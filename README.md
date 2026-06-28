@@ -16,7 +16,7 @@
 
 ## 技术栈
 
-- **后端**: Spring Boot 4.x, Java 17, MyBatis-Plus, Redis, WebSocket
+- **后端**: Spring Boot 4.x, Java  21, MyBatis-Plus, Redis, WebSocket
 - **前端**: Vue 3, Element Plus, Vite, TypeScript, Pinia
 - **数据库**: MySQL 8.0
 - **缓存**: Redis

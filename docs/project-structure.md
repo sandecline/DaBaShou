@@ -9,7 +9,7 @@
 将青年群体的"闲置技能"与"碎片时间"进行数字化撮合，倡导"技能换时间、时间换服务"的无压力青年互助生态。
 
 ### 1.3 技术栈
-- **后端**: Spring Boot 4.x, Java 17, MyBatis-Plus, Redis, WebSocket
+- **后端**: Spring Boot 4.x, Java 21, MyBatis-Plus, Redis, WebSocket
 - **前端**: Vue 3, Element Plus, Vite, TypeScript, Pinia
 - **数据库**: MySQL 8.0
 - **缓存**: Redis
