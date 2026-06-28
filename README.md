@@ -16,7 +16,7 @@
 
 ## 技术栈
 
-- **后端**: Spring Boot 4.x, Java  21, MyBatis-Plus, Redis, WebSocket
+- **后端**: Spring Boot 4.0.x, Java 21, MyBatis-Plus, Redis, WebSocket
 - **前端**: Vue 3, Element Plus, Vite, TypeScript, Pinia
 - **数据库**: MySQL 8.0
 - **缓存**: Redis
@@ -194,11 +194,12 @@ DaBaShou/
 - 修改代码前必须先阅读相关文档
 - 新增功能必须同步更新API文档
 - 重要业务逻辑必须编写单元测试
+- 修改特定模块（如frontend、backend、database）时，原则上不应同时修改其他模块，除非在提交信息或相关文档中明确声明并说明原因
 
 ## 快速开始
 
 ### 环境要求
-- JDK 17+
+- JDK 21+
 - Node.js 18+
 - MySQL 8.0+
 - Redis 7.0+
