@@ -1,22 +1,46 @@
 import request from '@/utils/request'
-import type { Review, Violation, Appeal, ReviewForm, AppealForm, PageResult, PageParams } from '@/types'
+import type { ApiResponse, PageResult, ReviewVo, ReviewDto, ViolationVo, ViolationDto, AppealVo, AppealDto } from '@/types/api'
 
-export function submitReview(data: ReviewForm): Promise<any> {
-  return request.post('/credit/review', data)
+export function submitReview(data: ReviewDto): Promise<ApiResponse<number>> {
+  return request({ url: '/v1/reviews', method: 'post', data })
 }
 
-export function getReviews(params: PageParams & { type?: 'sent' | 'received' }): Promise<PageResult<Review>> {
-  return request.get('/credit/reviews', params)
+export function getMyReviews(params?: {
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<ReviewVo>>> {
+  return request({ url: '/v1/reviews/mine', method: 'get', params })
 }
 
-export function getViolations(params: PageParams): Promise<PageResult<Violation>> {
-  return request.get('/credit/violations', params)
+export function getReceivedReviews(params?: {
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<ReviewVo>>> {
+  return request({ url: '/v1/reviews/received', method: 'get', params })
 }
 
-export function submitAppeal(data: AppealForm): Promise<any> {
-  return request.post('/credit/appeal', data)
+export function getOrderReview(orderId: number): Promise<ApiResponse<ReviewVo>> {
+  return request({ url: `/v1/orders/${orderId}/review`, method: 'get' })
 }
 
-export function getAppeals(params: PageParams): Promise<PageResult<Appeal>> {
-  return request.get('/credit/appeals', params)
+export function reportViolation(data: ViolationDto): Promise<ApiResponse<number>> {
+  return request({ url: '/v1/violations', method: 'post', data })
+}
+
+export function getMyViolations(params?: {
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<ViolationVo>>> {
+  return request({ url: '/v1/violations/mine', method: 'get', params })
+}
+
+export function submitAppeal(data: AppealDto): Promise<ApiResponse<number>> {
+  return request({ url: '/v1/appeals', method: 'post', data })
+}
+
+export function getMyAppeals(params?: {
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<AppealVo>>> {
+  return request({ url: '/v1/appeals/mine', method: 'get', params })
 }

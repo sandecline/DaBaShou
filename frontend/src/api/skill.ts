@@ -1,26 +1,30 @@
 import request from '@/utils/request'
-import type { SkillCategory, SkillTag, UserSkill, PageResult, PageParams } from '@/types'
+import type { ApiResponse, SkillCategoryVo, SkillTagVo, UserSkillVo, UserSkillDto } from '@/types/api'
 
-export function getCategories(): Promise<SkillCategory[]> {
-  return request.get('/skill/categories')
+export function getCategoryTree(): Promise<ApiResponse<SkillCategoryVo[]>> {
+  return request({ url: '/v1/skills/categories/tree', method: 'get' })
 }
 
-export function getTags(categoryId?: number): Promise<SkillTag[]> {
-  return request.get('/skill/tags', { categoryId })
+export function getTags(categoryId: number): Promise<ApiResponse<SkillTagVo[]>> {
+  return request({ url: '/v1/skills/tags', method: 'get', params: { categoryId } })
 }
 
-export function getUserSkills(userId?: number): Promise<UserSkill[]> {
-  return request.get('/user/skills', { userId })
+export function getHotTags(limit = 20): Promise<ApiResponse<SkillTagVo[]>> {
+  return request({ url: '/v1/skills/tags/hot', method: 'get', params: { limit } })
 }
 
-export function addUserSkill(data: { skillTagId: number; proficiency: number; description?: string }): Promise<any> {
-  return request.post('/user/skills', data)
+export function getMySkills(): Promise<ApiResponse<UserSkillVo[]>> {
+  return request({ url: '/v1/users/me/skills', method: 'get' })
 }
 
-export function deleteUserSkill(skillId: number): Promise<any> {
-  return request.delete(`/user/skills/${skillId}`)
+export function addSkill(data: UserSkillDto): Promise<ApiResponse<UserSkillVo>> {
+  return request({ url: '/v1/users/me/skills', method: 'post', data })
 }
 
-export function getAllSkills(): Promise<PageResult<SkillTag>> {
-  return request.get('/skill/all')
+export function updateSkill(id: number, data: UserSkillDto): Promise<ApiResponse<null>> {
+  return request({ url: `/v1/users/me/skills/${id}`, method: 'put', data })
+}
+
+export function removeSkill(id: number): Promise<ApiResponse<null>> {
+  return request({ url: `/v1/users/me/skills/${id}`, method: 'delete' })
 }
