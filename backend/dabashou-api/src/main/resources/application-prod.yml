@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/dabashou?useUnicode=true&characterEncoding=utf8&useSSL=true&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+springdoc:
+  api-docs:
+    enabled: false
+
+knife4j:
+  enable: false
+  production: true
+
+dabashou:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 86400000
+    refresh-expiration: 604800000
+    header: Authorization
+    prefix: "Bearer "

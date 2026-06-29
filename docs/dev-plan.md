@@ -1,322 +1,353 @@
-# 搭把手 开发计划文档
+# 搭把手（DaBaShou）后端完善实施方案
 
-## 一、项目目标与范围
-
-### 1.1 核心定位
-搭把手（DaBaShou）是一个校园共享技能互助平台，将青年群体的"闲置技能"与"碎片时间"进行数字化撮合，倡导"技能换时间、时间换服务"的无压力青年互助生态。
-
-### 1.2 三条核心业务线
-1. **技能货架与闲时格子发布线**：上架个人非全职技能，可视化日历矩阵勾选空闲时段，生成个人专属技能小铺
-2. **悬赏求助看板与智能匹配线**：公共求助墙发布碎片化需求，基于地理位置与技能标签双向匹配
-3. **担保履约与积分核销结算线**：积分冻结到担保池，动态核销码扫码确认，积分即时解冻结算并更新信任分
-
-### 1.3 功能模块（9 大模块）
-| 序号 | 模块             | 包含子功能                                         |
-| ---- | ---------------- | -------------------------------------------------- |
-| 1    | 系统基础通用     | 权限管理（学生/管理员/客服）、文件、通知、日志、配置 |
-| 2    | 用户与身份认证   | 校园认证（学号/邮箱/学生证）、个人技能小铺、信任分体系 |
-| 3    | 技能货架         | 技能上架、闲时格子日历、标签分类、浏览搜索         |
-| 4    | 悬赏求助看板     | 需求发布、公共求助墙、智能匹配（地理+技能）、接单管理 |
-| 5    | 担保履约结算     | 状态机（8 状态）、担保锁单、动态核销码、熔断退改   |
-| 6    | 互助积分         | 账户管理、积分获取/消耗、技能置换                   |
-| 7    | 数据统计         | 供需统计、技能热度、用户活跃度、图表可视化         |
-| 8    | 信用评价         | 双向评价、违规记录、申诉管理、信任分动态调整       |
-| 9    | 管理后台         | 用户/订单/信用管理、系统配置                        |
-
-### 1.4 非目标（不在本项目范围）
-- 移动端原生 App（仅做响应式 H5）
-- 第三方支付对接（使用平台积分体系）
-- 实时音视频通讯（仅文字 + 图片消息）
+> 本文档为搭把手项目后端完善实施计划，基于对源码、数据库、文档的逐项核验编制，所有判断均有据可查。
+>
+> 技术栈：Spring Boot 3.4.3 + Java 21 + MyBatis-Plus + MySQL，Maven 多模块（13 个子模块），包名 `com.dabashou.{module}`。
+>
+> 编制日期：2026-06-29　　文档版本：v1.0.0
 
 ---
 
-## 二、技术栈与版本锁定
+## 一、现状分析
 
-详见 `docs/constraints.md` 第二章。核心版本：
-- **后端**：Spring Boot 4.0.x + Java 21 + MyBatis-Plus 3.5.x + Redis 7.x
-- **前端**：Vue 3.4+ + TypeScript 5.x + Vite 5.x + Element Plus 2.x + Pinia 2.x + Tailwind CSS 3.x
-- **数据库**：MySQL 8.0+（InnoDB）
-- **部署**：Docker + Docker Compose
+### 1.1 模块完成度
+
+| 模块 | 状态 | 依据 |
+|---|---|---|
+| dabashou-common | ✅ 已实现（11 类） | AjaxResult / BaseEntity / PageQuery / PageResult / ErrorCode / OrderStatus / PointTransType / TrustLevel / BusinessException / JwtUtil / SecurityUtil |
+| dabashou-order | ⚠️ 骨架（17 类） | OrderController 14 接口 + OrderServiceImpl 状态机校验完整，但跨模块逻辑全 TODO |
+| dabashou-api | ⚠️ 已实现但有问题 | 启动类 + 9 配置类 + DemoController（624 行，绕过架构直查数据库） |
+| dabashou-user | ❌ 空壳 | 仅 package-info.java |
+| dabashou-skill | ❌ 空壳 | 仅 package-info.java |
+| dabashou-shelf | ❌ 空壳 | 仅 package-info.java |
+| dabashou-demand | ❌ 空壳 | 仅 package-info.java |
+| dabashou-point | ❌ 空壳 | 仅 package-info.java |
+| dabashou-message | ❌ 空壳 | 仅 package-info.java |
+| dabashou-credit | ❌ 空壳 | 仅 package-info.java |
+| dabashou-stat | ❌ 空壳 | 仅 package-info.java |
+| dabashou-admin | ❌ 空壳 | 仅 package-info.java |
+| dabashou-system | ❌ 空壳 | 仅 package-info.java |
+
+### 1.2 技术问题清单（按严重程度分级）
+
+| 级别 | 问题 | 源码依据 |
+|---|---|---|
+| **P0** | DemoController 任意密码登录、硬编码 userId=1、无事务、confirm 直接 `UPDATE status=5` 无状态校验（违反订单状态机不可跳变约束） | DemoController L39 / L295 / L377 / L416 / L530 |
+| **P0** | SecurityConfig 放行 `/api/user`、`/api/order` 等几乎所有业务路径，接口实际无鉴权 | SecurityConfig L41-49 |
+| **P0** | Redis 配置矛盾：主 yml 排除 RedisAutoConfiguration，dev 又配 redis 连接 → Redis 不可用 | application.yml L12-14 / application-dev.yml L7-12 |
+| **P0** | 缺 point 三表（account/freeze/guarantee_pool），积分余额冗余在 dbs_user.point_balance，无法支撑冻结/担保逻辑 | V1.0.0 仅 dbs_point_transaction |
+| **P0** | 迁移脚本全部无回滚语句（违反 AGENTS.md 2.2 "迁移脚本必须可回滚"） | V1.0.0 / V1.2.0 均无 DROP/ALTER 回滚段 |
+| **P0** | dbs_order.verify_code 无 UNIQUE 约束；Order 未继承 BaseEntity 且无 deleted 字段，与全局 logic-delete 配置冲突 | Order.java L10 / BaseEntity L25 / application.yml L34 |
+| **P0** | 缺复合索引：order(buyer_id,status)/(seller_id,status)、demand(status,demand_type)、chat_message(session_id,create_time) | V1.0.0 L148-150 仅单列索引 |
+| **P0** | 零种子数据：无管理员账号、无技能分类、无测试用户，新环境部署后无法登录 | grep INSERT 在 migration/*.sql 无结果 |
+| **P1** | OrderServiceImpl 跨模块逻辑全 TODO：未从货架/需求取信息、支付未冻结积分、确认未结算、核销未校验码、争议/退款未退款 | OrderServiceImpl L33-49 / L114 / L217 / L248 / L269 |
+| **P1** | 登录未用 BCrypt（PasswordEncoder Bean 已存在但未被调用） | DemoController L39 / SecurityConfig L29 |
+| **P2** | 测试覆盖率 0%（AGENTS.md 5.2 要求核心模块 ≥80%） | 整个 backend 无任何测试类 |
+| **P2** | 表前缀不统一（dbs_ / credit_ / user_ 三种混用，违反命名规范一致性） | V1.0.0 vs V1.2.0 |
+| **P2** | DemoController 路径 `/api/` 无版本前缀，与 API 文档 `/api/v1/` 不一致 | order.md L5 vs DemoController |
+
+### 1.3 数据库现状摘要
+
+- 共 26 张表（核心业务 10 + 系统 8 + 信用 4 + 统计 2 + 聊天 2）
+- 表名/字段名小写下划线：✅ 全部符合
+- 中文注释：✅ 基本齐全
+- 订单 status 注释：✅ 已标注 0-7 全部含义
+- 信任分字段：✅ DECIMAL(3,1) 支持 0.0-5.0
+- `database/migration` 与 `backend/src` 迁移脚本不同步（database 缺 V1.4.0）
+
+### 1.4 文档现状摘要
+
+- ✅ API 文档完整：`docs/api/` 下 11 模块 121 端点，自描述风格含 DTO/VO 定义
+- ✅ 订单状态机文档完整：`docs/order-state-machine.md`
+- ❌ 缺失：根 `README.md`、`docs/dev-plan.md`（本文件填补）、数据库设计文档（仅占位）、联调文档
+- ⚠️ API 文档用 `/api/v1/` 前缀，DemoController 用 `/api/`，存在根本性不一致
 
 ---
 
-## 三、模块开发依赖顺序
+## 二、完善目标
 
-```
-Phase 0: 骨架搭建（当前阶段）
-  ↓
-Phase 1: dabashou-common → dabashou-system + dabashou-user
-  ↓
-Phase 2: dabashou-skill → dabashou-shelf + dabashou-demand → dabashou-order + dabashou-point
-  ↓
-Phase 3: dabashou-credit + dabashou-stat + dabashou-message
-  ↓
-Phase 4: dabashou-admin + dabashou-api（聚合）+ 性能优化 + 安全加固
-```
+### 2.1 必须达成（6-8 周内）
+
+1. DemoController 业务全部迁移到正式模块并删除（或仅留 health 接口）
+2. 10 个空壳模块补齐 Controller / Service / Mapper / Entity / DTO / VO 完整实现
+3. 数据库：补 point 三表、种子数据、回滚脚本、复合索引、verify_code 唯一约束、Order 继承 BaseEntity
+4. 安全：SecurityConfig 强制鉴权、登录改 BCrypt、Redis 可用
+5. 订单状态机闭环：积分冻结 / 结算 / 核销 / 争议 / 退款全链路打通，无状态跳变
+6. 核心模块（order / point / user）单元测试覆盖率 ≥80%
+
+### 2.2 争取达成
+
+- 消息模块 WebSocket 实时联调
+- 统计模块定时任务 + Redis 缓存
+- 表前缀统一为 `dbs_`（消除 credit_ / user_ 前缀）
+- 多环境配置（dev / prod 分离）
 
 ---
 
-## 四、第 0 阶段 · 启动期（当前，可立即执行）
+## 三、具体计划（按优先级）
 
-> 目标：项目从"文档+空壳"变为"可编译、可运行、可验证"的骨架工程。
+### P0-1　数据库基线修复
 
-### 任务 0.1：仓库与分支策略
-**产出物**：
-- `develop` 分支从 `main` 创建
-- `main` 分支保护规则（禁止直接推送）
-- 分支命名规范落地（feature/fix/hotfix）
-- PR 模板（`.github/pull_request_template.md`）
+**技术要点**：
+- 新增迁移 `V1.4.0__point_tables.sql`：
+  - `dbs_point_account`（user_id UK, available, frozen, total_earned, total_spent）
+  - `dbs_point_freeze`（order_id UK, user_id, amount, status, freeze_time, release_time）
+  - `dbs_guarantee_pool`（order_id UK, amount, status, settle_time）
+- 新增 `V1.5.0__fix_indexes_and_constraints.sql`：
+  - dbs_order 加复合索引 (buyer_id, status)、(seller_id, status)
+  - dbs_order.verify_code 加 UNIQUE 约束
+  - dbs_demand 加 (status, demand_type) 复合索引
+  - dbs_chat_message 加 (session_id, create_time) 复合索引
+  - dbs_order 加 deleted 字段（TINYINT DEFAULT 0，配合全局逻辑删除）
+- 新增 `V1.6.0__seed_data.sql`：
+  - 1 个管理员（admin / BCrypt 哈希）
+  - 7 个技能分类（学业辅导、维修帮忙、设计美工、技术支持、运动陪练、音乐艺术、生活服务）
+  - 若干技能标签
+  - 3 个测试用户（zhangsan / lisi / wangwu，BCrypt 哈希）
+- 所有新脚本末尾附回滚段（`-- ROLLBACK:` 注释 + DROP / ALTER 语句）
+- 同步 `database/migration` 与 `backend/src` 两处迁移脚本目录
 
 **验收标准**：
-- `git branch -a` 可见 `main` + `develop`
-- `main` 分支保护已配置
-
-**执行步骤**：
-1. `git checkout -b develop && git push -u origin develop`
-2. 在 GitHub 设置 main 分支保护规则
-3. 创建 `.github/pull_request_template.md`
+- [ ] 脚本可正向执行且可回滚执行
+- [ ] Flyway 开启（spring.flyway.enabled=true）后验证通过
+- [ ] verify_code 重复插入报 MySQL 1062 错误
+- [ ] 种子数据导入后可用 admin / zhangsan 登录
 
 ---
 
-### 任务 0.2：后端骨架
-**产出物**：
-- `backend/pom.xml`（父 POM，声明依赖版本 + 子模块）
-- 12 个子模块的 `pom.xml`（各自的依赖声明）
-- `dabashou-common` 基础类：
-  - `AjaxResult`：统一响应封装
-  - `BusinessException`：业务异常
-  - `ErrorCode`：统一错误码枚举
-  - `OrderStatus`：订单状态枚举
-  - `PageQuery` / `PageResult`：分页封装
+### P0-2　安全与配置修复
+
+**技术要点**：
+- `SecurityConfig`：白名单仅保留 `/api/v1/auth/**`、`/api/v1/files/download/**`、`/ws/**`、`/swagger-ui/**`、`/v3/api-docs/**`；其余 `anyRequest().authenticated()`
+- `application.yml`：移除 `RedisAutoConfiguration` 排除项，引入 `spring-boot-starter-data-redis`；OrderServiceImpl 用 RedisTemplate 存幂等 Token / 核销码（30min TTL）
+- 登录改 BCrypt：UserServiceImpl.login 用 `passwordEncoder.matches(rawPassword, user.getPasswordHash())`
+- 新增 `application-prod.yml`，敏感配置（JWT secret、DB 密码）走环境变量
 
 **验收标准**：
-- `mvn clean compile` 在根目录执行成功
-- `AjaxResult.success(data)` 可返回标准格式
-- 无编译错误、无 WARNING（deprecation 除外）
-
-**执行步骤**：
-1. 创建父 `pom.xml`（Spring Boot 3.2.x parent，Java 21，声明子模块）
-2. 为每个子模块创建 `pom.xml`（继承父 POM，声明所需依赖）
-3. 创建 `DabashouApplication.java`（在 dabashou-api 模块）
-4. 在 dabashou-common 中编写基础类（AjaxResult、BusinessException、ErrorCode 等）
+- [ ] 未带 Token 访问 `/api/v1/order` 返回 401
+- [ ] Redis 可连通（redis-cli ping 返回 PONG）
+- [ ] 错误密码登录返回 400 + "用户名或密码错误"
+- [ ] prod 环境配置不含明文密钥
 
 ---
 
-### 任务 0.3：前端骨架
-**产出物**：
-- `frontend/package.json`、`vite.config.ts`、`tsconfig.json`、`tailwind.config.js`
-- `src/utils/request.ts`（Axios 封装，统一错误拦截）
-- `src/router/index.ts` + `src/router/guard.ts`（路由入口 + 守卫）
-- `src/components/layout/Header.vue`、`Sidebar.vue`、`Footer.vue`
-- `src/stores/user.ts`（用户状态 store 骨架）
-- `src/App.vue`、`src/main.ts`
+### P0-3　订单状态机闭环
+
+**技术要点**：
+补全 OrderServiceImpl 所有 TODO，严格按状态机流转：
+
+- `createOrderFromShelf / createOrderFromDemand`：跨模块通过 shelf / demand 模块 Service 接口（同进程 @Autowired，禁止跨库 join）获取 sellerId / title / pointAmount，校验不能自买自卖
+- `payOrder`（1→2）：调用 `PointService.freeze(buyerId, amount, orderId)` 冻结买家积分，写 dbs_point_freeze；Redis 生成核销码（6 位，30min TTL）
+- `startService`（2→3）：校验核销码已生成
+- `verifyOrder`（3→4）：Redis 校验核销码匹配且未过期，更新订单 verify_code
+- `confirmOrder`（4→5）：调用 `PointService.settle()` 解冻 → 转入卖家账户，写双方流水，更新担保池状态
+- `cancelOrder`（0/1→0）：若已支付则调用 `PointService.unfreeze()` 退还买家
+- `refundOrder`（2/3/4→6）：调用 `PointService.refund()` 解冻退还买家
+- `arbitrateOrder`（→7）：按仲裁结果转为 COMPLETED 或 REFUNDED
+- 所有写操作加 `@Transactional(rollbackFor = Exception.class)`
 
 **验收标准**：
-- `npm install && npm run dev` 可启动开发服务器
-- `npm run lint && npm run typecheck` 通过
-- 浏览器访问可见基础布局
-
-**执行步骤**：
-1. `npm create vite@latest . -- --template vue-ts`（在 frontend 目录初始化）
-2. 配置 `vite.config.ts`（代理 /api 到后端、Element Plus 按需引入）
-3. 配置 `tailwind.config.js`、`postcss.config.js`
-4. 编写 `request.ts`（Axios 实例 + 请求/响应拦截器）
-5. 编写路由和布局组件
+- [ ] 状态机全路径单元测试通过（含非法跳变拒绝）
+- [ ] 积分余额 + 冻结额对账一致（账户表 = 流水表汇总）
+- [ ] 无负余额场景
+- [ ] 核销码过期后 confirm 失败
 
 ---
 
-### 任务 0.4：数据库迁移机制
-**产出物**：
-- Flyway 配置（`application-dev.yml` 中启用 Flyway）
-- 将现有 `init.sql` 拆分为版本化脚本：
-  - `V1.0.0__init_core_tables.sql`（用户/技能/货架/需求/订单/积分/评价）
-  - `V1.1.0__init_system_tables.sql`（sys_role/sys_permission/sys_file/sys_notification/sys_log/sys_config + 关联表）
-  - `V1.2.0__init_credit_tables.sql`（user_campus_auth/user_trust_score_log/credit_violation/credit_appeal）
-  - `V1.3.0__init_stat_tables.sql`（stat_daily_summary/stat_skill_heat）
-- 原 `init.sql` 保留为参考，标注"已迁移至 Flyway 脚本"
+### P1-1　用户模块（dabashou-user）
+
+**技术要点**：
+- 内容：UserController（login / register / profile / update / campus-auth）、UserService、UserMapper、User 实体（继承 BaseEntity）、DTO（RegisterDto / LoginDto / UpdateProfileDto）、VO（UserVo）
+- DB：dbs_user 已存在，补充 deleted 字段（配合逻辑删除）
+- 逻辑：注册 BCrypt 加密 + 初始积分 100 + 信任分 5.0；登录返回 JWT；校园认证写 user_campus_auth
+- 安全：密码脱敏（日志不打印明文）、参数校验（@Valid）、防重放（X-Idempotent-Token 头）
 
 **验收标准**：
-- MySQL 容器启动后 Flyway 自动执行全部脚本
-- `SHOW TABLES` 可见全部 22 张表
-- 所有表结构与 `docs/design/database-design.md` 一致
-- 外键、索引、注释完整
-
-**执行步骤**：
-1. 在父 POM 添加 Flyway 依赖
-2. 在 `application-dev.yml` 配置 Flyway（locations、baseline-on-migrate）
-3. 拆分 init.sql 为 4 个版本化脚本
-4. 补全缺失的 12 张表的建表语句（参考 database-design.md）
-5. 本地启动验证 Flyway 自动迁移
+- [ ] 注册 → 登录 → 获取 profile 链路通
+- [ ] 密码不以明文存储或返回（响应 VO 无 passwordHash 字段）
+- [ ] 日志中密码字段显示为 ******
 
 ---
 
-### 任务 0.5：容器化
-**产出物**：
-- `docker/docker-compose.yml`（MySQL 8.0 + Redis 7 + 后端 + 前端）
-- `docker/Dockerfile.backend`（多阶段构建：Maven 编译 + JRE 运行）
-- `docker/Dockerfile.frontend`（多阶段构建：Node 编译 + Nginx 部署）
-- `scripts/start.sh`、`scripts/stop.sh`、`scripts/deploy.sh`
+### P1-2　积分模块（dabashou-point）
+
+**技术要点**：
+- 内容：PointAccountController（balance / transactions）、PointService（freeze / unfreeze / settle / refund / reward）、三实体（PointAccount / PointFreeze / GuaranteePool）+ Mapper
+- 逻辑：所有操作 `@Transactional`；冻结前校验 `available >= amount`；每步写 dbs_point_transaction 流水（含 balance_after 字段）
+- 并发控制：冻结用 `UPDATE dbs_point_account SET available = available - ?, frozen = frozen + ? WHERE user_id = ? AND available >= ?`，影响行数 = 0 则抛 409
 
 **验收标准**：
-- `docker-compose up -d` 一键启动全部服务
-- 浏览器访问 `http://localhost` 可见前端页面
-- 前端 `/api/**` 请求可代理到后端
-
-**执行步骤**：
-1. 编写 `docker-compose.yml`（4 个服务：mysql、redis、backend、frontend）
-2. 编写 `Dockerfile.backend`（FROM maven:3.9-eclipse-temurin-21 AS build → FROM eclipse-temurin:21-jre）
-3. 编写 `Dockerfile.frontend`（FROM node:20-alpine AS build → FROM nginx:alpine）
-4. 编写启动/停止/部署脚本
+- [ ] 并发冻结不超额（10 并发线程冻结同一账户，总额不超余额）
+- [ ] 流水表与账户余额对账一致
+- [ ] 担保池状态随订单状态正确流转
 
 ---
 
-### 任务 0.6：验证链路约定
-**产出物**：
-- 后端验证命令：`mvn clean verify`（编译 + 测试 + 覆盖率报告）
-- 前端验证命令：`npm run lint && npm run typecheck && npm run test`
-- 验证命令写入 `AGENTS.md` 和 `docs/constraints.md`
+### P1-3　技能货架 / 需求模块（dabashou-shelf, dabashou-demand, dabashou-skill）
+
+**技术要点**：
+- dabashou-skill：SkillCategoryController / SkillTagController（分类/标签 CRUD，管理员维护）
+- dabashou-shelf：ShelfController（list / detail / publish / update / offshelf / my）
+- dabashou-demand：DemandController（list / detail / publish / take / close / my）
+- 逻辑：发布校验技能标签存在；上下架改 status；接单改 demand.status=2 并触发订单创建
+- 安全：仅本人可编辑 / 下架自己的货架 / 需求（校验 user_id 匹配）
+- 性能：分页查询用关联查询或批量注解消除 N+1，响应 ≤500ms
 
 **验收标准**：
-- 后端 `mvn clean verify` 全绿
-- 前端 `npm run lint && npm run typecheck` 全绿
-- CI 命令文档化
+- [ ] 分页查询响应 ≤500ms
+- [ ] 非本人调用更新 / 下架接口返回 403
+- [ ] 下单 → 支付 → 核销 → 完成 e2e 链路通
 
 ---
 
-## 五、第 1 阶段 · 基础框架（2-3 周）
+### P2-1　信用评价模块（dabashou-credit）
 
-### 目标
-实现系统通用模块 + 用户认证模块，打通前后端联调链路。
+**技术要点**：
+- ReviewController（submit / list）、ViolationController（list / appeal）、AppealController（submit / approve / reject）
+- 逻辑：评价仅订单 status=5 可提交，且 (order_id, reviewer_id) UK 防重；评价不可修改（不提供 update 接口）；违规写 credit_violation 并按规则扣信任分
+- 信任分计算：违规扣分写 user_trust_score_log，触发 trust_score 更新
 
-### 里程碑
-| 里程碑          | 交付物                                        | 验收标准                          |
-| --------------- | --------------------------------------------- | --------------------------------- |
-| M1.1 系统通用   | 角色/权限 CRUD、文件上传、日志记录、系统配置  | 管理员可登录，权限分配生效        |
-| M1.2 用户注册登录 | 注册/登录 API + 前端页面、JWT 认证          | 用户可注册、登录、获取 token      |
-| M1.3 校园认证   | 学号/邮箱认证 API、信任分初始化               | 认证后显示学校标识                |
-| M1.4 个人主页   | 个人资料编辑、技能小铺骨架、前端页面          | 个人主页可访问，展示基本信息      |
-
-### 关键模块
-- `dabashou-system`：角色、权限、文件、日志、配置
-- `dabashou-user`：注册、登录、认证、信任分
+**验收标准**：
+- [ ] 同一订单同一用户重复评价返回 409
+- [ ] 评价提交后无修改接口可调用
+- [ ] 违规记录触发信任分下降
 
 ---
 
-## 六、第 2 阶段 · 核心业务（1天）
+### P2-2　消息模块（dabashou-message）
 
-### 目标
-实现技能货架 + 需求看板 + 订单状态机 + 积分担保，打通核心业务闭环。
+**技术要点**：
+- 会话 / 消息 / 未读数接口；复用已有 WsAuthInterceptor + dbs_chat_session / dbs_chat_message 表
+- WebSocket 鉴权：连接时校验 JWT，按 userId 建立会话
+- 未读数：消息发送时 Redis INCR，已读时 DECR
 
-### 里程碑
-| 里程碑          | 交付物                                                    | 验收标准                              |
-| --------------- | --------------------------------------------------------- | ------------------------------------- |
-| M2.1 技能货架   | 技能发布/编辑/下架、闲时格子日历、标签分类、浏览搜索      | 用户可发布技能，设置空闲时段          |
-| M2.2 需求看板   | 需求发布/关闭、公共求助墙、智能匹配推荐                   | 用户可发布需求，系统自动推荐匹配      |
-| M2.3 订单状态机 | 8 状态完整流转、超时熔断、退改扣分                        | 订单可正常流转，超时自动处理          |
-| M2.4 积分担保   | 积分冻结/解冻/结算、担保池、核销码生成/验证               | 支付冻结积分，核销后结算              |
-| M2.5 端到端联调 | 完整业务流程：发布→下单→支付→核销→结算→评价              | 场景 1（PPT 排版帮助）跑通           |
-
-### 关键模块
-- `dabashou-skill`：分类、标签、用户技能
-- `dabashou-shelf`：技能服务发布管理
-- `dabashou-demand`：需求发布、匹配
-- `dabashou-order`：状态机（**核心难点**，参见 `docs/design/order-state-machine.md`）
-- `dabashou-point`：积分账户、流水、担保池
-
-### 技术难点与对策
-| 难点             | 对策                                                             |
-| ---------------- | ---------------------------------------------------------------- |
-| 状态机一致性     | 状态机引擎（Spring StateMachine 或手写枚举状态机），单元测试全覆盖 |
-| 积分并发安全     | Redis 分布式锁 + 数据库乐观锁 + @Transactional                   |
-| 核销码防伪       | 6 位随机码 + Redis 存储 + 30 分钟 TTL + 防截图（动态刷新）       |
-| 超时熔断         | Spring @Scheduled 定时扫描 + Redis 延迟队列                      |
+**验收标准**：
+- [ ] WebSocket 无 Token 连接被拒
+- [ ] 未读数实时更新（≤1s 延迟）
 
 ---
 
-## 七、第 3 阶段 · 信用与统计（2-3天）
+### P2-3　统计模块（dabashou-stat）
 
-### 目标
-实现信用评价 + 数据统计 + 消息通讯，完善平台生态。
+**技术要点**：
+- overview / user / daily / skill-heat / demand 接口
+- `@Scheduled` 定时任务每日凌晨写 dbs_stat_daily
+- 热点数据加 Redis 缓存（TTL 5min）
 
-### 里程碑
-| 里程碑          | 交付物                                          | 验收标准                        |
-| --------------- | ----------------------------------------------- | ------------------------------- |
-| M3.1 双向评价   | 星级+文字评价、评价展示                         | 完成订单后双方可互评            |
-| M3.2 信用体系   | 信任分自动调整、违规记录、申诉机制              | 差评自动扣分，可发起申诉        |
-| M3.3 消息通知   | 系统通知（接单/核销/评价/超时）、消息管理       | 实时收到订单状态通知            |
-| M3.4 即时通讯   | 用户间聊天（WebSocket）、聊天记录               | 买卖双方可在线沟通              |
-| M3.5 数据统计   | 供需统计、技能热度、用户活跃度、图表（ECharts） | 管理后台可查看平台数据          |
-
-### 关键模块
-- `dabashou-credit`：评价、违规、申诉、信任分
-- `dabashou-message`：WebSocket、系统通知、聊天
-- `dabashou-stat`：统计分析、图表数据
+**验收标准**：
+- [ ] 统计接口有数据返回
+- [ ] 定时任务正常执行
+- [ ] 缓存命中率可观测
 
 ---
 
-## 八、第 4 阶段 · 管理后台与优化（2 天）
+### P3-1　DemoController 渐进式迁移
 
-### 目标
-完成管理后台，性能优化与安全加固，达到可演示状态。
-
-### 里程碑
-| 里程碑          | 交付物                                        | 验收标准                        |
-| --------------- | --------------------------------------------- | ------------------------------- |
-| M4.1 管理后台   | 用户/订单/信用/统计管理、系统配置              | 管理员可管理所有业务数据        |
-| M4.2 性能优化   | SQL 优化、缓存策略、分页优化、接口响应 ≤500ms | 核心接口响应达标                |
-| M4.3 安全加固   | 参数校验、防刷机制、风控规则、审计日志         | 通过安全测试                    |
-| M4.4 测试收尾   | 单元测试补全、集成测试、E2E 测试               | 覆盖率达标（核心≥80%）          |
-| M4.5 部署上线   | Docker Compose 生产配置、部署文档              | 可一键部署                      |
+**规则**：
+- 每补一个正式模块，从 DemoController 删除对应 `/api/xxx` 方法
+- 路径统一从 `/api/xxx` 改为 `/api/v1/xxx`
+- 过渡期路径双写：v1 新接口 + 旧 `/api/` 保留 1 周，文档标注 `@Deprecated`
+- 最终 DemoController 删除或仅留 health 接口
 
 ---
 
-## 九、遗留问题修复
+### P3-2　测试补齐
 
-以下是启动阶段发现的问题，纳入 Phase 0 或后续阶段一并解决：
+**技术要点**：
+- order / point / user 核心逻辑 JUnit5 + Mockito 单测
+- OrderServiceImpl 状态机边界测试（所有合法流转 + 所有非法跳变）
+- 积分并发测试（CountDownLatch 模拟并发冻结）
+- 覆盖率工具：JaCoCo，目标 ≥80%
 
-| 序号 | 问题                                             | 处置                                          | 阶段 |
-| ---- | ------------------------------------------------ | --------------------------------------------- | ---- |
-| 1    | init.sql 只含 10/22 张表                         | 补全 12 张缺失表，拆分为 Flyway 版本化脚本    | 0.4  |
-| 2    | init.sql 是单体，未按 Flyway 版本化              | 拆分为 V1.0.0 ~ V1.3.0 四个脚本               | 0.4  |
-| 3    | docker/ 和 scripts/ 目录为空                     | 补全 docker-compose.yml + Dockerfile + 脚本    | 0.5  |
-
----
-
-## 十、风险与对策
-
-| 风险                         | 概率 | 影响 | 对策                                                     |
-| ---------------------------- | ---- | ---- | -------------------------------------------------------- |                 |
-| 状态机实现复杂导致 bug       | 高   | 高   | 手写枚举状态机 + 单元测试覆盖所有合法/非法流转           |
-| 积分并发扣减导致余额异常     | 高   | 高   | Redis 分布式锁 + 数据库乐观锁 + 事务回滚                 |
-| 前后端联调接口不一致         | 中   | 中   | Knife4j 自动生成 API 文档，前端按文档开发                |
-| MySQL 性能瓶颈               | 低   | 中   | 索引优化 + 读写分离预留 + Redis 缓存热点数据             |
-| WebSocket 连接管理（断线重连）| 中   | 中   | 心跳检测 + 自动重连 + 离线消息持久化                     |
-| Flyway 迁移脚本冲突          | 中   | 高   | 严格的分支管理，迁移脚本合并前必须 rebase                |
+**验收标准**：
+- [ ] core 模块覆盖率 ≥80%
+- [ ] 状态机非法跳变全部被拒绝
+- [ ] 并发场景无超额
 
 ---
 
-## 十一、验收标准总表
+## 四、API 变更同步要求
 
-### Phase 0 完成标准（启动期）
-- [ ] `mvn clean compile` 后端编译成功
-- [ ] `npm install && npm run dev` 前端启动成功
-- [ ] `npm run lint && npm run typecheck` 前端检查通过
-- [ ] `docker-compose up -d` 一键启动全部服务
-- [ ] Flyway 自动创建 22 张表
-- [ ] `develop` 分支已创建并推送
-- [ ] 5 项遗留问题全部解决
+> **核心原则**：代码与文档必须保持一致，违反一致性阻断合并。
 
-### 项目整体完成标准
-- [ ] 全部 9 大功能模块实现
-- [ ] 三条核心业务线端到端跑通
-- [ ] 核心模块测试覆盖率 ≥ 80%
-- [ ] 核心接口响应时间 ≤ 500ms
-- [ ] 安全测试通过（SQL 注入、XSS、CSRF）
-- [ ] Docker Compose 可一键部署
-- [ ] API 文档完整（Knife4j 自动生成）
-- [ ] 用户文档完整（README + 部署文档）
+1. **同 PR 更新**：每次新增 / 修改 / 删除接口，必须在**同一个 PR 内**更新 `docs/api/` 对应 .md 文件（含 URL / 请求参数 / 响应结构 / 错误码 / 示例）
+
+2. **路径迁移记录**：DemoController 接口迁移到正式模块时，路径 `/api/xxx` → `/api/v1/xxx`，须：
+   - 更新对应 API 文档
+   - 记录到 `docs/api/CHANGELOG.md`（变更日期、旧路径、新路径、影响范围）
+   - 通知前端同学
+
+3. **每周一致性检查**：每周五运行脚本比对 `@*Mapping` 注解路径与 `docs/api/*.md` 的 URL 一致性，不一致阻断合并
+
+4. **版本管理**：
+   - 新接口一律 v1
+   - 破坏性变更走 v2，并标记旧版 `@Deprecated`，保留至少 1 个版本周期
+   - 废弃接口在 API 文档顶部标注"已废弃"及替代接口
+
+5. **文档评审**：API 文档变更需在 PR 描述中贴出 diff，由 reviewer 一并审查
+
+---
+
+## 五、实施步骤与时间安排
+
+| 周 | 里程碑 | 涉及模块 | 关键任务 | 交付物 | 验收标准 |
+|---|---|---|---|---|---|
+| **W1** | 基线修复 | db / api | P0-1 数据库脚本 + 回滚 + 种子；P0-2 安全配置 + Redis + BCrypt | V1.4-V1.6 脚本；SecurityConfig 修复 | 脚本可回滚；无 Token 返 401；种子数据可登录 |
+| **W2** | 用户 + 积分 | user / point | P1-1 用户模块；P1-2 积分模块（账户 / 冻结 / 流水） | user / point 全类 | 注册登录链路通；冻结超额拒绝 |
+| **W3** | 订单闭环 | order | P0-3 补全 OrderServiceImpl 全部 TODO | 订单全链路 | 状态机单测通过；积分对账一致 |
+| **W4** | 货架 + 需求 | shelf / demand / skill | P1-3 货架 / 需求发布查询上下架 | 3 模块全类 | 下单→支付→核销→完成 e2e 通 |
+| **W5** | 信用 + 消息 | credit / message | P2-1 评价 / 违规 / 申诉；P2-2 会话 / 消息 | credit / message 全类 | 评价不可改；WebSocket 鉴权通 |
+| **W6** | 统计 + 迁移 | stat / api | P2-3 统计；P3-1 删 DemoController 业务方法 | stat 全类；DemoController 清理 | DemoController 仅剩 health；统计接口有数据 |
+| **W7** | 测试 + 文档 | 全部 | P3-2 核心单测覆盖率 ≥80%；补 dev-plan / 联调 / db 设计文档 | 测试报告 + 文档 | 覆盖率 ≥80%；API 文档与代码一致 |
+| **W8** | 缓冲 + 联调 | 全部 | 端到端联调、性能优化、遗留修复 | 联调报告 | 接口 ≤500ms；无 P0 缺陷 |
+
+---
+
+## 六、风险与应对
+
+| 风险 | 影响 | 应对措施 |
+|---|---|---|
+| Order 改继承 BaseEntity 影响存量数据 | 中 | 仅加 deleted 字段默认 0；不动已有字段类型（符合 AGENTS.md 2.1 "禁止修改字段类型"） |
+| 迁移加索引锁表 | 高 | 在低峰执行；大表用 pt-osc 或 `ALGORITHM=INPLACE, LOCK=NONE` |
+| DemoController 迁移期前端断线 | 高 | 路径双写过渡：v1 新接口 + 旧 `/api/` 保留 1 周，文档标注废弃 |
+| 跨模块调用违反边界 | 中 | 同进程用模块 Service 接口（非实现类），禁止跨库 join；为后续抽 Feign 预留 |
+| 积分并发超扣 | 高 | freeze 用 `UPDATE ... WHERE available >= ?` 乐观更新，影响行数 = 0 则抛 409 |
+| Redis 依赖引入风险 | 中 | 先修配置矛盾使 Redis 可用；幂等 Token 可降级为 DB 唯一索引兜底 |
+| 测试时间不足 | 中 | W3 起核心逻辑随开发补单测，W7 集中补齐，不积压到末尾 |
+| 表前缀统一涉及改名 | 中 | 争取项，不强制；如做则用 `ALTER TABLE ... RENAME TO`，保留旧视图过渡 |
+
+---
+
+## 七、关键文件清单
+
+### 待修改
+- `backend/dabashou-api/src/main/java/com/dabashou/api/config/SecurityConfig.java` — 收紧白名单
+- `backend/dabashou-api/src/main/resources/application.yml` / `application-dev.yml` — 修 Redis 矛盾，新增 prod
+- `backend/dabashou-api/src/main/java/com/dabashou/api/controller/DemoController.java` — 渐进删除
+- `backend/dabashou-order/src/main/java/com/dabashou/order/service/impl/OrderServiceImpl.java` — 补全 TODO
+- `backend/dabashou-order/src/main/java/com/dabashou/order/domain/Order.java` — 继承 BaseEntity
+
+### 待新增
+- `database/migration/V1.4.0__point_tables.sql` — 积分三表
+- `database/migration/V1.5.0__fix_indexes_and_constraints.sql` — 索引 + 约束
+- `database/migration/V1.6.0__seed_data.sql` — 种子数据
+- `backend/dabashou-user/src/main/java/com/dabashou/user/**` — 用户模块全套
+- `backend/dabashou-point/src/main/java/com/dabashou/point/**` — 积分模块全套
+- `backend/dabashou-shelf/src/main/java/com/dabashou/shelf/**` — 货架模块全套
+- `backend/dabashou-demand/src/main/java/com/dabashou/demand/**` — 需求模块全套
+- `backend/dabashou-skill/src/main/java/com/dabashou/skill/**` — 技能模块全套
+- `backend/dabashou-credit/src/main/java/com/dabashou/credit/**` — 信用评价模块全套
+- `backend/dabashou-message/src/main/java/com/dabashou/message/**` — 消息模块全套
+- `backend/dabashou-stat/src/main/java/com/dabashou/stat/**` — 统计模块全套
+- `docs/api/CHANGELOG.md` — API 变更记录
+
+### 待同步更新
+- `docs/api/*.md` — 随接口实现同步更新（路径 /api/ → /api/v1/）
+- `docs/design/database-design.md` — 补全表结构 + ER 图（当前仅占位）
+- `README.md`（项目根）— 补齐项目说明
 
 ---
 
 **文档版本**：v1.0.0
-**最后更新**：2026-06-28
+**最后更新**：2026-06-29
+**下次评审**：W3 结束时（订单闭环完成后）

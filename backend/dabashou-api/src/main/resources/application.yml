@@ -8,10 +8,8 @@ spring:
     name: dabashou
   profiles:
     active: dev
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+#   autoconfigure:
+#     exclude: []  # 此前错误排除了 Redis 自动配置，现已修复
   datasource:
     url: jdbc:mysql://localhost:3306/dabashou?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}

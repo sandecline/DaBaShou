@@ -128,7 +128,8 @@ public class OrderController {
         return AjaxResult.ok();
     }
 
-    @Operation(summary = "仲裁订单(7→5|6)")
+    @Operation(summary = "仲裁订单(7→5|6) - 仅管理员")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{orderId}/arbitrate")
     public AjaxResult<Void> arbitrateOrder(@PathVariable Long orderId, @Valid @RequestBody ArbitrateDto dto) {
         orderService.arbitrateOrder(orderId, dto);

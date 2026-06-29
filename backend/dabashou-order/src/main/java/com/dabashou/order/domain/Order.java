@@ -1,16 +1,19 @@
 package com.dabashou.order.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.dabashou.common.core.BaseEntity;
+
 import java.time.LocalDateTime;
 
 /**
  * 订单实体 — 对应 dbs_order 表(V1.0.0:127)
+ * 继承 BaseEntity，获得 id / createTime / updateTime / deleted（逻辑删除）
  */
 @TableName("dbs_order")
-public class Order {
+public class Order extends BaseEntity {
 
-    @TableId(type = IdType.AUTO)
-    private Long id;
     private String orderNo;
     private Long buyerId;
     private Long sellerId;
@@ -28,13 +31,9 @@ public class Order {
     private LocalDateTime completeTime;
     private LocalDateTime cancelTime;
     private String cancelReason;
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
+    private String remark;
+    // id / createTime / updateTime / deleted 继承自 BaseEntity
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
     public String getOrderNo() { return orderNo; }
     public void setOrderNo(String orderNo) { this.orderNo = orderNo; }
     public Long getBuyerId() { return buyerId; }
@@ -69,8 +68,6 @@ public class Order {
     public void setCancelTime(LocalDateTime cancelTime) { this.cancelTime = cancelTime; }
     public String getCancelReason() { return cancelReason; }
     public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
-    public LocalDateTime getCreateTime() { return createTime; }
-    public void setCreateTime(LocalDateTime createTime) { this.createTime = createTime; }
-    public LocalDateTime getUpdateTime() { return updateTime; }
-    public void setUpdateTime(LocalDateTime updateTime) { this.updateTime = updateTime; }
+    public String getRemark() { return remark; }
+    public void setRemark(String remark) { this.remark = remark; }
 }
