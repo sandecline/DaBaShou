@@ -9,14 +9,14 @@ import jakarta.validation.constraints.NotNull;
 public class CreateOrderDto {
 
     @NotNull(message = "货架ID不能为空")
-    private Long shelfId;
+    private Long skillShelfId;
     private Long timeSlotId;
     private String remark;
     @NotBlank(message = "幂等Token不能为空")
     private String idempotentToken;
 
-    public Long getShelfId() { return shelfId; }
-    public void setShelfId(Long shelfId) { this.shelfId = shelfId; }
+    public Long getSkillShelfId() { return skillShelfId; }
+    public void setSkillShelfId(Long skillShelfId) { this.skillShelfId = skillShelfId; }
     public Long getTimeSlotId() { return timeSlotId; }
     public void setTimeSlotId(Long timeSlotId) { this.timeSlotId = timeSlotId; }
     public String getRemark() { return remark; }

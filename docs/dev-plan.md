@@ -95,7 +95,7 @@ Phase 4: dabashou-admin + dabashou-api（聚合）+ 性能优化 + 安全加固
 - 无编译错误、无 WARNING（deprecation 除外）
 
 **执行步骤**：
-1. 创建父 `pom.xml`（Spring Boot 3.2.x parent，Java 21，声明子模块）
+1. 创建父 `pom.xml`（Spring Boot 4.0.x parent，Java 21，声明子模块）
 2. 为每个子模块创建 `pom.xml`（继承父 POM，声明所需依赖）
 3. 创建 `DabashouApplication.java`（在 dabashou-api 模块）
 4. 在 dabashou-common 中编写基础类（AjaxResult、BusinessException、ErrorCode 等）
