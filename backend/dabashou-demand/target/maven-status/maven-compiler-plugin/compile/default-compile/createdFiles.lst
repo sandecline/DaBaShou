@@ -1,1 +1,11 @@
+com\dabashou\demand\api\impl\DemandApiImpl.class
+com\dabashou\demand\api\DemandApi.class
+com\dabashou\demand\dto\DemandDto.class
+com\dabashou\demand\service\impl\DemandServiceImpl.class
+com\dabashou\demand\vo\DemandItemVo.class
+com\dabashou\demand\mapper\DemandMapper.class
+com\dabashou\demand\service\DemandService.class
+com\dabashou\demand\domain\Demand.class
 com\dabashou\demand\package-info.class
+com\dabashou\demand\vo\DemandMatchVo.class
+com\dabashou\demand\controller\DemandController.class

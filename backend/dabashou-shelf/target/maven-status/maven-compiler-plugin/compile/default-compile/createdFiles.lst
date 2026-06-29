@@ -1,1 +1,17 @@
+com\dabashou\shelf\vo\TimeSlotVo.class
+com\dabashou\shelf\api\impl\ShelfApiImpl.class
+com\dabashou\shelf\vo\ShelfDetailVo.class
+com\dabashou\shelf\vo\ShelfItemVo.class
 com\dabashou\shelf\package-info.class
+com\dabashou\shelf\dto\SkillShelfDto.class
+com\dabashou\shelf\api\ShelfApi.class
+com\dabashou\shelf\dto\TimeSlotDto.class
+com\dabashou\shelf\service\SkillShelfService.class
+com\dabashou\shelf\mapper\TimeSlotMapper.class
+com\dabashou\shelf\mapper\SkillShelfMapper.class
+com\dabashou\shelf\service\impl\TimeSlotServiceImpl.class
+com\dabashou\shelf\controller\ShelfController.class
+com\dabashou\shelf\domain\SkillShelf.class
+com\dabashou\shelf\domain\TimeSlot.class
+com\dabashou\shelf\service\impl\SkillShelfServiceImpl.class
+com\dabashou\shelf\service\TimeSlotService.class

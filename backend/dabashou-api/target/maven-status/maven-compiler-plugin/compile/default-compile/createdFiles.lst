@@ -1,10 +1,10 @@
 com\dabashou\api\controller\DemoController.class
 com\dabashou\api\DabashouApplication.class
-com\dabashou\api\config\MyBatisPlusConfig$1.class
 com\dabashou\api\interceptor\WsAuthInterceptor.class
 com\dabashou\api\filter\JwtAuthFilter.class
 com\dabashou\api\filter\RequestLogFilter.class
 com\dabashou\api\config\SecurityConfig.class
 com\dabashou\api\config\ResponseAdvice.class
+com\dabashou\api\config\WebSocketConfig.class
 com\dabashou\api\config\MyBatisPlusConfig.class
 com\dabashou\api\handler\GlobalExceptionHandler.class

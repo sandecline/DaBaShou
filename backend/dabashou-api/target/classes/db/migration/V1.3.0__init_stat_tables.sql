@@ -42,3 +42,9 @@ CREATE TABLE IF NOT EXISTS `stat_skill_heat` (
     FOREIGN KEY (`skill_tag_id`) REFERENCES `dbs_skill_tag`(`id`),
     FOREIGN KEY (`category_id`) REFERENCES `dbs_skill_category`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='技能热度统计表';
+
+-- ============================================================================
+-- ROLLBACK (逆序删除，尊重外键约束)
+-- ============================================================================
+-- DROP TABLE IF EXISTS `stat_skill_heat`;
+-- DROP TABLE IF EXISTS `stat_daily_summary`;
