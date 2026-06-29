@@ -1,0 +1,74 @@
+// ========== 主题色变量 — 闲鱼风格 ==========
+// 主色 - 暖黄/橙色系（闲鱼标志性暖色）
+$color-primary: #FFC300;
+$color-primary-light: #FFE082;
+$color-primary-dark: #FF8F00;
+
+// 辅助强调色 - 深橙（重要操作、价格）
+$color-accent: #FF6B00;
+$color-accent-light: #FFAB40;
+
+// 成功色 - Teal 系（完成、成长）
+$color-success: #26C6B8;
+$color-success-light: #80DEEA;
+
+// 警告色 - Amber 系（紧急、提醒）
+$color-warning: #FF9800;
+$color-warning-light: #FFB74D;
+
+// 危险色 - Red 系（错误、违规）
+$color-danger: #FF5252;
+$color-danger-light: #FF8A80;
+
+// 信息色 - Light Blue 系
+$color-info: #42A5F5;
+
+// 中性色 - Warm Gray 系
+$color-text-primary: #333333;
+$color-text-regular: #666666;
+$color-text-secondary: #999999;
+$color-text-placeholder: #CCCCCC;
+$color-border: #EEEEEE;
+$color-border-light: #F5F5F5;
+$color-bg: #F5F5F5;
+$color-bg-white: #FFFFFF;
+
+// ========== 间距 ==========
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+// ========== 圆角（闲鱼风格：更大更圆润） ==========
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 20px;
+$radius-round: 50%;
+
+// ========== 阴影（更柔和） ==========
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+$shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
+$shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.10);
+
+// ========== 字体 ==========
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+$font-size-xs: 11px;
+$font-size-sm: 12px;
+$font-size-base: 14px;
+$font-size-md: 15px;
+$font-size-lg: 16px;
+$font-size-xl: 18px;
+$font-size-2xl: 22px;
+$font-size-3xl: 28px;
+
+// ========== 布局 ==========
+$header-height: 56px;
+$header-categories-height: 42px;  // 桌面端分类导航条高度
+$header-offset: 98px;             // 桌面端总头部偏移 = 56 + 42
+$bottom-nav-height: 56px;
+$sidebar-width: 240px;
+$max-width: 1200px;
