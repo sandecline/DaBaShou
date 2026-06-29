@@ -1,63 +1,76 @@
 import request from '@/utils/request'
-import type { User, Order, Review, Violation, Appeal, PageResult, PageParams } from '@/types'
+import type { ApiResponse, PageResult, UserAdminVo, OrderAdminVo, ViolationAdminVo, AppealAdminVo, CampusAuthVo } from '@/types/api'
 
-// 用户管理
-export function getAdminUserList(params: PageParams): Promise<PageResult<User>> {
-  return request.get('/admin/users', params)
+export function getUsers(params?: {
+  keyword?: string
+  status?: number
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<UserAdminVo>>> {
+  return request({ url: '/admin/v1/users', method: 'get', params })
 }
 
-export function updateUserStatus(userId: number, status: 0 | 1): Promise<any> {
-  return request.put(`/admin/users/${userId}/status`, { status })
+export function getUserDetail(id: number): Promise<ApiResponse<UserAdminVo>> {
+  return request({ url: `/admin/v1/users/${id}`, method: 'get' })
 }
 
-export function resetUserPassword(userId: number): Promise<any> {
-  return request.post(`/admin/users/${userId}/reset-password`)
+export function toggleUserStatus(id: number, status: number): Promise<ApiResponse<null>> {
+  return request({ url: `/admin/v1/users/${id}/status`, method: 'put', data: { status } })
 }
 
-// 订单管理
-export function getAdminOrderList(params: PageParams): Promise<PageResult<Order>> {
-  return request.get('/admin/orders', params)
+export function resetUserPassword(id: number): Promise<ApiResponse<string>> {
+  return request({ url: `/admin/v1/users/${id}/reset-password`, method: 'post' })
 }
 
-export function handleDisputeOrder(orderId: number, action: 'complete' | 'refund', reason?: string): Promise<any> {
-  return request.post(`/admin/orders/${orderId}/dispute`, { action, reason })
+export function getOrders(params?: {
+  status?: number
+  keyword?: string
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<OrderAdminVo>>> {
+  return request({ url: '/admin/v1/orders', method: 'get', params })
 }
 
-// 信用管理
-export function getAdminReviews(params: PageParams): Promise<PageResult<Review>> {
-  return request.get('/admin/reviews', params)
+export function getOrderDetail(id: number): Promise<ApiResponse<OrderAdminVo>> {
+  return request({ url: `/admin/v1/orders/${id}`, method: 'get' })
 }
 
-export function deleteReview(reviewId: number): Promise<any> {
-  return request.delete(`/admin/reviews/${reviewId}`)
+export function arbitrate(id: number, result: string, refundAmount?: number): Promise<ApiResponse<null>> {
+  return request({ url: `/admin/v1/orders/${id}/arbitrate`, method: 'post', data: { result, refundAmount } })
 }
 
-export function getAdminViolations(params: PageParams): Promise<PageResult<Violation>> {
-  return request.get('/admin/violations', params)
+export function getViolations(params?: {
+  status?: number
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<ViolationAdminVo>>> {
+  return request({ url: '/admin/v1/violations', method: 'get', params })
 }
 
-export function handleViolation(violationId: number, action: 'confirm' | 'dismiss'): Promise<any> {
-  return request.post(`/admin/violations/${violationId}/handle`, { action })
+export function handleViolation(id: number, result: string): Promise<ApiResponse<null>> {
+  return request({ url: `/admin/v1/violations/${id}`, method: 'post', data: { result } })
 }
 
-export function getAdminAppeals(params: PageParams): Promise<PageResult<Appeal>> {
-  return request.get('/admin/appeals', params)
+export function getAppeals(params?: {
+  status?: number
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<AppealAdminVo>>> {
+  return request({ url: '/admin/v1/appeals', method: 'get', params })
 }
 
-export function handleAppeal(appealId: number, action: 'approve' | 'reject', reply?: string): Promise<any> {
-  return request.post(`/admin/appeals/${appealId}/handle`, { action, reply })
+export function handleAppeal(id: number, approved: boolean, reason: string): Promise<ApiResponse<null>> {
+  return request({ url: `/admin/v1/appeals/${id}`, method: 'post', data: { approved, reason } })
 }
 
-// 系统配置
-export function getSystemConfig(): Promise<Record<string, any>> {
-  return request.get('/admin/config')
+export function getCampusAuths(params?: {
+  status?: number
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<CampusAuthVo>>> {
+  return request({ url: '/admin/v1/campus-auths', method: 'get', params })
 }
 
-export function updateSystemConfig(config: Record<string, any>): Promise<any> {
-  return request.put('/admin/config', config)
-}
-
-// 数据统计
-export function getAdminStats(): Promise<any> {
-  return request.get('/admin/stats')
+export function reviewCampusAuth(id: number, approved: boolean, reason?: string): Promise<ApiResponse<null>> {
+  return request({ url: `/admin/v1/campus-auths/${id}`, method: 'post', data: { approved, reason } })
 }

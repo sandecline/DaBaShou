@@ -187,3 +187,17 @@ CREATE TABLE IF NOT EXISTS `dbs_review` (
     FOREIGN KEY (`reviewer_id`) REFERENCES `dbs_user`(`id`),
     FOREIGN KEY (`reviewee_id`) REFERENCES `dbs_user`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评价表';
+
+-- ============================================================================
+-- ROLLBACK (逆序删除，尊重外键约束)
+-- ============================================================================
+-- DROP TABLE IF EXISTS `dbs_review`;
+-- DROP TABLE IF EXISTS `dbs_point_transaction`;
+-- DROP TABLE IF EXISTS `dbs_order`;
+-- DROP TABLE IF EXISTS `dbs_demand`;
+-- DROP TABLE IF EXISTS `dbs_skill_shelf`;
+-- DROP TABLE IF EXISTS `dbs_time_slot`;
+-- DROP TABLE IF EXISTS `dbs_user_skill`;
+-- DROP TABLE IF EXISTS `dbs_skill_tag`;
+-- DROP TABLE IF EXISTS `dbs_skill_category`;
+-- DROP TABLE IF EXISTS `dbs_user`;

@@ -38,16 +38,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/api/user/**",
-                    "/api/skill/**",
-                    "/api/shelf/**",
-                    "/api/demand/**",
-                    "/api/order/**",
-                    "/api/stat/**",
-                    "/api/point/**",
-                    "/api/credit/**",
-                    "/api/message/**",
-                    "/api/v1/auth/**",
+                    "/api/v1/auth/register",
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/sms-code",
+                    "/api/v1/auth/sms-login",
                     "/api/v1/files/download/**",
                     "/ws/chat/**",
                     "/doc.html",
@@ -55,7 +49,7 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/webjars/**"
                 ).permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/v1/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

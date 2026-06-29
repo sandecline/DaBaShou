@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,9 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
+    private static final String BLACKLIST_PREFIX = "dbs:blacklist:token:";
+
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${dabashou.jwt.secret}")
     private String jwtSecret;
@@ -36,6 +40,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Value("${dabashou.jwt.prefix:Bearer }")
     private String prefix;
 
+    public JwtAuthFilter(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
@@ -43,6 +51,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith(prefix)) {
             String token = authHeader.substring(prefix.length());
             try {
+                // 检查token是否在黑名单中
+                if (Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + token))) {
+                    log.debug("Token已被注销(黑名单)");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 Claims claims = JwtUtil.parseToken(token, jwtSecret);
                 Long userId = JwtUtil.getUserId(claims);
                 List<String> roles = JwtUtil.getRoles(claims);

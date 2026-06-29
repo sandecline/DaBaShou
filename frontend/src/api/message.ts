@@ -1,30 +1,45 @@
 import request from '@/utils/request'
-import type { Conversation, ChatMessage, Notification, PageResult, PageParams } from '@/types'
+import type { ApiResponse, PageResult, NotificationVo, ChatSessionVo, ChatMessageVo } from '@/types/api'
 
-export function getConversations(): Promise<Conversation[]> {
-  return request.get('/message/conversations')
+export function getNotifications(params?: {
+  type?: string
+  isRead?: boolean
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<NotificationVo>>> {
+  return request({ url: '/v1/notifications', method: 'get', params })
 }
 
-export function getMessages(targetUserId: number, params: PageParams): Promise<PageResult<ChatMessage>> {
-  return request.get(`/message/chat/${targetUserId}`, params)
+export function getUnreadCount(): Promise<ApiResponse<number>> {
+  return request({ url: '/v1/notifications/unread-count', method: 'get' })
 }
 
-export function sendMessage(receiverId: number, content: string, type: 'text' | 'image' = 'text'): Promise<any> {
-  return request.post('/message/send', { receiverId, content, type })
+export function markAsRead(id: number): Promise<ApiResponse<null>> {
+  return request({ url: `/v1/notifications/${id}/read`, method: 'put' })
 }
 
-export function getNotifications(params: PageParams): Promise<PageResult<Notification>> {
-  return request.get('/message/notifications', params)
+export function markAllAsRead(): Promise<ApiResponse<null>> {
+  return request({ url: '/v1/notifications/read-all', method: 'put' })
 }
 
-export function getUnreadCount(): Promise<{ count: number }> {
-  return request.get('/message/unread')
+export function deleteNotification(id: number): Promise<ApiResponse<null>> {
+  return request({ url: `/v1/notifications/${id}`, method: 'delete' })
 }
 
-export function markAsRead(messageId: number): Promise<any> {
-  return request.post('/message/read', { messageId })
+export function getChatSessions(params?: {
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<ChatSessionVo>>> {
+  return request({ url: '/v1/chat/sessions', method: 'get', params })
 }
 
-export function markAllAsRead(): Promise<any> {
-  return request.post('/message/read-all')
+export function getChatHistory(sessionId: number, params?: {
+  pageNum?: number
+  pageSize?: number
+}): Promise<ApiResponse<PageResult<ChatMessageVo>>> {
+  return request({ url: `/v1/chat/sessions/${sessionId}/messages`, method: 'get', params })
+}
+
+export function createSession(userId: number): Promise<ApiResponse<number>> {
+  return request({ url: '/v1/chat/sessions', method: 'post', data: { userId } })
 }

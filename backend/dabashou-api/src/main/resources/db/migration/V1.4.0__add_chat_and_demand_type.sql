@@ -42,3 +42,10 @@ CREATE TABLE IF NOT EXISTS `dbs_chat_message` (
     FOREIGN KEY (`session_id`) REFERENCES `dbs_chat_session`(`id`),
     FOREIGN KEY (`sender_id`) REFERENCES `dbs_user`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天消息表';
+
+-- ============================================================================
+-- ROLLBACK (逆序删除，尊重外键约束)
+-- ============================================================================
+-- DROP TABLE IF EXISTS `dbs_chat_message`;
+-- DROP TABLE IF EXISTS `dbs_chat_session`;
+-- ALTER TABLE `dbs_demand` DROP COLUMN `demand_type`;
