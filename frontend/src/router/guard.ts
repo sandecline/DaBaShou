@@ -17,8 +17,8 @@ export function setupRouterGuard(router: Router) {
       return
     }
 
-    // 已登录用户访问登录页，重定向到首页
-    if (isLoggedIn() && whiteList.includes(to.path)) {
+    // 已登录用户访问登录/注册页，重定向到首页
+    if (isLoggedIn() && (to.path === '/login' || to.path === '/register')) {
       next({ name: 'Home' })
       return
     }

@@ -94,7 +94,7 @@ const total = ref(0)
 const page = ref(1)
 const size = ref(12)
 const keyword = ref((route.query.keyword as string) || '')
-const selectedCategory = ref(0)
+const selectedCategory = ref(Number(route.query.categoryId) || 0)
 const sortBy = ref('heat')
 const categories = ref<SkillCategory[]>([])
 

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.dabashou</groupId>
+        <artifactId>dabashou-backend</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>dabashou-admin</artifactId>
+    <name>dabashou-admin</name>
+    <description>管理后台模块 - 用户管理、订单仲裁、审核</description>
+    <dependencies>
+        <dependency>
+            <groupId>com.dabashou</groupId>
+            <artifactId>dabashou-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dabashou</groupId>
+            <artifactId>dabashou-system</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dabashou</groupId>
+            <artifactId>dabashou-credit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dabashou</groupId>
+            <artifactId>dabashou-stat</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dabashou</groupId>
+            <artifactId>dabashou-user</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dabashou</groupId>
+            <artifactId>dabashou-order</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.dabashou</groupId>
+            <artifactId>dabashou-skill</artifactId>
+        </dependency>
+    </dependencies>
+</project>

@@ -51,12 +51,38 @@
             </template>
           </el-dropdown>
 
-          <!-- 用户头像 -->
-          <router-link to="/user/shop" class="avatar-link">
+          <!-- 用户头像 + 下拉菜单 -->
+          <el-dropdown trigger="click">
             <el-avatar :size="32" :src="userStore.user?.avatar" class="header-avatar">
               {{ userStore.user?.nickname?.charAt(0) || userStore.user?.username?.charAt(0) || 'U' }}
             </el-avatar>
-          </router-link>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <div class="dropdown-user-info">
+                  <span class="user-name">{{ userStore.user?.nickname || userStore.user?.username }}</span>
+                  <span class="user-trust">信任分 {{ userStore.user?.trustScore ?? 0 }}</span>
+                </div>
+                <el-dropdown-item divided @click="$router.push('/user/shop')">
+                  <el-icon><Shop /></el-icon> 我的小铺
+                </el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/user/profile')">
+                  <el-icon><User /></el-icon> 个人资料
+                </el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/user/points')">
+                  <el-icon><Coin /></el-icon> 积分管理
+                </el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/user/trust')">
+                  <el-icon><Medal /></el-icon> 信任分
+                </el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/stat')">
+                  <el-icon><DataAnalysis /></el-icon> 数据统计
+                </el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">
+                  <span style="color: #FF5252;">退出登录</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </template>
       </div>
     </div>
@@ -93,7 +119,6 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import TrustBadge from '@/components/common/TrustBadge.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -113,6 +138,11 @@ function handleSearch() {
 
 function focusSearch() {
   searchInputRef.value?.focus()
+}
+
+function handleLogout() {
+  userStore.logout()
+  router.push('/')
 }
 
 function checkMobile() {

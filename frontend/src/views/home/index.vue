@@ -53,11 +53,6 @@
         <span class="stat-num">{{ stats[2].value }}</span>
         <span class="stat-desc">{{ stats[2].label }}</span>
       </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-num">{{ stats[3].value }}</span>
-        <span class="stat-desc">{{ stats[3].label }}</span>
-      </div>
     </section>
 
     <div class="page-container">
@@ -100,11 +95,12 @@ import { ref, onMounted } from 'vue'
 import { getShelfList } from '@/api/shelf'
 import { getDemandList } from '@/api/demand'
 import { getOverview } from '@/api/stat'
+import { getCategories } from '@/api/skill'
 import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, Demand, OverviewStat } from '@/types'
+import type { SkillShelf, Demand, OverviewStat, SkillCategory } from '@/types'
 
 const hotSkills = ref<SkillShelf[]>([])
 const latestDemands = ref<Demand[]>([])
@@ -112,25 +108,39 @@ const skillLoading = ref(true)
 const demandLoading = ref(true)
 const noticeText = ref('')
 
-const categories = [
-  { key: 'tutor', name: '学业辅导', icon: '📚', route: '/skill?cat=tutor', bgClass: 'bg-blue' },
-  { key: 'repair', name: '维修帮忙', icon: '🔧', route: '/skill?cat=repair', bgClass: 'bg-orange' },
-  { key: 'design', name: '设计美工', icon: '🎨', route: '/skill?cat=design', bgClass: 'bg-purple' },
-  { key: 'tech', name: '技术支持', icon: '💻', route: '/skill?cat=tech', bgClass: 'bg-teal' },
-  { key: 'sports', name: '运动陪练', icon: '⚽', route: '/skill?cat=sports', bgClass: 'bg-green' },
-  { key: 'music', name: '音乐艺术', icon: '🎵', route: '/skill?cat=music', bgClass: 'bg-pink' },
-  { key: 'daily', name: '生活服务', icon: '🏠', route: '/skill?cat=daily', bgClass: 'bg-amber' },
-  { key: 'other', name: '更多', icon: '✨', route: '/skill', bgClass: 'bg-gray' },
-]
+const categories = ref<Array<{ key: string; name: string; icon: string; route: string; bgClass: string }>>([])
+
+async function loadCategories() {
+  try {
+    const cats = await getCategories()
+    const iconMap: Record<string, string> = {
+      '学业辅导': '📚', '维修帮忙': '🔧', '设计美工': '🎨',
+      '技术支持': '💻', '运动陪练': '⚽', '音乐艺术': '🎵',
+      '生活服务': '🏠',
+    }
+    const bgMap: Record<string, string> = {
+      '学业辅导': 'bg-blue', '维修帮忙': 'bg-orange', '设计美工': 'bg-purple',
+      '技术支持': 'bg-teal', '运动陪练': 'bg-green', '音乐艺术': 'bg-pink',
+      '生活服务': 'bg-amber',
+    }
+    categories.value = cats.filter(c => c.status === 1).map(c => ({
+      key: String(c.id),
+      name: c.name,
+      icon: iconMap[c.name] || '✨',
+      route: `/skill?categoryId=${c.id}`,
+      bgClass: bgMap[c.name] || 'bg-gray',
+    }))
+  } catch { /* ignore */ }
+}
 
 const stats = ref([
-  { label: '注册用户', value: '0' },
   { label: '技能服务', value: '0' },
   { label: '完成订单', value: '0' },
   { label: '好评率', value: '0%' },
 ])
 
 onMounted(async () => {
+  loadCategories()
   try {
     const [skillResult, demandResult, overview] = await Promise.all([
       getShelfList({ page: 1, size: 8, sort: 'heat' }).catch(() => ({ records: [] as SkillShelf[], total: 0, page: 1, size: 8 })),
@@ -143,7 +153,6 @@ onMounted(async () => {
 
     if (overview) {
       stats.value = [
-        { label: '注册用户', value: String(overview.totalUsers) },
         { label: '技能服务', value: String(overview.totalSkills) },
         { label: '完成订单', value: String(overview.completedOrders) },
         { label: '好评率', value: `${Math.round(overview.orderCompletionRate * 100)}%` },

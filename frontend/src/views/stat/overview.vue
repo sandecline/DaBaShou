@@ -54,7 +54,7 @@
                   <span class="stat-text">完成订单</span>
                 </div>
                 <div class="user-stat-item">
-                  <span class="stat-num">{{ userStat.averageRating.toFixed(1) }}</span>
+                  <span class="stat-num">{{ (userStat.averageRating ?? 0).toFixed(1) }}</span>
                   <span class="stat-text">平均评分</span>
                 </div>
               </div>
@@ -110,7 +110,7 @@ async function loadData() {
         { label: '已发布技能', value: String(userStatResult.publishedSkills) },
         { label: '已发布需求', value: String(userStatResult.publishedDemands) },
         { label: '完成订单', value: String(userStatResult.completedOrders) },
-        { label: '平均评分', value: userStatResult.averageRating.toFixed(1) },
+        { label: '平均评分', value: (userStatResult.averageRating ?? 0).toFixed(1) },
       ]
     }
 

@@ -16,7 +16,7 @@
             >
               <el-badge :value="conv.unreadCount" :hidden="conv.unreadCount === 0" :max="99">
                 <el-avatar :size="44" :src="conv.targetAvatar">
-                  {{ conv.targetUserName.charAt(0) }}
+                  {{ (conv.targetUserName || '?').charAt(0) }}
                 </el-avatar>
               </el-badge>
               <div class="conv-info">
