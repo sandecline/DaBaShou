@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -118,9 +119,13 @@ public class CreditServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
     @Override
     public PageResult<ViolationVo> getMyViolations(Long userId, int pageNum, int pageSize) {
         LambdaQueryWrapper<Violation> qw = new LambdaQueryWrapper<>();
-        qw.eq(Violation::getUserId, userId).orderByDesc(Violation::getCreateTime);
+        if (userId != null) {
+            qw.eq(Violation::getUserId, userId);
+        }
+        qw.orderByDesc(Violation::getCreateTime);
         List<Violation> list = violationMapper.selectList(qw.last("LIMIT " + pageSize + " OFFSET " + (pageNum - 1) * pageSize));
-        long total = violationMapper.selectCount(new LambdaQueryWrapper<Violation>().eq(Violation::getUserId, userId));
+        long total = violationMapper.selectCount(userId != null ?
+                new LambdaQueryWrapper<Violation>().eq(Violation::getUserId, userId) : new LambdaQueryWrapper<>());
         return PageResult.of(total, list.stream().map(this::toViolationVo).collect(Collectors.toList()), pageNum, pageSize);
     }
 
@@ -152,10 +157,41 @@ public class CreditServiceImpl extends ServiceImpl<ReviewMapper, Review> impleme
     @Override
     public PageResult<AppealVo> getMyAppeals(Long userId, int pageNum, int pageSize) {
         LambdaQueryWrapper<Appeal> qw = new LambdaQueryWrapper<>();
-        qw.eq(Appeal::getAppellantId, userId).orderByDesc(Appeal::getCreateTime);
+        if (userId != null) {
+            qw.eq(Appeal::getAppellantId, userId);
+        }
+        qw.orderByDesc(Appeal::getCreateTime);
         List<Appeal> list = appealMapper.selectList(qw.last("LIMIT " + pageSize + " OFFSET " + (pageNum - 1) * pageSize));
-        long total = appealMapper.selectCount(new LambdaQueryWrapper<Appeal>().eq(Appeal::getAppellantId, userId));
+        long total = appealMapper.selectCount(userId != null ?
+                new LambdaQueryWrapper<Appeal>().eq(Appeal::getAppellantId, userId) : new LambdaQueryWrapper<>());
         return PageResult.of(total, list.stream().map(this::toAppealVo).collect(Collectors.toList()), pageNum, pageSize);
+    }
+
+    @Override
+    @Transactional
+    public void processViolation(Long violationId, String result) {
+        Violation violation = violationMapper.selectById(violationId);
+        if (violation == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "违规记录不存在");
+        }
+        violation.setStatus(1);
+        violationMapper.updateById(violation);
+    }
+
+    @Override
+    @Transactional
+    public void reviewAppeal(Long appealId, boolean approved, String reason) {
+        Appeal appeal = appealMapper.selectById(appealId);
+        if (appeal == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "申诉记录不存在");
+        }
+        if (appeal.getStatus() != 0) {
+            throw new BusinessException(ErrorCode.CONFLICT, "该申诉已处理");
+        }
+        appeal.setStatus(approved ? 1 : 2);
+        appeal.setReviewRemark(reason);
+        appeal.setReviewTime(LocalDateTime.now());
+        appealMapper.updateById(appeal);
     }
 
     private List<ReviewVo> toReviewVoList(List<Review> list) {

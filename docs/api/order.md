@@ -260,7 +260,7 @@ public class DisputeDto {
 ### VerifyDto
 ```java
 public class VerifyDto {
-    @NotBlank private String verifyCode;
+    @NotBlank private String code;
 }
 ```
 

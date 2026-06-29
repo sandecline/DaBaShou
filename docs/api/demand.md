@@ -137,12 +137,13 @@ public class DemandDto {
     @NotBlank private String title;
     private String description;
     private Integer demandType;      // 1-求助悬赏(默认) 2-技能置换
-    private Integer pointReward;
-    private List<String> images;
-    private String deadline;
-    @NotNull private Integer locationType;
+    @NotNull private Integer pointReward;
+    private LocalDateTime deadline;
+    @NotNull private Integer locationType;  // 1-线上 2-线下 3-均可
     private BigDecimal longitude;
     private BigDecimal latitude;
+    private String campus;
+    private String building;
 }
 ```
 

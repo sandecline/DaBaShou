@@ -6,6 +6,10 @@ import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.point.service.PointService;
 import com.dabashou.point.vo.PointBalanceVo;
 import com.dabashou.point.vo.PointTransVo;
+import com.dabashou.point.vo.SignInVo;
+import com.dabashou.point.vo.SignInStatusVo;
+import com.dabashou.point.vo.PointStatsVo;
+import com.dabashou.point.vo.GuaranteePoolVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,16 +56,28 @@ public class PointController {
 
     @Operation(summary = "每日签到")
     @PostMapping("/sign-in")
-    public AjaxResult<Void> signIn() {
+    public AjaxResult<SignInVo> signIn() {
         Long userId = SecurityUtil.requireCurrentUserId();
-        pointService.signIn(userId);
-        return AjaxResult.ok();
+        return AjaxResult.ok(pointService.signIn(userId));
     }
 
     @Operation(summary = "签到状态")
     @GetMapping("/sign-in/status")
-    public AjaxResult<Boolean> getSignInStatus() {
+    public AjaxResult<SignInStatusVo> getSignInStatus() {
         Long userId = SecurityUtil.requireCurrentUserId();
-        return AjaxResult.ok(pointService.hasSignedToday(userId));
+        return AjaxResult.ok(pointService.getSignInStatus(userId));
+    }
+
+    @Operation(summary = "收支统计")
+    @GetMapping("/stats")
+    public AjaxResult<PointStatsVo> getStats() {
+        Long userId = SecurityUtil.requireCurrentUserId();
+        return AjaxResult.ok(pointService.getStats(userId));
+    }
+
+    @Operation(summary = "担保池查询")
+    @GetMapping("/guarantee-pool")
+    public AjaxResult<GuaranteePoolVo> getGuaranteePool() {
+        return AjaxResult.ok(pointService.getGuaranteePool());
     }
 }

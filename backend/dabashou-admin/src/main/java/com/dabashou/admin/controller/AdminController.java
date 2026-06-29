@@ -11,12 +11,15 @@ import com.dabashou.order.mapper.OrderMapper;
 import com.dabashou.user.api.UserApi;
 import com.dabashou.user.domain.User;
 import com.dabashou.user.mapper.UserMapper;
-import com.dabashou.system.service.RoleService;
+import com.dabashou.user.service.UserService;
+import com.dabashou.user.domain.UserCampusAuth;
+import com.dabashou.user.mapper.UserCampusAuthMapper;
+import com.dabashou.user.service.UserCampusAuthService;
+import com.dabashou.user.vo.CampusAuthVo;
 import com.dabashou.system.service.ConfigService;
 import com.dabashou.system.service.LogService;
 import com.dabashou.system.vo.ConfigVo;
 import com.dabashou.system.vo.LogVo;
-import com.dabashou.system.vo.RoleVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,19 +36,25 @@ public class AdminController {
     private final UserMapper userMapper;
     private final OrderMapper orderMapper;
     private final CreditService creditService;
-    private final RoleService roleService;
     private final LogService logService;
     private final ConfigService configService;
+    private final UserService userService;
+    private final UserCampusAuthService campusAuthService;
+    private final UserCampusAuthMapper campusAuthMapper;
 
     public AdminController(UserMapper userMapper, OrderMapper orderMapper,
-                           CreditService creditService, RoleService roleService,
-                           LogService logService, ConfigService configService) {
+                           CreditService creditService,
+                           LogService logService, ConfigService configService,
+                           UserService userService, UserCampusAuthService campusAuthService,
+                           UserCampusAuthMapper campusAuthMapper) {
         this.userMapper = userMapper;
         this.orderMapper = orderMapper;
         this.creditService = creditService;
-        this.roleService = roleService;
         this.logService = logService;
         this.configService = configService;
+        this.userService = userService;
+        this.campusAuthService = campusAuthService;
+        this.campusAuthMapper = campusAuthMapper;
     }
 
     @Operation(summary = "用户列表")
@@ -118,12 +127,6 @@ public class AdminController {
         return AjaxResult.ok(creditService.getMyAppeals(null, pageNum, pageSize));
     }
 
-    @Operation(summary = "角色列表")
-    @GetMapping("/roles")
-    public AjaxResult<List<RoleVo>> getRoles() {
-        return AjaxResult.ok(roleService.getRoles());
-    }
-
     @Operation(summary = "日志查询")
     @GetMapping("/logs")
     public AjaxResult<PageResult<LogVo>> getLogs(
@@ -138,5 +141,67 @@ public class AdminController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int pageSize) {
         return AjaxResult.ok(configService.getConfigs(pageNum, pageSize));
+    }
+
+    @Operation(summary = "重置密码")
+    @PostMapping("/users/{id}/reset-password")
+    public AjaxResult<Map<String, String>> resetPassword(@PathVariable Long id) {
+        userService.resetPassword(id);
+        return AjaxResult.ok(Map.of("newPassword", "123456"));
+    }
+
+    @Operation(summary = "违规处理")
+    @PostMapping("/violations/{id}")
+    public AjaxResult<Void> processViolation(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        creditService.processViolation(id, body.get("result"));
+        return AjaxResult.ok();
+    }
+
+    @Operation(summary = "申诉审核")
+    @PostMapping("/appeals/{id}")
+    public AjaxResult<Void> reviewAppeal(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Boolean approved = (Boolean) body.get("approved");
+        String reason = (String) body.get("reason");
+        creditService.reviewAppeal(id, approved, reason);
+        return AjaxResult.ok();
+    }
+
+    @Operation(summary = "校园认证列表")
+    @GetMapping("/campus-auths")
+    public AjaxResult<PageResult<CampusAuthVo>> getCampusAuths(
+            @Parameter(description = "状态") @RequestParam(required = false) Integer status,
+            @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
+            @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int pageSize) {
+        var qw = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserCampusAuth>();
+        if (status != null) qw.eq(UserCampusAuth::getStatus, status);
+        qw.orderByDesc(UserCampusAuth::getCreateTime);
+        var page = campusAuthMapper.selectPage(
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(pageNum, pageSize), qw);
+        List<CampusAuthVo> list = page.getRecords().stream().map(auth -> {
+            CampusAuthVo vo = new CampusAuthVo();
+            vo.setId(auth.getId());
+            vo.setAuthType(auth.getAuthType());
+            vo.setStudentNo(auth.getStudentNo());
+            vo.setRealName(auth.getRealName());
+            vo.setCampus(auth.getCampus());
+            vo.setCollege(auth.getCollege());
+            vo.setCredentialFileId(auth.getCredentialFileId());
+            vo.setStatus(auth.getStatus());
+            vo.setStatusName(auth.getStatus() == 0 ? "待审核" : auth.getStatus() == 1 ? "已通过" : "已拒绝");
+            vo.setReviewRemark(auth.getReviewRemark());
+            vo.setCreateTime(auth.getCreateTime());
+            return vo;
+        }).toList();
+        return AjaxResult.ok(PageResult.of(page.getTotal(), list, pageNum, pageSize));
+    }
+
+    @Operation(summary = "审核校园认证")
+    @PostMapping("/campus-auths/{id}")
+    public AjaxResult<Void> reviewCampusAuth(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Boolean approved = (Boolean) body.get("approved");
+        String reason = (String) body.get("reason");
+        Long reviewerId = com.dabashou.common.utils.SecurityUtil.getCurrentUserId();
+        campusAuthService.reviewCampusAuth(id, reviewerId, Boolean.TRUE.equals(approved), reason);
+        return AjaxResult.ok();
     }
 }

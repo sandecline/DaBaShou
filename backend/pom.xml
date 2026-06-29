@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.3</version>
+        <version>3.4.5</version>
         <relativePath/>
     </parent>
 
@@ -40,7 +40,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <mybatis-plus.version>3.5.9</mybatis-plus.version>
+        <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <knife4j.version>4.4.0</knife4j.version>
         <jjwt.version>0.12.6</jjwt.version>
         <hutool.version>5.8.32</hutool.version>

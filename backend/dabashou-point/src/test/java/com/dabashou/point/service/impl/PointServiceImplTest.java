@@ -5,6 +5,7 @@ import com.dabashou.common.exception.BusinessException;
 import com.dabashou.point.domain.PointTransaction;
 import com.dabashou.point.mapper.PointTransactionMapper;
 import com.dabashou.point.vo.PointBalanceVo;
+import com.dabashou.point.vo.SignInStatusVo;
 import com.dabashou.user.api.UserApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -199,16 +200,24 @@ class PointServiceImplTest {
 
         @Test
         @DisplayName("今日已签到")
-        void hasSignedToday_true() {
+        void getSignInStatus_signed() {
             when(redisTemplate.hasKey(anyString())).thenReturn(true);
-            assertTrue(pointService.hasSignedToday(USER_ID));
+            when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+            when(valueOperations.get(anyString())).thenReturn("3");
+            SignInStatusVo result = pointService.getSignInStatus(USER_ID);
+            assertNotNull(result);
+            assertTrue(result.isTodaySigned());
         }
 
         @Test
         @DisplayName("今日未签到")
-        void hasSignedToday_false() {
+        void getSignInStatus_notSigned() {
             when(redisTemplate.hasKey(anyString())).thenReturn(false);
-            assertFalse(pointService.hasSignedToday(USER_ID));
+            when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+            when(valueOperations.get(anyString())).thenReturn(null);
+            SignInStatusVo result = pointService.getSignInStatus(USER_ID);
+            assertNotNull(result);
+            assertFalse(result.isTodaySigned());
         }
     }
 }

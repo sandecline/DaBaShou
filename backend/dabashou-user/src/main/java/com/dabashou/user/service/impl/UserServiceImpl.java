@@ -13,6 +13,10 @@ import com.dabashou.user.mapper.UserMapper;
 import com.dabashou.user.service.UserService;
 import com.dabashou.user.vo.LoginVo;
 import com.dabashou.user.vo.UserProfileVo;
+import com.dabashou.user.vo.TrustScoreOverviewVo;
+import com.dabashou.user.vo.TrustScoreVo;
+import com.dabashou.user.domain.UserTrustScoreLog;
+import com.dabashou.user.mapper.UserTrustScoreLogMapper;
 import com.dabashou.system.api.SystemApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -32,6 +36,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final StringRedisTemplate redisTemplate;
     private final SystemApi systemApi;
+    private final UserTrustScoreLogMapper trustScoreLogMapper;
 
     @Value("${dabashou.jwt.secret}")
     private String jwtSecret;
@@ -42,9 +47,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Value("${dabashou.jwt.refresh-expiration}")
     private Long refreshExpiration;
 
-    public UserServiceImpl(StringRedisTemplate redisTemplate, SystemApi systemApi) {
+    public UserServiceImpl(StringRedisTemplate redisTemplate, SystemApi systemApi,
+                           UserTrustScoreLogMapper trustScoreLogMapper) {
         this.redisTemplate = redisTemplate;
         this.systemApi = systemApi;
+        this.trustScoreLogMapper = trustScoreLogMapper;
     }
 
     @Override
@@ -225,6 +232,47 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         vo.setAvatar(user.getAvatar());
         vo.setTrustScore(user.getTrustScore());
         return vo;
+    }
+
+    @Override
+    public TrustScoreOverviewVo getTrustScore(Long userId) {
+        User user = getById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");
+        }
+        TrustScoreOverviewVo vo = new TrustScoreOverviewVo();
+        vo.setScore(user.getTrustScore());
+        vo.setLevel(TrustLevel.ofScore(user.getTrustScore() != null ? user.getTrustScore().doubleValue() : 0).getLabel());
+        LambdaQueryWrapper<UserTrustScoreLog> qw = new LambdaQueryWrapper<>();
+        qw.eq(UserTrustScoreLog::getUserId, userId)
+          .orderByDesc(UserTrustScoreLog::getCreateTime)
+          .last("LIMIT 10");
+        List<UserTrustScoreLog> logs = trustScoreLogMapper.selectList(qw);
+        vo.setRecentLogs(logs.stream().map(log -> {
+            TrustScoreVo item = new TrustScoreVo();
+            item.setId(log.getId());
+            item.setOrderId(log.getOrderId());
+            item.setType(log.getType());
+            item.setScoreChange(log.getScoreChange());
+            item.setScoreBefore(log.getScoreBefore());
+            item.setScoreAfter(log.getScoreAfter());
+            item.setReason(log.getReason());
+            item.setCreateTime(log.getCreateTime());
+            return item;
+        }).toList());
+        return vo;
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(Long userId) {
+        User user = getById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");
+        }
+        String newPwd = passwordEncoder.encode("123456");
+        user.setPasswordHash(newPwd);
+        updateById(user);
     }
 
     private UserProfileVo toProfileVo(User user) {

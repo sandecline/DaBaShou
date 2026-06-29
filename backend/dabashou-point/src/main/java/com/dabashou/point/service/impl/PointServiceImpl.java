@@ -11,6 +11,10 @@ import com.dabashou.point.mapper.PointTransactionMapper;
 import com.dabashou.point.service.PointService;
 import com.dabashou.point.vo.PointBalanceVo;
 import com.dabashou.point.vo.PointTransVo;
+import com.dabashou.point.vo.SignInVo;
+import com.dabashou.point.vo.SignInStatusVo;
+import com.dabashou.point.vo.PointStatsVo;
+import com.dabashou.point.vo.GuaranteePoolVo;
 import com.dabashou.user.api.UserApi;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -116,28 +120,66 @@ public class PointServiceImpl extends ServiceImpl<PointTransactionMapper, PointT
 
     @Override
     @Transactional
-    public void signIn(Long userId) {
+    public SignInVo signIn(Long userId) {
         String today = LocalDate.now().toString();
         String key = "dbs:sign:" + userId + ":" + today;
         Boolean set = redisTemplate.opsForValue().setIfAbsent(key, "1", 25, TimeUnit.HOURS);
         if (Boolean.FALSE.equals(set)) {
             throw new BusinessException(ErrorCode.CONFLICT, "今日已签到");
         }
-        // 连续签到天数
         String streakKey = "dbs:sign:streak:" + userId;
         String streak = redisTemplate.opsForValue().get(streakKey);
         int days = streak != null ? Integer.parseInt(streak) + 1 : 1;
         redisTemplate.opsForValue().set(streakKey, String.valueOf(days), 48, TimeUnit.HOURS);
-        // 签到奖励积分
         int reward = Math.min(days, 7) * 10;
         reward(userId, reward, "每日签到(连续" + days + "天)");
+        return new SignInVo(reward, days);
     }
 
     @Override
-    public boolean hasSignedToday(Long userId) {
+    public SignInStatusVo getSignInStatus(Long userId) {
+        SignInStatusVo vo = new SignInStatusVo();
         String today = LocalDate.now().toString();
         String key = "dbs:sign:" + userId + ":" + today;
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        vo.setTodaySigned(Boolean.TRUE.equals(redisTemplate.hasKey(key)));
+        String streakKey = "dbs:sign:streak:" + userId;
+        String streak = redisTemplate.opsForValue().get(streakKey);
+        int days = streak != null ? Integer.parseInt(streak) : 0;
+        vo.setConsecutiveDays(days);
+        vo.setReward(Math.min(days, 7) * 10);
+        return vo;
+    }
+
+    @Override
+    public PointStatsVo getStats(Long userId) {
+        PointStatsVo vo = new PointStatsVo();
+        QueryWrapper<PointTransaction> qw = new QueryWrapper<>();
+        qw.eq("user_id", userId);
+        List<PointTransaction> all = baseMapper.selectList(qw);
+        vo.setTotalIncome(all.stream().filter(t -> t.getType() == 1).mapToInt(PointTransaction::getAmount).sum());
+        vo.setTotalExpense(all.stream().filter(t -> t.getType() == 2).mapToInt(PointTransaction::getAmount).sum());
+        LocalDate now = LocalDate.now();
+        LocalDate monthStart = now.withDayOfMonth(1);
+        vo.setMonthIncome(all.stream().filter(t -> t.getType() == 1 && t.getCreateTime() != null && t.getCreateTime().toLocalDate().compareTo(monthStart) >= 0).mapToInt(PointTransaction::getAmount).sum());
+        vo.setMonthExpense(all.stream().filter(t -> t.getType() == 2 && t.getCreateTime() != null && t.getCreateTime().toLocalDate().compareTo(monthStart) >= 0).mapToInt(PointTransaction::getAmount).sum());
+        return vo;
+    }
+
+    @Override
+    public GuaranteePoolVo getGuaranteePool() {
+        GuaranteePoolVo vo = new GuaranteePoolVo();
+        QueryWrapper<PointTransaction> frozenW = new QueryWrapper<>();
+        frozenW.eq("type", 3);
+        int frozenSum = baseMapper.selectList(frozenW).stream().mapToInt(PointTransaction::getAmount).sum();
+        QueryWrapper<PointTransaction> unfrozenW = new QueryWrapper<>();
+        unfrozenW.eq("type", 4);
+        int unfrozenSum = baseMapper.selectList(unfrozenW).stream().mapToInt(PointTransaction::getAmount).sum();
+        vo.setFrozenAmount(frozenSum - unfrozenSum);
+        QueryWrapper<PointTransaction> allW = new QueryWrapper<>();
+        int totalIncome = baseMapper.selectList(allW.eq("type", 1)).stream().mapToInt(PointTransaction::getAmount).sum();
+        vo.setTotalPool(totalIncome);
+        vo.setAvailableAmount(totalIncome - vo.getFrozenAmount());
+        return vo;
     }
 
     private void recordTransaction(Long userId, Long orderId, int type, int amount, String description) {

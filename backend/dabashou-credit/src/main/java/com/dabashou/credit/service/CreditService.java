@@ -29,4 +29,8 @@ public interface CreditService extends IService<Review> {
     Long submitAppeal(Long userId, AppealDto dto);
 
     PageResult<AppealVo> getMyAppeals(Long userId, int pageNum, int pageSize);
+
+    void processViolation(Long violationId, String result);
+
+    void reviewAppeal(Long appealId, boolean approved, String reason);
 }

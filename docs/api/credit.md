@@ -2,14 +2,14 @@
 
 ## 模块信息
 - **模块**: dabashou-credit
-- **前缀**: `/api/v1/reviews`, `/api/v1/violations`, `/api/v1/appeals`
+- **前缀**: `/api/v1/credit/reviews`, `/api/v1/credit/violations`, `/api/v1/credit/appeals`
 
 ---
 
 ## 一、评价接口
 
 ### 1.1 提交评价
-- **URL**: `POST /api/v1/reviews`
+- **URL**: `POST /api/v1/credit/reviews`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -23,7 +23,7 @@
 - **错误码**: 400-订单未完成, 409-已评价
 
 ### 1.2 我发出的评价
-- **URL**: `GET /api/v1/reviews/mine`
+- **URL**: `GET /api/v1/credit/reviews/mine`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -33,7 +33,7 @@
 - **响应**: `data = PageResult<ReviewVo>`
 
 ### 1.3 我收到的评价
-- **URL**: `GET /api/v1/reviews/received`
+- **URL**: `GET /api/v1/credit/reviews/received`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -43,7 +43,7 @@
 - **响应**: `data = PageResult<ReviewVo>`
 
 ### 1.4 订单评价查询
-- **URL**: `GET /api/v1/orders/{orderId}/review`
+- **URL**: `GET /api/v1/credit/orders/{orderId}/review`
 - **响应**: `data = ReviewVo`
 - **错误码**: 404-未评价
 
@@ -52,7 +52,7 @@
 ## 二、违规举报接口
 
 ### 2.1 举报违规
-- **URL**: `POST /api/v1/violations`
+- **URL**: `POST /api/v1/credit/violations`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -66,7 +66,7 @@
 - **错误码**: 400-参数错误
 
 ### 2.2 我的违规记录
-- **URL**: `GET /api/v1/violations/mine`
+- **URL**: `GET /api/v1/credit/violations/mine`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -80,7 +80,7 @@
 ## 三、申诉接口
 
 ### 3.1 提交申诉
-- **URL**: `POST /api/v1/appeals`
+- **URL**: `POST /api/v1/credit/appeals`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -92,7 +92,7 @@
 - **错误码**: 404-违规不存在, 409-已申诉
 
 ### 3.2 我的申诉记录
-- **URL**: `GET /api/v1/appeals/mine`
+- **URL**: `GET /api/v1/credit/appeals/mine`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|

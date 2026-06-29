@@ -10,6 +10,7 @@ import com.dabashou.user.service.UserCampusAuthService;
 import com.dabashou.user.service.UserService;
 import com.dabashou.user.vo.CampusAuthVo;
 import com.dabashou.user.vo.UserProfileVo;
+import com.dabashou.user.vo.TrustScoreOverviewVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -82,5 +83,12 @@ public class UserController {
     public AjaxResult<UserProfileVo> getUserProfile(
             @Parameter(description = "用户ID") @PathVariable Long userId) {
         return AjaxResult.ok(userService.getProfile(userId));
+    }
+
+    @Operation(summary = "查询信任分")
+    @GetMapping("/trust-score")
+    public AjaxResult<TrustScoreOverviewVo> getTrustScore() {
+        Long userId = SecurityUtil.requireCurrentUserId();
+        return AjaxResult.ok(userService.getTrustScore(userId));
     }
 }

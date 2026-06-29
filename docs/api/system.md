@@ -112,7 +112,7 @@
 - **错误码**: 404-角色不存在
 
 ### 3.3 分配用户角色
-- **URL**: `POST /api/admin/v1/users/{userId}/roles`
+- **URL**: `POST /api/admin/v1/roles/users/{userId}/roles`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -126,7 +126,7 @@
 ## 四、日志接口（管理员）
 
 ### 4.1 日志查询
-- **URL**: `GET /api/admin/v1/logs`
+- **URL**: `GET /api/admin/v1/system/logs`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -144,7 +144,7 @@
 ## 五、配置接口（管理员）
 
 ### 5.1 配置列表
-- **URL**: `GET /api/admin/v1/configs`
+- **URL**: `GET /api/admin/v1/system/configs`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -154,7 +154,7 @@
 - **响应**: `data = PageResult<ConfigVo>`
 
 ### 5.2 更新配置
-- **URL**: `PUT /api/admin/v1/configs/{key}`
+- **URL**: `PUT /api/admin/v1/system/configs/{key}`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
