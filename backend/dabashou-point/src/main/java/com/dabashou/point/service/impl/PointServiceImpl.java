@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -32,12 +33,34 @@ public class PointServiceImpl extends ServiceImpl<PointTransactionMapper, PointT
 
     @Override
     public PointBalanceVo getBalance(Long userId) {
-        // TODO: 计算冻结金额（从订单状态=2的记录汇总）
         PointBalanceVo vo = new PointBalanceVo();
-        // 通过userApi获取用户积分余额
-        vo.setAvailable(0); // TODO: 从User.pointBalance获取
-        vo.setFrozen(0);    // TODO: 计算冻结金额
-        vo.setTotal(0);     // TODO: available + frozen
+        int available = userApi.getPointBalance(userId);
+        int frozen = Math.toIntExact(lambdaQuery()
+                .eq(PointTransaction::getUserId, userId)
+                .eq(PointTransaction::getType, 3)
+                .count());
+        // type=3(冻结)减去type=4(解冻) = 仍在冻结中的金额
+        long unfrozenCount = lambdaQuery()
+                .eq(PointTransaction::getUserId, userId)
+                .eq(PointTransaction::getType, 4)
+                .count();
+        // 实际冻结 = 冻结流水总额 - 解冻流水总额
+        // 简化计算：直接用已知逻辑，available来自User表，frozen从流水汇总
+        // freeze时available已扣，所以frozen = sum(type=3金额) - sum(type=4金额)
+        List<PointTransaction> frozenTrans = lambdaQuery()
+                .eq(PointTransaction::getUserId, userId)
+                .eq(PointTransaction::getType, 3)
+                .list();
+        List<PointTransaction> unfrozenTrans = lambdaQuery()
+                .eq(PointTransaction::getUserId, userId)
+                .eq(PointTransaction::getType, 4)
+                .list();
+        int frozenSum = frozenTrans.stream().mapToInt(PointTransaction::getAmount).sum();
+        int unfrozenSum = unfrozenTrans.stream().mapToInt(PointTransaction::getAmount).sum();
+        frozen = frozenSum - unfrozenSum;
+        vo.setAvailable(available);
+        vo.setFrozen(frozen);
+        vo.setTotal(available + frozen);
         return vo;
     }
 
@@ -74,10 +97,13 @@ public class PointServiceImpl extends ServiceImpl<PointTransactionMapper, PointT
 
     @Override
     @Transactional
-    public void unfreezeAndTransfer(Long userId, Long orderId, int amount, String description) {
-        // 冻结积分转给卖家
-        // TODO: 需要订单信息获取sellerId
-        recordTransaction(userId, orderId, 4, amount, "解冻:" + description);
+    public void unfreezeAndTransfer(Long buyerId, Long sellerId, Long orderId, int amount, String description) {
+        // 给卖家增加积分
+        userApi.addPointBalance(sellerId, amount);
+        // 记录买家解冻流水
+        recordTransaction(buyerId, orderId, 4, amount, "解冻:" + description);
+        // 记录卖家收入流水
+        recordTransaction(sellerId, orderId, 1, amount, "结算收入:" + description);
     }
 
     @Override
@@ -128,14 +154,21 @@ public class PointServiceImpl extends ServiceImpl<PointTransactionMapper, PointT
     }
 
     private void recordTransaction(Long userId, Long orderId, int type, int amount, String description) {
+        int currentBalance = userApi.getPointBalance(userId);
+        int balanceAfter;
+        // 收入/解冻/退款/奖励 → 余额增加；支出/冻结/扣除 → 余额减少
+        if (type == 1 || type == 4 || type == 5) {
+            balanceAfter = currentBalance + amount;
+        } else {
+            balanceAfter = currentBalance - amount;
+        }
         PointTransaction trans = new PointTransaction();
         trans.setUserId(userId);
         trans.setOrderId(orderId);
         trans.setType(type);
         trans.setAmount(amount);
+        trans.setBalanceAfter(balanceAfter);
         trans.setDescription(description);
-        // TODO: 计算变动后余额
-        trans.setBalanceAfter(0);
         save(trans);
     }
 

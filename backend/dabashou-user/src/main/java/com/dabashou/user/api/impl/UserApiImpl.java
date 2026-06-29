@@ -68,6 +68,12 @@ public class UserApiImpl implements UserApi {
     }
 
     @Override
+    public Integer getPointBalance(Long userId) {
+        User user = userService.getById(userId);
+        return user != null ? user.getPointBalance() : 0;
+    }
+
+    @Override
     public boolean isUserActive(Long userId) {
         User user = userService.getById(userId);
         return user != null && user.getStatus() == 1;

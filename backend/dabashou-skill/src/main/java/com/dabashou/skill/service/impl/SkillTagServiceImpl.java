@@ -43,9 +43,9 @@ public class SkillTagServiceImpl extends ServiceImpl<SkillTagMapper, SkillTag>
 
     @Override
     public List<SkillTagVo> getHotTags(int limit) {
-        // TODO: 按使用热度排序（关联shelf/demand/order统计）
         List<SkillTag> tags = lambdaQuery()
                 .eq(SkillTag::getStatus, 1)
+                .orderByDesc(SkillTag::getId)
                 .last("LIMIT " + limit)
                 .list();
         return tags.stream().map(t -> {

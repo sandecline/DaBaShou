@@ -13,6 +13,7 @@ import com.dabashou.user.mapper.UserMapper;
 import com.dabashou.user.service.UserService;
 import com.dabashou.user.vo.LoginVo;
 import com.dabashou.user.vo.UserProfileVo;
+import com.dabashou.system.api.SystemApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -30,6 +31,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final StringRedisTemplate redisTemplate;
+    private final SystemApi systemApi;
 
     @Value("${dabashou.jwt.secret}")
     private String jwtSecret;
@@ -40,8 +42,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Value("${dabashou.jwt.refresh-expiration}")
     private Long refreshExpiration;
 
-    public UserServiceImpl(StringRedisTemplate redisTemplate) {
+    public UserServiceImpl(StringRedisTemplate redisTemplate, SystemApi systemApi) {
         this.redisTemplate = redisTemplate;
+        this.systemApi = systemApi;
     }
 
     @Override
@@ -146,8 +149,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public void logout(Long userId) {
-        // TODO: 将token加入黑名单(Redis)
+    public void logout(Long userId, String token) {
+        if (token != null && !token.isEmpty()) {
+            redisTemplate.opsForValue().set("dbs:blacklist:token:" + token, "1", jwtExpiration, TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
@@ -204,7 +209,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     private LoginVo buildLoginVo(User user) {
-        List<String> roles = Collections.singletonList("USER");
+        List<String> roles = systemApi.getRoleCodesByUserId(user.getId());
+        if (roles == null || roles.isEmpty()) {
+            roles = Collections.singletonList("USER");
+        }
         String accessToken = JwtUtil.generateToken(user.getId(), roles, jwtSecret, jwtExpiration);
         String refreshToken = JwtUtil.generateRefreshToken(user.getId(), jwtSecret, refreshExpiration);
         LoginVo vo = new LoginVo();

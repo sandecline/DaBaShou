@@ -40,6 +40,11 @@ public interface UserApi {
     void adjustTrustScore(Long userId, Long orderId, String type, BigDecimal change, String reason);
 
     /**
+     * 获取用户积分余额
+     */
+    Integer getPointBalance(Long userId);
+
+    /**
      * 检查用户是否存在且正常
      */
     boolean isUserActive(Long userId);

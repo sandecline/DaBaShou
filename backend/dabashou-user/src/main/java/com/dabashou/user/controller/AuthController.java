@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "认证管理", description = "注册、登录、验证码等认证接口")
@@ -58,9 +59,11 @@ public class AuthController {
 
     @Operation(summary = "登出")
     @PostMapping("/logout")
-    public AjaxResult<Void> logout() {
+    public AjaxResult<Void> logout(HttpServletRequest request) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        userService.logout(userId);
+        String authHeader = request.getHeader("Authorization");
+        String token = (authHeader != null && authHeader.startsWith("Bearer ")) ? authHeader.substring(7) : null;
+        userService.logout(userId, token);
         return AjaxResult.ok();
     }
 }

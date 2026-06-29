@@ -20,8 +20,7 @@ public class PointApiImpl implements PointApi {
 
     @Override
     public void unfreezeAndTransfer(Long buyerId, Long sellerId, Long orderId, int amount, String description) {
-        pointService.unfreezeAndTransfer(buyerId, orderId, amount, description);
-        // TODO: 给卖家增加积分
+        pointService.unfreezeAndTransfer(buyerId, sellerId, orderId, amount, description);
     }
 
     @Override

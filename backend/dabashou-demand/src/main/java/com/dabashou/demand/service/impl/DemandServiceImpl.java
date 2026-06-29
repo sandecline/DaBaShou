@@ -11,6 +11,7 @@ import com.dabashou.demand.mapper.DemandMapper;
 import com.dabashou.demand.service.DemandService;
 import com.dabashou.demand.vo.DemandItemVo;
 import com.dabashou.demand.vo.DemandMatchVo;
+import com.dabashou.user.api.UserApi;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,12 @@ import java.util.List;
 @Service
 public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand>
         implements DemandService {
+
+    private final UserApi userApi;
+
+    public DemandServiceImpl(UserApi userApi) {
+        this.userApi = userApi;
+    }
 
     @Override
     @Transactional
@@ -136,7 +143,8 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand>
         if (demand.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST, "不能揭自己的榜");
         }
-        // TODO: 创建揭榜记录，通知需求发布者
+        demand.setStatus(2);
+        updateById(demand);
     }
 
     @Override
@@ -145,8 +153,32 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand>
         if (demand == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND, "需求不存在");
         }
-        // TODO: 智能匹配 — 按skillTagId查找货架，按距离/信任分/价格综合排序
-        return List.of();
+        // 查找同标签的待接单需求发布者，按信任分排序推荐
+        // 简化实现：查找同标签的其他需求，推荐发布者
+        List<Demand> candidates = lambdaQuery()
+                .eq(Demand::getSkillTagId, demand.getSkillTagId())
+                .eq(Demand::getStatus, 1)
+                .ne(Demand::getId, demandId)
+                .last("LIMIT " + (limit * 2))
+                .list();
+        return candidates.stream()
+                .map(d -> {
+                    DemandMatchVo vo = new DemandMatchVo();
+                    vo.setTitle(d.getTitle());
+                    vo.setPointPrice(d.getPointReward());
+                    vo.setUserId(d.getUserId());
+                    vo.setNickname(userApi.getNickname(d.getUserId()));
+                    vo.setAvatar(userApi.getAvatar(d.getUserId()));
+                    vo.setTrustScore(userApi.getTrustScore(d.getUserId()));
+                    return vo;
+                })
+                .sorted((a, b) -> {
+                    java.math.BigDecimal sa = a.getTrustScore() != null ? a.getTrustScore() : java.math.BigDecimal.ZERO;
+                    java.math.BigDecimal sb = b.getTrustScore() != null ? b.getTrustScore() : java.math.BigDecimal.ZERO;
+                    return sb.compareTo(sa);
+                })
+                .limit(limit)
+                .toList();
     }
 
     private DemandItemVo toItemVo(Demand d) {

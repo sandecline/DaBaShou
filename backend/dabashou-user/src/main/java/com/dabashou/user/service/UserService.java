@@ -18,7 +18,7 @@ public interface UserService extends IService<User> {
 
     LoginVo refreshToken(String refreshToken);
 
-    void logout(Long userId);
+    void logout(Long userId, String token);
 
     UserProfileVo getProfile(Long userId);
 
