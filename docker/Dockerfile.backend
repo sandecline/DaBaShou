@@ -1,0 +1,28 @@
+# Stage 1: Build
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
+WORKDIR /app
+COPY backend/pom.xml ./
+COPY backend/dabashou-common/pom.xml ./dabashou-common/
+COPY backend/dabashou-api/pom.xml ./dabashou-api/
+COPY backend/dabashou-user/pom.xml ./dabashou-user/
+COPY backend/dabashou-skill/pom.xml ./dabashou-skill/
+COPY backend/dabashou-shelf/pom.xml ./dabashou-shelf/
+COPY backend/dabashou-demand/pom.xml ./dabashou-demand/
+COPY backend/dabashou-order/pom.xml ./dabashou-order/
+COPY backend/dabashou-point/pom.xml ./dabashou-point/
+COPY backend/dabashou-message/pom.xml ./dabashou-message/
+COPY backend/dabashou-credit/pom.xml ./dabashou-credit/
+COPY backend/dabashou-stat/pom.xml ./dabashou-stat/
+COPY backend/dabashou-system/pom.xml ./dabashou-system/
+COPY backend/dabashou-admin/pom.xml ./dabashou-admin/
+RUN mvn dependency:go-offline -B
+COPY backend/ ./
+RUN mvn clean package -DskipTests -B
+
+# Stage 2: Runtime
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/dabashou-api/target/*.jar app.jar
+RUN mkdir -p /app/uploads
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

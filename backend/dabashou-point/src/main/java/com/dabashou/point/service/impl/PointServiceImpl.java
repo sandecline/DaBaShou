@@ -1,5 +1,6 @@
 package com.dabashou.point.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.dabashou.common.enums.ErrorCode;
@@ -35,29 +36,15 @@ public class PointServiceImpl extends ServiceImpl<PointTransactionMapper, PointT
     public PointBalanceVo getBalance(Long userId) {
         PointBalanceVo vo = new PointBalanceVo();
         int available = userApi.getPointBalance(userId);
-        int frozen = Math.toIntExact(lambdaQuery()
-                .eq(PointTransaction::getUserId, userId)
-                .eq(PointTransaction::getType, 3)
-                .count());
-        // type=3(冻结)减去type=4(解冻) = 仍在冻结中的金额
-        long unfrozenCount = lambdaQuery()
-                .eq(PointTransaction::getUserId, userId)
-                .eq(PointTransaction::getType, 4)
-                .count();
-        // 实际冻结 = 冻结流水总额 - 解冻流水总额
-        // 简化计算：直接用已知逻辑，available来自User表，frozen从流水汇总
-        // freeze时available已扣，所以frozen = sum(type=3金额) - sum(type=4金额)
-        List<PointTransaction> frozenTrans = lambdaQuery()
-                .eq(PointTransaction::getUserId, userId)
-                .eq(PointTransaction::getType, 3)
-                .list();
-        List<PointTransaction> unfrozenTrans = lambdaQuery()
-                .eq(PointTransaction::getUserId, userId)
-                .eq(PointTransaction::getType, 4)
-                .list();
+        QueryWrapper<PointTransaction> frozenW = new QueryWrapper<>();
+        frozenW.eq("user_id", userId).eq("type", 3);
+        List<PointTransaction> frozenTrans = baseMapper.selectList(frozenW);
+        QueryWrapper<PointTransaction> unfrozenW = new QueryWrapper<>();
+        unfrozenW.eq("user_id", userId).eq("type", 4);
+        List<PointTransaction> unfrozenTrans = baseMapper.selectList(unfrozenW);
         int frozenSum = frozenTrans.stream().mapToInt(PointTransaction::getAmount).sum();
         int unfrozenSum = unfrozenTrans.stream().mapToInt(PointTransaction::getAmount).sum();
-        frozen = frozenSum - unfrozenSum;
+        int frozen = frozenSum - unfrozenSum;
         vo.setAvailable(available);
         vo.setFrozen(frozen);
         vo.setTotal(available + frozen);

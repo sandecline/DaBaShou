@@ -86,3 +86,11 @@ CREATE TABLE IF NOT EXISTS `credit_appeal` (
     FOREIGN KEY (`appellant_id`) REFERENCES `dbs_user`(`id`),
     FOREIGN KEY (`evidence_file_id`) REFERENCES `sys_file`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='申诉表';
+
+-- ============================================================================
+-- ROLLBACK (逆序删除，尊重外键约束)
+-- ============================================================================
+-- DROP TABLE IF EXISTS `credit_appeal`;
+-- DROP TABLE IF EXISTS `credit_violation`;
+-- DROP TABLE IF EXISTS `user_trust_score_log`;
+-- DROP TABLE IF EXISTS `user_campus_auth`;

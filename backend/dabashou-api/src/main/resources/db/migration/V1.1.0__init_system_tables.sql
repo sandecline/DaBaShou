@@ -122,3 +122,15 @@ CREATE TABLE IF NOT EXISTS `sys_config` (
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统配置表';
+
+-- ============================================================================
+-- ROLLBACK (逆序删除，尊重外键约束)
+-- ============================================================================
+-- DROP TABLE IF EXISTS `sys_config`;
+-- DROP TABLE IF EXISTS `sys_log`;
+-- DROP TABLE IF EXISTS `sys_notification`;
+-- DROP TABLE IF EXISTS `sys_file`;
+-- DROP TABLE IF EXISTS `sys_user_role`;
+-- DROP TABLE IF EXISTS `sys_role_permission`;
+-- DROP TABLE IF EXISTS `sys_permission`;
+-- DROP TABLE IF EXISTS `sys_role`;
