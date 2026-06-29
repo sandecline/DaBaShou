@@ -5,18 +5,14 @@ import com.dabashou.common.core.PageResult;
 import com.dabashou.credit.service.CreditService;
 import com.dabashou.credit.vo.AppealVo;
 import com.dabashou.credit.vo.ViolationVo;
-import com.dabashou.order.api.OrderApi;
 import com.dabashou.order.domain.Order;
 import com.dabashou.order.mapper.OrderMapper;
-import com.dabashou.user.api.UserApi;
 import com.dabashou.user.domain.User;
 import com.dabashou.user.mapper.UserMapper;
-import com.dabashou.system.service.RoleService;
 import com.dabashou.system.service.ConfigService;
 import com.dabashou.system.service.LogService;
 import com.dabashou.system.vo.ConfigVo;
 import com.dabashou.system.vo.LogVo;
-import com.dabashou.system.vo.RoleVo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,17 +29,15 @@ public class AdminController {
     private final UserMapper userMapper;
     private final OrderMapper orderMapper;
     private final CreditService creditService;
-    private final RoleService roleService;
     private final LogService logService;
     private final ConfigService configService;
 
     public AdminController(UserMapper userMapper, OrderMapper orderMapper,
-                           CreditService creditService, RoleService roleService,
+                           CreditService creditService,
                            LogService logService, ConfigService configService) {
         this.userMapper = userMapper;
         this.orderMapper = orderMapper;
         this.creditService = creditService;
-        this.roleService = roleService;
         this.logService = logService;
         this.configService = configService;
     }
@@ -116,12 +110,6 @@ public class AdminController {
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
             @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") int pageSize) {
         return AjaxResult.ok(creditService.getMyAppeals(null, pageNum, pageSize));
-    }
-
-    @Operation(summary = "角色列表")
-    @GetMapping("/roles")
-    public AjaxResult<List<RoleVo>> getRoles() {
-        return AjaxResult.ok(roleService.getRoles());
     }
 
     @Operation(summary = "日志查询")
