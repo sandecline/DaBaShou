@@ -1,0 +1,224 @@
+// ========== Element Plus 主题覆盖 — 闲鱼风格 ==========
+
+:root {
+  // 主色 - 闲鱼黄
+  --el-color-primary: #FFC300;
+  --el-color-primary-light-3: #FFD54F;
+  --el-color-primary-light-5: #FFE082;
+  --el-color-primary-light-7: #FFECB3;
+  --el-color-primary-light-8: #FFF8E1;
+  --el-color-primary-light-9: #FFFDF5;
+  --el-color-primary-dark-2: #FFB800;
+
+  // 成功色
+  --el-color-success: #26C6B8;
+  --el-color-success-light-3: #80DEEA;
+  --el-color-success-light-5: #B2EBF2;
+  --el-color-success-light-7: #E0F7FA;
+  --el-color-success-light-9: #F0FCFC;
+
+  // 警告色
+  --el-color-warning: #FF9800;
+  --el-color-warning-light-3: #FFB74D;
+  --el-color-warning-light-5: #FFCC80;
+  --el-color-warning-light-7: #FFE0B2;
+  --el-color-warning-light-9: #FFF3E0;
+
+  // 危险色
+  --el-color-danger: #FF5252;
+  --el-color-danger-light-3: #FF8A80;
+  --el-color-danger-light-5: #FFCDD2;
+  --el-color-danger-light-7: #FFEBEE;
+  --el-color-danger-light-9: #FFF5F5;
+
+  // 信息色
+  --el-color-info: #42A5F5;
+
+  // 字体
+  --el-font-size-base: 14px;
+  --el-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  // 圆角 - 更圆润
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+
+  // 边框
+  --el-border-color: #EEEEEE;
+  --el-border-color-light: #F5F5F5;
+  --el-border-color-lighter: #FAFAFA;
+
+  // 背景
+  --el-bg-color: #FFFFFF;
+  --el-bg-color-page: #F5F5F5;
+  --el-bg-color-overlay: #FFFFFF;
+
+  // 填充
+  --el-fill-color: #F5F5F5;
+  --el-fill-color-light: #FAFAFA;
+  --el-fill-color-lighter: #FCFCFC;
+  --el-fill-color-blank: #FFFFFF;
+}
+
+// 按钮 — 闲鱼风格
+.el-button {
+  font-weight: 500;
+  border-radius: 20px;
+
+  &--primary {
+    --el-button-bg-color: #FFC300;
+    --el-button-border-color: #FFC300;
+    --el-button-text-color: #333333;
+    --el-button-hover-bg-color: #FFB800;
+    --el-button-hover-border-color: #FFB800;
+    --el-button-hover-text-color: #333333;
+    --el-button-active-bg-color: #FFA000;
+    --el-button-active-border-color: #FFA000;
+
+    &.el-button--text {
+      --el-button-text-color: #FF8F00;
+      --el-button-hover-text-color: #FFA000;
+    }
+  }
+
+  &--warning {
+    --el-button-bg-color: #FF6B00;
+    --el-button-border-color: #FF6B00;
+    --el-button-text-color: #FFFFFF;
+    --el-button-hover-bg-color: #E65100;
+    --el-button-hover-border-color: #E65100;
+  }
+
+  &.is-round {
+    border-radius: 20px;
+  }
+}
+
+// 卡片
+.el-card {
+  border-radius: 12px;
+  border: 1px solid #EEEEEE;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+// 输入框
+.el-input {
+  --el-input-focus-border-color: #FFC300;
+
+  .el-input__wrapper {
+    border-radius: 20px;
+    box-shadow: 0 0 0 1px #EEEEEE inset;
+
+    &:hover {
+      box-shadow: 0 0 0 1px #CCCCCC inset;
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 1px #FFC300 inset;
+    }
+  }
+}
+
+// 标签
+.el-tag {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+// 菜单
+.el-menu {
+  border-right: none;
+}
+
+// 对话框
+.el-dialog {
+  border-radius: 16px;
+}
+
+// 步骤条
+.el-steps {
+  .el-step__head.is-finish .el-step__icon {
+    background-color: #FFC300;
+    border-color: #FFC300;
+    color: #333333;
+  }
+
+  .el-step__title.is-finish {
+    color: #FFC300;
+  }
+
+  .el-step__head.is-process .el-step__icon {
+    border-color: #FFC300;
+    color: #FFC300;
+  }
+}
+
+// 分页
+.el-pagination {
+  --el-pagination-hover-color: #FFC300;
+
+  .el-pager li {
+    border-radius: 8px;
+
+    &.is-active {
+      background-color: #FFC300;
+      color: #333333;
+      font-weight: 600;
+    }
+  }
+}
+
+// 下拉菜单
+.el-dropdown-menu {
+  border-radius: 12px;
+  border: 1px solid #EEEEEE;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+// 消息提示
+.el-badge__content {
+  border-radius: 10px;
+}
+
+// 头像
+.el-avatar {
+  --el-avatar-bg-color: #FFE082;
+}
+
+// Radio button
+.el-radio-button {
+  --el-radio-button-checked-bg-color: #FFC300;
+  --el-radio-button-checked-border-color: #FFC300;
+  --el-radio-button-checked-text-color: #333333;
+}
+
+// Checkbox
+.el-checkbox {
+  --el-checkbox-checked-bg-color: #FFC300;
+  --el-checkbox-checked-border-color: #FFC300;
+  --el-checkbox-checked-input-color: #333333;
+}
+
+// Tabs
+.el-tabs {
+  --el-tabs-header-height: 44px;
+
+  .el-tabs__item.is-active {
+    color: #FF8F00;
+    font-weight: 600;
+  }
+
+  .el-tabs__active-bar {
+    background-color: #FFC300;
+  }
+}
+
+// 加载
+.el-loading-spinner {
+  --el-loading-spinner-color: #FFC300;
+}

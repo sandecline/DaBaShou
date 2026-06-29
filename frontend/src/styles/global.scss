@@ -1,0 +1,202 @@
+// ========== 全局样式 — 闲鱼风格 ==========
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: $font-family;
+  color: $color-text-primary;
+  background-color: $color-bg;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  color: $color-accent;
+  text-decoration: none;
+  &:hover {
+    color: $color-primary-dark;
+  }
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+// 滚动条美化
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #DDDDDD;
+  border-radius: 2px;
+  &:hover {
+    background: #CCCCCC;
+  }
+}
+
+// 通用页面容器
+.page-container {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: $spacing-md;
+}
+
+// 卡片网格（瀑布流风格）
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: $spacing-sm;
+}
+
+// 卡片悬停效果 — 闲鱼风格微动
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-lg;
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// 渐变背景
+.gradient-primary {
+  background: linear-gradient(135deg, #FFC300 0%, #FF8F00 100%);
+}
+
+.gradient-success {
+  background: linear-gradient(135deg, #26C6B8 0%, #009688 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, #FF6B00 0%, #FF8F00 100%);
+}
+
+// 文本省略
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// 弹性布局工具
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// 闲鱼风格标签
+.xy-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: $font-size-xs;
+  font-weight: 500;
+  line-height: 1.5;
+
+  &--hot {
+    background: #FFF3E0;
+    color: #FF6B00;
+  }
+
+  &--new {
+    background: #FFF8E1;
+    color: #FF8F00;
+  }
+
+  &--urgent {
+    background: #FFEBEE;
+    color: $color-danger;
+  }
+
+  &--trust {
+    background: #E0F7FA;
+    color: #00897B;
+  }
+}
+
+// 页面标题
+.page-title {
+  font-size: $font-size-xl;
+  font-weight: 700;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+// 板块标题
+.section-title {
+  font-size: $font-size-lg;
+  font-weight: 700;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &::before {
+    content: '';
+    width: 3px;
+    height: 16px;
+    background: $color-primary;
+    border-radius: 2px;
+  }
+}
+
+// 响应式
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .page-container {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
