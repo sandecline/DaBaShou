@@ -31,15 +31,15 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3099,
+    port: 5173,
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:9090',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:8080',
+        target: 'ws://localhost:9090',
         ws: true,
       },
     },

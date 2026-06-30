@@ -243,3 +243,5 @@
 | V1.8.0 | Order.remark |
 | V1.9.0 | Review.images/is_anonymous |
 | V1.10.0 | dbs_notification |
+| V1.11.0 | 积分流水索引优化 |
+| V1.12.0 | 测试数据(20用户+订单+积分+评价+聊天+统计) |

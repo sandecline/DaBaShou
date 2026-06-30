@@ -1,7 +1,6 @@
 C:\Users\86510\Desktop\实习\实习项目\DaBaShou\backend\dabashou-api\src\main\java\com\dabashou\api\config\MyBatisPlusConfig.java
 C:\Users\86510\Desktop\实习\实习项目\DaBaShou\backend\dabashou-api\src\main\java\com\dabashou\api\config\ResponseAdvice.java
 C:\Users\86510\Desktop\实习\实习项目\DaBaShou\backend\dabashou-api\src\main\java\com\dabashou\api\config\SecurityConfig.java
-C:\Users\86510\Desktop\实习\实习项目\DaBaShou\backend\dabashou-api\src\main\java\com\dabashou\api\controller\DemoController.java
 C:\Users\86510\Desktop\实习\实习项目\DaBaShou\backend\dabashou-api\src\main\java\com\dabashou\api\DabashouApplication.java
 C:\Users\86510\Desktop\实习\实习项目\DaBaShou\backend\dabashou-api\src\main\java\com\dabashou\api\filter\JwtAuthFilter.java
 C:\Users\86510\Desktop\实习\实习项目\DaBaShou\backend\dabashou-api\src\main\java\com\dabashou\api\filter\RequestLogFilter.java

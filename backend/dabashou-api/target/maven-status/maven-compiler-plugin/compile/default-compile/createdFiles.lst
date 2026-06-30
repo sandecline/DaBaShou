@@ -1,4 +1,3 @@
-com\dabashou\api\controller\DemoController.class
 com\dabashou\api\DabashouApplication.class
 com\dabashou\api\config\MyBatisPlusConfig$1.class
 com\dabashou\api\interceptor\WsAuthInterceptor.class

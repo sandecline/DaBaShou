@@ -130,7 +130,7 @@ function changePage(p: number) {
 onMounted(async () => {
   try {
     const cats = await getCategories()
-    categories.value = cats.filter((c) => c.status === 1)
+    categories.value = cats
   } catch {
     // ignore
   }
