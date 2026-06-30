@@ -1,10 +1,11 @@
 ﻿import request from '@/utils/request'
 import type { DemandItemVo, DemandDetailVo, DemandMatchVo, PageResult, PageParams } from '@/types/api'
+import { normalizePageParams } from './_params'
 
 export function publishDemand(data: {
-  skillTagId: number; title: string; description?: string;
-  pointReward?: number; deadline?: string; locationType: number;
-  demandType?: number; longitude?: number; latitude?: number
+  skillTagId: number | null; title: string; description?: string;
+  pointReward?: number; deadline?: string | null; locationType: number;
+  demandType?: number; longitude?: number; latitude?: number; isUrgent?: boolean
 }): Promise<number> {
   return request.post('/v1/demands', data)
 }
@@ -31,13 +32,15 @@ export function getDemandDetail(id: number): Promise<DemandDetailVo> {
 export function searchDemands(params: {
   keyword?: string; categoryId?: number; skillTagId?: number;
   demandType?: number; status?: number; sortBy?: string;
-  pageNum?: number; pageSize?: number
+  pageNum?: number; pageSize?: number; page?: number; size?: number; sort?: string; urgent?: boolean | number
 }): Promise<PageResult<DemandItemVo>> {
-  return request.get('/v1/demands', params)
+  return request.get('/v1/demands', normalizePageParams(params))
 }
 
+export const getDemandList = searchDemands
+
 export function getMyDemands(params?: PageParams): Promise<PageResult<DemandItemVo>> {
-  return request.get('/v1/demands/mine', params)
+  return request.get('/v1/demands/mine', normalizePageParams(params))
 }
 
 export function bidDemand(id: number): Promise<null> {

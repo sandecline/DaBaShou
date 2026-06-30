@@ -1,8 +1,9 @@
 ﻿import request from '@/utils/request'
 import type { NotificationVo, ChatSessionVo, ChatMessageVo, PageResult, PageParams } from '@/types/api'
+import { normalizePageParams } from './_params'
 
 export function getNotifications(params: PageParams & { type?: string; isRead?: boolean }): Promise<PageResult<NotificationVo>> {
-  return request.get('/v1/notifications', params)
+  return request.get('/v1/notifications', normalizePageParams(params))
 }
 
 export function getUnreadCount(): Promise<number> {
@@ -22,11 +23,11 @@ export function deleteNotification(id: number): Promise<null> {
 }
 
 export function getChatSessions(params?: PageParams): Promise<PageResult<ChatSessionVo>> {
-  return request.get('/v1/chat/sessions', params)
+  return request.get('/v1/chat/sessions', normalizePageParams(params))
 }
 
 export function getChatMessages(targetUserId: number, params?: PageParams): Promise<PageResult<ChatMessageVo>> {
-  return request.get('/v1/chat/messages', { targetUserId, ...params })
+  return request.get('/v1/chat/messages', normalizePageParams({ targetUserId, ...params }))
 }
 
 export function createChatSession(userId: number): Promise<number> {

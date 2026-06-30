@@ -12,8 +12,11 @@ const instance: AxiosInstance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(
   (config) => {
-    const token = getToken()
+    const url = String(config.url || '')
+    const isAuthEndpoint = url.includes('/v1/auth/')
+    const token = isAuthEndpoint ? null : getToken()
     ;(config as any).__hadAuthToken = !!token
+    ;(config as any).__isAuthEndpoint = isAuthEndpoint
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -50,7 +53,8 @@ instance.interceptors.response.use(
 
     // token过期
     if (code === 401) {
-      handleUnauthorized(!!(response.config as any).__hadAuthToken, msg)
+      const config = response.config as any
+      handleUnauthorized(!!config.__hadAuthToken && !config.__isAuthEndpoint, msg)
       return Promise.reject(new Error(msg))
     }
 
@@ -59,7 +63,8 @@ instance.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      handleUnauthorized(!!(error.config as any)?.__hadAuthToken, error.response?.data?.msg)
+      const config = error.config as any
+      handleUnauthorized(!!config?.__hadAuthToken && !config?.__isAuthEndpoint, error.response?.data?.msg)
     } else if (error.response?.status === 403) {
       ElMessage.error('没有权限访问')
     } else if (error.response?.status === 500) {

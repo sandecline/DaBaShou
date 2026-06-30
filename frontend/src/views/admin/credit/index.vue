@@ -32,8 +32,8 @@
               <el-table-column label="操作" width="180">
                 <template #default="{ row }">
                   <template v-if="row.status === 0">
-                    <el-button size="small" type="success" @click="adminHandleViolationClick(row, 'confirm')">确认违规</el-button>
-                    <el-button size="small" @click="adminHandleViolationClick(row, 'dismiss')">撤销</el-button>
+                    <el-button size="small" type="success" @click="adminHandleViolationClick(row as ViolationVo, 'confirm')">确认违规</el-button>
+                    <el-button size="small" @click="adminHandleViolationClick(row as ViolationVo, 'dismiss')">撤销</el-button>
                   </template>
                   <span v-else>-</span>
                 </template>
@@ -56,8 +56,8 @@
               <el-table-column label="操作" width="180">
                 <template #default="{ row }">
                   <template v-if="row.status === 0">
-                    <el-button size="small" type="success" @click="adminHandleAppealClick(row, 'approve')">通过</el-button>
-                    <el-button size="small" type="danger" @click="adminHandleAppealClick(row, 'reject')">驳回</el-button>
+                    <el-button size="small" type="success" @click="adminHandleAppealClick(row as AppealVo, 'approve')">通过</el-button>
+                    <el-button size="small" type="danger" @click="adminHandleAppealClick(row as AppealVo, 'reject')">驳回</el-button>
                   </template>
                   <span v-else>{{ row.reply || '-' }}</span>
                 </template>
@@ -74,9 +74,9 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAdminViolations, adminHandleViolation, getAdminAppeals, adminHandleAppeal } from '@/api/admin'
-// ViolationTypeMap removed
+import { ViolationTypeMap } from '@/types/api'
 import Sidebar from '@/components/layout/Sidebar.vue'
-import type { ViolationVo, AppealVo } from '@/types/api'
+import type { ViolationVo, AppealVo, ViolationType } from '@/types/api'
 
 const adminMenu = [
   { path: '/admin/users', title: '用户管理', icon: 'User' },
@@ -95,7 +95,7 @@ const aLoading = ref(false)
 async function loadViolations() {
   vLoading.value = true
   try {
-    const result = await getAdminCampusAuths({ page: 1, size: 50 })
+    const result = await getAdminViolations({ page: 1, size: 50 })
     violations.value = result.list
   } catch { /* handled */ } finally { vLoading.value = false }
 }
@@ -103,12 +103,12 @@ async function loadViolations() {
 async function loadAppeals() {
   aLoading.value = true
   try {
-    const result = await getAdminCampusAuths({ page: 1, size: 50 })
+    const result = await getAdminAppeals({ page: 1, size: 50 })
     appeals.value = result.list
   } catch { /* handled */ } finally { aLoading.value = false }
 }
 
-async function adminHandleViolationClick(row: Violation, action: 'confirm' | 'dismiss') {
+async function adminHandleViolationClick(row: ViolationVo, action: 'confirm' | 'dismiss') {
   try {
     await adminHandleViolation(row.id, action)
     ElMessage.success(action === 'confirm' ? '已确认违规' : '已撤销')
@@ -116,12 +116,12 @@ async function adminHandleViolationClick(row: Violation, action: 'confirm' | 'di
   } catch { /* handled */ }
 }
 
-async function adminHandleAppealClick(row: Appeal, action: 'approve' | 'reject') {
+async function adminHandleAppealClick(row: AppealVo, action: 'approve' | 'reject') {
   try {
     const { value: reply } = action === 'reject'
       ? await ElMessageBox.prompt('请输入驳回理由', '驳回申诉')
       : { value: undefined }
-    await adminHandleAppeal(row.id, action, reply || undefined)
+    await adminHandleAppeal(row.id, { approved: action === 'approve', reason: reply || '' })
     ElMessage.success(action === 'approve' ? '申诉已通过' : '申诉已驳回')
     loadAppeals()
   } catch { /* cancelled */ }

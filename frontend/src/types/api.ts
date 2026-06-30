@@ -16,8 +16,11 @@ export interface PageParams {
 export interface PageResult<T> {
   total: number
   list: T[]
+  records: T[]
   pageNum: number
   pageSize: number
+  page?: number
+  size?: number
 }
 
 // ---- 登录 ----
@@ -100,6 +103,7 @@ export interface CategoryTreeNode {
   name: string
   icon: string
   sortOrder: number
+  status?: number
   children?: CategoryTreeNode[]
 }
 
@@ -128,6 +132,11 @@ export interface ShelfItemVo {
   userId: number
   nickname: string
   avatar: string
+  userName?: string
+  userAvatar?: string
+  coverImage?: string
+  tagName?: string
+  distance?: number
   trustScore: number
   skillTagName: string
   title: string
@@ -146,6 +155,7 @@ export interface ShelfDetailVo extends ShelfItemVo {
 
 export interface TimeSlotVo {
   id: number
+  date?: string
   dayOfWeek: number
   startTime: string
   endTime: string
@@ -159,10 +169,18 @@ export interface DemandItemVo {
   userId: number
   nickname: string
   avatar: string
+  userName?: string
+  userAvatar?: string
+  tagName?: string
+  campus?: string
+  building?: string
+  distance?: number
+  description?: string
+  isUrgent?: boolean
   skillTagName: string
   title: string
   pointReward: number
-  deadline: string
+  deadline: string | null
   locationType: number
   demandType: number
   demandTypeDesc: string
@@ -215,13 +233,21 @@ export const OrderStatusColor: Record<OrderStatus, string> = {
 export interface OrderItemVo {
   id: number
   orderNo: string
+  buyerId?: number
+  buyerNickname?: string
+  sellerId?: number
+  sellerNickname?: string
   title: string
-  skillTagName: string
+  skillTagName?: string
   pointAmount: number
-  status: OrderStatus
+  status: OrderStatus | number
   statusDesc: string
-  counterpartNickname: string
-  counterpartAvatar: string
+  counterpartNickname?: string
+  counterpartAvatar?: string
+  buyerName?: string
+  buyerAvatar?: string
+  sellerName?: string
+  sellerAvatar?: string
   createTime: string
 }
 
@@ -265,6 +291,7 @@ export interface PointBalanceVo {
   available: number
   frozen: number
   total: number
+  balance: number
 }
 
 export interface PointTransVo {
@@ -317,11 +344,15 @@ export interface GuaranteePoolVo {
 export interface ReviewVo {
   id: number
   orderId: number
+  orderTitle?: string
   rating: number
   content: string
   images: string[]
   isAnonymous: boolean
   reviewerId: number
+  revieweeId?: number
+  reviewerName?: string
+  revieweeName?: string
   reviewerNickname: string
   reviewerAvatar: string
   createTime: string
@@ -335,6 +366,7 @@ export interface ViolationVo {
   type: number
   typeDesc: string
   reason: string
+  description?: string
   evidence: string[]
   status: number
   statusDesc: string
@@ -392,23 +424,35 @@ export interface ChatMessageVo {
 // ---- 统计 ----
 
 export interface PersonalOverviewVo {
-  totalOrders: number
+  totalOrders?: number
   completedOrders: number
-  totalIncome: number
-  totalExpense: number
-  trustScore: number
-  skillCount: number
-  reviewCount: number
+  totalIncome?: number
+  totalExpense?: number
+  trustScore?: number
+  skillCount?: number
+  reviewCount?: number
+  publishedSkills?: number
+  publishedDemands?: number
+  takenOrders: number
+  averageRating?: number
+  totalSkills?: number
+  orderCompletionRate?: number
+  totalPointsEarned?: number
+  totalPointsSpent?: number
 }
 
 export interface TrendItem {
   date: string
   value: number
+  newUsers?: number
+  newOrders?: number
+  completedOrders?: number
 }
 
 export interface SkillHeatItem {
   skillTagId: number
   skillTagName: string
+  tagName?: string
   shelfCount: number
   demandCount: number
   orderCount: number
@@ -454,14 +498,21 @@ export interface OrderAdminVo {
 export interface AdminOverviewVo {
   totalUsers: number
   totalOrders: number
+  completedOrders?: number
   totalShelves: number
+  totalSkills?: number
   totalDemands: number
   todayNewUsers: number
   todayNewOrders: number
+  orderCompletionRate?: number
+  totalPointsInCirculation?: number
 }
 
 export interface DailyTrendItem {
   date: string
+  newUsers?: number
+  newOrders?: number
+  completedOrders?: number
   newUserCount: number
   activeUserCount: number
   newOrderCount: number
@@ -495,4 +546,43 @@ export interface CampusAuthAdminVo {
   statusDesc: string
   reviewRemark: string | null
   createTime: string
+}
+
+// ---- 兼容别名：前端旧页面逐步迁移到后端VO命名期间使用 ----
+export type SkillShelf = ShelfItemVo
+export type Demand = DemandItemVo
+export type Order = OrderItemVo
+export type User = UserProfileVo
+export type SkillCategory = CategoryTreeNode
+export type SkillTag = SkillTagVo
+export type TimeSlot = TimeSlotVo
+export type Conversation = ChatSessionVo
+export type ChatMessage = ChatMessageVo
+export type Violation = ViolationVo
+export type Appeal = AppealVo
+export type OverviewStat = PersonalOverviewVo
+export type SkillHeatItemItem = SkillHeatItem
+export type PointTransactionType = number
+export type TrustLevel = '新人' | '靠谱' | '金牌' | string
+
+export const ViolationTypeMap: Record<number, string> = {
+  1: '虚假服务',
+  2: '态度恶劣',
+  3: '违规交易',
+  4: '其他',
+}
+
+export type ViolationType = keyof typeof ViolationTypeMap
+
+export interface DemandForm {
+  skillTagId: number | null
+  title: string
+  description: string
+  pointReward: number
+  deadline: string | null
+  locationType: number
+  isUrgent?: boolean
+  demandType?: number
+  longitude?: number
+  latitude?: number
 }

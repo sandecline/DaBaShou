@@ -1,8 +1,9 @@
 ﻿import request from '@/utils/request'
-import type { UserAdminVo, OrderAdminVo, AdminOverviewVo, DailyTrendItem, UserActiveItem, TrustDistributionItem, CampusAuthAdminVo, PageResult, PageParams } from '@/types/api'
+import type { UserAdminVo, OrderAdminVo, AdminOverviewVo, DailyTrendItem, UserActiveItem, TrustDistributionItem, CampusAuthAdminVo, ViolationVo, AppealVo, ReviewVo, PageResult, PageParams } from '@/types/api'
+import { normalizePageParams } from './_params'
 
 export function getAdminUserList(params: PageParams & { keyword?: string; status?: number }): Promise<PageResult<UserAdminVo>> {
-  return request.get('/admin/v1/users', params)
+  return request.get('/admin/v1/users', normalizePageParams(params))
 }
 
 export function getAdminUserDetail(id: number): Promise<UserAdminVo> {
@@ -18,7 +19,7 @@ export function resetUserPassword(userId: number): Promise<{ newPassword: string
 }
 
 export function getAdminOrderList(params: PageParams & { keyword?: string; status?: number }): Promise<PageResult<OrderAdminVo>> {
-  return request.get('/admin/v1/orders', params)
+  return request.get('/admin/v1/orders', normalizePageParams(params))
 }
 
 export function getAdminOrderDetail(id: number): Promise<OrderAdminVo> {
@@ -38,7 +39,7 @@ export function adminHandleAppeal(id: number, data: { approved: boolean; reason:
 }
 
 export function getAdminCampusAuths(params: PageParams & { status?: number }): Promise<PageResult<CampusAuthAdminVo>> {
-  return request.get('/admin/v1/campus-auths', params)
+  return request.get('/admin/v1/campus-auths', normalizePageParams(params))
 }
 
 export function reviewCampusAuth(id: number, data: { approved: boolean; reason?: string }): Promise<null> {
@@ -66,11 +67,11 @@ export function exportAdminData(type: string): Promise<Blob> {
 }
 
 export function getAdminViolations(params: PageParams): Promise<PageResult<ViolationVo>> {
-  return request.get('/admin/v1/violations', params)
+  return request.get('/admin/v1/violations', normalizePageParams(params))
 }
 
 export function getAdminAppeals(params: PageParams): Promise<PageResult<AppealVo>> {
-  return request.get('/admin/v1/appeals', params)
+  return request.get('/admin/v1/appeals', normalizePageParams(params))
 }
 
 export function getSystemConfig(): Promise<Record<string, any>> {
@@ -82,7 +83,7 @@ export function updateSystemConfig(config: Record<string, any>): Promise<null> {
 }
 
 export function getAdminReviews(params: PageParams): Promise<PageResult<ReviewVo>> {
-  return request.get('/admin/v1/reviews', params)
+  return request.get('/admin/v1/reviews', normalizePageParams(params))
 }
 
 export function deleteReview(reviewId: number): Promise<null> {

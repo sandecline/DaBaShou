@@ -116,7 +116,8 @@ class OrderIntegrationTest {
     @DisplayName("4. 创建订单（从货架购买）")
     void createOrderFromShelf() throws Exception {
         Map<String, Object> body = new HashMap<>();
-        body.put("shelfId", shelfId);
+        // 购买种子数据中李四发布的货架，避免买家购买自己刚发布的服务。
+        body.put("shelfId", 3L);
         body.put("idempotentToken", "test-integration-" + System.currentTimeMillis());
 
         MvcResult result = mockMvc.perform(post("/api/v1/orders/from-shelf")

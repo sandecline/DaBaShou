@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getOrderList } from '@/api/order'
+import { getMyOrders, getMyTakenOrders } from '@/api/order'
 import OrderCard from '@/components/common/OrderCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'

@@ -109,14 +109,14 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { publishDemand } from '@/api/demand'
 import { getTags } from '@/api/skill'
-import type { SkillTag, DemandForm } from '@/types/api'
+import type { SkillTagVo, DemandForm } from '@/types/api'
 
 const router = useRouter()
 const formRef = ref()
 const submitting = ref(false)
 const tags = ref<SkillTagVo[]>([])
 
-const form = reactive({
+const form = reactive<DemandForm>({
   skillTagId: null,
   title: '',
   description: '',

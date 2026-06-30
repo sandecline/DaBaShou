@@ -1,17 +1,21 @@
 ﻿import request from '@/utils/request'
 import type { OrderItemVo, OrderDetailVo, VerifyCodeVo, PayResultVo, PageResult, PageParams } from '@/types/api'
+import { normalizePageParams } from './_params'
 
-export function createOrderFromShelf(data: { skillShelfId: number; timeSlotId?: number; remark?: string }): Promise<number> {
+export function createOrderFromShelf(data: { skillShelfId?: number; shelfId?: number; timeSlotId?: number; remark?: string }): Promise<number> {
   return request.post('/v1/order/from-shelf', data)
 }
 
-export function createOrderFromDemand(data: { demandId: number; sellerId: number; remark?: string }): Promise<number> {
+export function createOrderFromDemand(data: { demandId: number; sellerId?: number; remark?: string }): Promise<number> {
   return request.post('/v1/order/from-demand', data)
 }
 
 export function getOrderList(params: { role?: 'buyer' | 'seller'; status?: number; pageNum?: number; pageSize?: number }): Promise<PageResult<OrderItemVo>> {
-  return request.get('/v1/order', params)
+  return request.get('/v1/order', normalizePageParams(params))
 }
+
+export const getMyOrders = (params?: PageParams): Promise<PageResult<OrderItemVo>> => getOrderList({ ...params, role: 'buyer' })
+export const getMyTakenOrders = (params?: PageParams): Promise<PageResult<OrderItemVo>> => getOrderList({ ...params, role: 'seller' })
 
 export function getOrderDetail(id: number): Promise<OrderDetailVo> {
   return request.get('/v1/order/' + id)

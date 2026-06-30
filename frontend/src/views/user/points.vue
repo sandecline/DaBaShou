@@ -80,7 +80,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { getBalance, getTransactions } from '@/api/point'
 import { formatDateTime, formatPoints } from '@/utils/format'
 import { PointTransactionTypeMap } from '@/types/api'
-import type { PointTransVo } from '@/types/api'
+import type { PointTransVo, PointTransactionType } from '@/types/api'
 
 const balance = reactive({ available: 0, frozen: 0, total: 0 })
 const transactions = ref<PointTransVo[]>([])
@@ -128,7 +128,7 @@ function changeTxPage(p: number) {
   fetchTransactions()
 }
 
-function txTypeTag(type: number): 'success' | 'danger' | 'warning' | 'info' | '' {
+function txTypeTag(type: number): 'success' | 'danger' | 'warning' | 'info' | undefined {
   if ([1, 4, 5].includes(type)) return 'success'
   if ([2, 3].includes(type)) return 'warning'
   if (type === 6) return 'danger'

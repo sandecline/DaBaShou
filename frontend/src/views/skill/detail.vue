@@ -136,7 +136,7 @@ import { formatDateTime } from '@/utils/format'
 import TrustBadge from '@/components/common/TrustBadge.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { ShelfDetailVo, TimeSlotVo } from '@/types/api'
+import type { ShelfDetailVo, TimeSlot } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()

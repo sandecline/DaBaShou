@@ -48,7 +48,7 @@ import { ElMessage } from 'element-plus'
 import { getOrderDetail, verifyOrder, confirmOrder } from '@/api/order'
 import { useUserStore } from '@/stores/user'
 import VerifyCode from '@/components/common/VerifyCode.vue'
-import type { OrderItemVo } from '@/types/api'
+import type { OrderDetailVo } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()

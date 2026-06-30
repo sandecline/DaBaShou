@@ -30,13 +30,13 @@ export function formatPoints(amount: number): string {
 }
 
 /** 获取订单状态文本 */
-export function getOrderStatusText(status: OrderStatus): string {
-  return OrderStatusMap[status] || '未知'
+export function getOrderStatusText(status: OrderStatus | number): string {
+  return OrderStatusMap[status as OrderStatus] || '未知'
 }
 
 /** 获取订单状态颜色 */
-export function getOrderStatusColor(status: OrderStatus): string {
-  return OrderStatusColor[status] || '#909399'
+export function getOrderStatusColor(status: OrderStatus | number): string {
+  return OrderStatusColor[status as OrderStatus] || '#909399'
 }
 
 /** 根据信任分获取等级 */

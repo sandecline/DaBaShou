@@ -39,7 +39,7 @@ import { getAdminOverview, getAdminDailyTrend, getAdminUserActive, getAdminTrust
 import { getSkillHeat } from '@/api/stat'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import * as echarts from 'echarts'
-import type { OverviewStat, TrendItem, SkillHeatItem } from '@/types/api'
+import type { AdminOverviewVo, DailyTrendItem, SkillHeatItem } from '@/types/api'
 
 const adminMenu = [
   { path: '/admin/users', title: '用户管理', icon: 'User' },
@@ -63,9 +63,9 @@ const statCards = ref([
 
 onMounted(async () => {
   const [overview, dailyData, heatData] = await Promise.all([
-    getAdminOverview().catch(() => null as OverviewStat | null),
-    getAdminDailyTrend(30).catch(() => [] as TrendItem[]),
-    getSkillHeat().catch(() => [] as SkillHeatItemItem[]),
+    getAdminOverview().catch(() => null as AdminOverviewVo | null),
+    getAdminDailyTrend(30).catch(() => [] as DailyTrendItem[]),
+    getSkillHeat().catch(() => [] as SkillHeatItem[]),
   ])
 
   if (overview) {

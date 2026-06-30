@@ -69,7 +69,7 @@ import TimeSlotPicker from '@/components/common/TimeSlotPicker.vue'
 import TrustBadge from '@/components/common/TrustBadge.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, User } from '@/types/api'
+import type { ShelfItemVo, UserProfileVo } from '@/types/api'
 
 const route = useRoute()
 const userStore = useUserStore()

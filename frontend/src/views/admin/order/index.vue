@@ -41,12 +41,12 @@
             </el-table-column>
             <el-table-column label="操作" width="160" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" @click="showDetail(row)">详情</el-button>
+                <el-button size="small" @click="showDetail(row as OrderItemVo)">详情</el-button>
                 <el-button
                   v-if="row.status === 7"
                   size="small"
                   type="warning"
-                  @click="handleDispute(row)"
+                  @click="handleDispute(row as OrderItemVo)"
                 >
                   处理争议
                 </el-button>
@@ -110,7 +110,7 @@ const statusFilter = ref<number | undefined>(undefined)
 
 // Dispute
 const disputeDialog = ref(false)
-const disputeOrder = ref<OrderDetailVo | null>(null)
+const disputeOrder = ref<OrderItemVo | null>(null)
 const disputeAction = ref<'complete' | 'refund'>('complete')
 const disputing = ref(false)
 
@@ -135,14 +135,14 @@ async function fetchData() {
 function search() { page.value = 1; fetchData() }
 function changePage(p: number) { page.value = p; fetchData() }
 
-function showDetail(order: Order) {
+function showDetail(order: OrderItemVo) {
   ElMessageBox.alert(
     `订单号：${order.orderNo}\n标题：${order.title}\n金额：${order.pointAmount}积分\n状态：${getOrderStatusText(order.status)}`,
     '订单详情',
   )
 }
 
-function handleDispute(order: Order) {
+function handleDispute(order: OrderItemVo) {
   disputeOrder.value = order
   disputeAction.value = 'complete'
   disputeDialog.value = true

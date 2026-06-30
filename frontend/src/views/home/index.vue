@@ -101,7 +101,7 @@ import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, Demand, OverviewStat, SkillCategory } from '@/types/api'
+import type { SkillShelf, Demand, OverviewStat, SkillCategory, ShelfItemVo, DemandItemVo } from '@/types/api'
 
 const hotSkills = ref<ShelfItemVo[]>([])
 const latestDemands = ref<DemandItemVo[]>([])
@@ -156,7 +156,7 @@ onMounted(async () => {
       stats.value = [
         { label: '技能服务', value: String(overview.totalSkills) },
         { label: '完成订单', value: String(overview.completedOrders) },
-        { label: '好评率', value: `${Math.round(overview.orderCompletionRate * 100)}%` },
+        { label: '好评率', value: `${Math.round((overview.orderCompletionRate ?? 0) * 100)}%` },
       ]
     }
 

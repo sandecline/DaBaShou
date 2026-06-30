@@ -54,8 +54,9 @@ class SecurityIntegrationTest {
     void registerShouldBePublic() throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType("application/json")
-                        .content("{\"username\":\"testuser\"}"))
-                .andExpect(status().isOk());
+                        .content("{\"username\":\"testuser\",\"password\":\"123456\",\"nickname\":\"测试用户\",\"phone\":\"13900000001\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
     }
 
     @Test

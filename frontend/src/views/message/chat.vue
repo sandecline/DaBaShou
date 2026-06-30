@@ -55,7 +55,7 @@ import { useUserStore } from '@/stores/user'
 import { fromNow } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { ChatMessage } from '@/types/api'
+import type { ChatMessageVo } from '@/types/api'
 
 const props = defineProps<{
   targetUserId: number

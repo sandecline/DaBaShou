@@ -81,7 +81,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMyViolations, submitAppeal, getMyAppeals } from '@/api/credit'
 import { formatDateTime } from '@/utils/format'
-import type { Violation, Appeal } from '@/types/api'
+import { ViolationTypeMap } from '@/types/api'
+import type { ViolationVo, AppealVo } from '@/types/api'
 
 const formRef = ref()
 const submitting = ref(false)

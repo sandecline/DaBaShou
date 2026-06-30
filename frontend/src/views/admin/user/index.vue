@@ -48,11 +48,11 @@
             </el-table-column>
             <el-table-column label="操作" width="160" fixed="right">
               <template #default="{ row }">
-                <el-button size="small" @click="showDetail(row)">详情</el-button>
+                <el-button size="small" @click="showDetail(row as UserAdminVo)">详情</el-button>
                 <el-button
                   size="small"
                   :type="row.status === 1 ? 'danger' : 'success'"
-                  @click="toggleStatus(row)"
+                  @click="toggleStatus(row as UserAdminVo)"
                 >
                   {{ row.status === 1 ? '禁用' : '启用' }}
                 </el-button>
@@ -82,7 +82,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAdminUserList, updateUserStatus } from '@/api/admin'
 import { formatDateTime } from '@/utils/format'
 import Sidebar from '@/components/layout/Sidebar.vue'
-import type { UserProfileVo } from '@/types/api'
+import type { UserAdminVo } from '@/types/api'
 
 const adminMenu = [
   { path: '/admin/users', title: '用户管理', icon: 'User' },
@@ -121,14 +121,14 @@ async function fetchData() {
 function search() { page.value = 1; fetchData() }
 function changePage(p: number) { page.value = p; fetchData() }
 
-function showDetail(user: User) {
+function showDetail(user: UserAdminVo) {
   ElMessageBox.alert(
     `用户名：${user.username}\n昵称：${user.nickname}\n积分：${user.pointBalance}\n信任分：${user.trustScore}\n校区：${user.campus || '-'}`,
     '用户详情',
   )
 }
 
-async function toggleStatus(user: User) {
+async function toggleStatus(user: UserAdminVo) {
   const newStatus = user.status === 1 ? 0 : 1
   try {
     await updateUserStatus(user.id, newStatus as 0 | 1)

@@ -5,13 +5,16 @@
 <script setup lang="ts">
 import AppLayout from '@/components/layout/AppLayout.vue'
 import { useMessageStore } from '@/stores/message'
+import { isLoggedIn } from '@/utils/auth'
 import { onMounted } from 'vue'
 
 const messageStore = useMessageStore()
 
 onMounted(() => {
-  // 初始化未读消息数
-  messageStore.fetchUnreadCount()
+  // 只有登录后才初始化未读消息，避免公开页面触发未授权提示。
+  if (isLoggedIn()) {
+    messageStore.fetchUnreadCount()
+  }
 })
 </script>
 

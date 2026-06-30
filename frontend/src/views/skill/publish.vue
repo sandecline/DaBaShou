@@ -118,7 +118,7 @@ import { ElMessage } from 'element-plus'
 import { publishShelf } from '@/api/shelf'
 import { getCategoryTree, getTags } from '@/api/skill'
 import TimeSlotPicker from '@/components/common/TimeSlotPicker.vue'
-import type { CategoryTreeNode, SkillTagVo } from '@/types/api'
+import type { SkillTagVo } from '@/types/api'
 
 const router = useRouter()
 const isEdit = ref(false)
@@ -128,7 +128,15 @@ const submitting = ref(false)
 const cascaderValue = ref<number | null>(null)
 const cascaderOptions = ref<Array<{ id: number; name: string; children: Array<{ id: number; name: string }> }>>([])
 
-const form = reactive({
+const form = reactive<{
+  skillTagId: number | null
+  title: string
+  description: string
+  pointPrice: number
+  durationMinutes: number
+  locationType: number
+  timeSlots: Array<{ date: string; startTime: string; endTime: string }>
+}>({
   skillTagId: null,
   title: '',
   description: '',
@@ -153,8 +161,9 @@ const rules = {
   locationType: [{ required: true, message: '请选择服务方式', trigger: 'change' }],
 }
 
-function handleCascaderChange(value: number) {
-  form.skillTagId = value
+function handleCascaderChange(value: unknown) {
+  const selected = Array.isArray(value) ? value[value.length - 1] : value
+  form.skillTagId = selected == null ? null : Number(selected)
 }
 
 async function handleSubmit() {

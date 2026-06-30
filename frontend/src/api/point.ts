@@ -1,12 +1,13 @@
 ﻿import request from '@/utils/request'
 import type { PointBalanceVo, PointTransVo, PointStatsVo, SignInResultVo, SignInStatusVo, GuaranteePoolVo, PageResult, PageParams } from '@/types/api'
+import { normalizePageParams } from './_params'
 
 export function getBalance(): Promise<PointBalanceVo> {
   return request.get('/v1/points/balance')
 }
 
 export function getTransactions(params: PageParams & { type?: number; orderId?: number; startDate?: string; endDate?: string }): Promise<PageResult<PointTransVo>> {
-  return request.get('/v1/points/transactions', params)
+  return request.get('/v1/points/transactions', normalizePageParams(params))
 }
 
 export function getTransactionDetail(id: number): Promise<PointTransVo> {

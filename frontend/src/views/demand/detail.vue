@@ -97,7 +97,7 @@ import { createOrderFromDemand } from '@/api/order'
 import { formatDateTime } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { DemandItemVo } from '@/types/api'
+import type { Demand } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()

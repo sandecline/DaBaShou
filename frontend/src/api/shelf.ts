@@ -1,8 +1,9 @@
 ﻿import request from '@/utils/request'
 import type { ShelfItemVo, ShelfDetailVo, TimeSlotVo, PageResult, PageParams } from '@/types/api'
+import { normalizePageParams } from './_params'
 
 export function publishShelf(data: {
-  skillTagId: number; title: string; description?: string;
+  skillTagId: number | null; title: string; description?: string;
   pointPrice: number; durationMinutes: number; locationType: number
 }): Promise<number> {
   return request.post('/v1/shelves', data)
@@ -34,17 +35,19 @@ export function getShelfDetail(id: number): Promise<ShelfDetailVo> {
 export function searchShelves(params: {
   keyword?: string; categoryId?: number; skillTagId?: number;
   locationType?: number; sortBy?: string; longitude?: number;
-  latitude?: number; pageNum?: number; pageSize?: number
+  latitude?: number; pageNum?: number; pageSize?: number; page?: number; size?: number; sort?: string
 }): Promise<PageResult<ShelfItemVo>> {
-  return request.get('/v1/shelves', params)
+  return request.get('/v1/shelves', normalizePageParams(params))
 }
 
+export const getShelfList = searchShelves
+
 export function getMyShelves(params?: PageParams): Promise<PageResult<ShelfItemVo>> {
-  return request.get('/v1/shelves/mine', params)
+  return request.get('/v1/shelves/mine', normalizePageParams(params))
 }
 
 export function getUserShelves(userId: number, params?: PageParams): Promise<PageResult<ShelfItemVo>> {
-  return request.get('/v1/users/' + userId + '/shelves', params)
+  return request.get('/v1/users/' + userId + '/shelves', normalizePageParams(params))
 }
 
 export function setTimeSlots(shelfId: number, slots: { dayOfWeek: number; startTime: string; endTime: string }[]): Promise<null> {

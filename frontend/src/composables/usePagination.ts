@@ -21,11 +21,12 @@ export function usePagination<T>(
     }
     loading.value = true
     try {
-      const result = await fetchFn({ page: page.value, size: size.value })
+      const result = await fetchFn({ pageNum: page.value, pageSize: size.value })
+      const records = result.records || result.list || []
       if (reset) {
-        list.value = result.records
+        list.value = records
       } else {
-        list.value.push(...result.records)
+        list.value.push(...records)
       }
       total.value = result.total
     } catch {
