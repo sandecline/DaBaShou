@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="demand-publish-page">
     <div class="page-container">
       <el-button text @click="$router.back()" class="back-btn">

@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, PageResult, ShelfItemVo, ShelfDetailVo, SkillShelfDto, TimeSlotVo, TimeSlotDto, ShelfSearchParams } from '@/types/api'
 import type { SkillShelf } from '@/types'
 

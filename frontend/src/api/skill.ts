@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, SkillCategoryVo, SkillTagVo, UserSkillVo, UserSkillDto } from '@/types/api'
 
 export function getCategoryTree(): Promise<ApiResponse<SkillCategoryVo[]>> {

@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, PageResult, OrderItemVo, OrderDetailVo, CreateOrderFromShelfDto, CreateOrderFromDemandDto, PayOrderDto } from '@/types/api'
 import { generateIdempotentToken } from '@/utils/request'
 

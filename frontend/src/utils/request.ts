@@ -1,10 +1,10 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import type { ApiResponse } from '@/types/api'
 
 const service: AxiosInstance = axios.create({
   baseURL: '/api',
-  timeout: 15000,
+  timeout: 5000,
   headers: { 'Content-Type': 'application/json' }
 })
 
@@ -26,7 +26,7 @@ service.interceptors.response.use(
     }
     const res = response.data as ApiResponse
     if (res.code === 200) {
-      return res as any
+      return res.data as any
     }
     if (res.code === 401) {
       localStorage.removeItem('dabashou_token')
@@ -50,4 +50,5 @@ export function generateIdempotentToken(): string {
 }
 
 export default service
+
 

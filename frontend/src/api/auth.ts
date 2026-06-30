@@ -52,3 +52,7 @@ export function getCampusAuth(): Promise<ApiResponse<any>> {
 export function getTrustScore(): Promise<ApiResponse<any>> {
   return request({ url: '/v1/user/trust-score', method: 'get' })
 }
+
+export function getUserById(userId: number): Promise<ApiResponse<UserProfileVo>> {
+  return request({ url: '/v1/users/' + userId, method: 'get' })
+}

@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, PageResult, DemandItemVo, DemandDto, DemandMatchVo } from '@/types/api'
 
 export function publishDemand(data: DemandDto): Promise<ApiResponse<number>> {

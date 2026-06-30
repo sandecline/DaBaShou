@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, PageResult, UserAdminVo, OrderAdminVo, ViolationAdminVo, AppealAdminVo, CampusAuthVo } from '@/types/api'
 
 export function getUsers(params?: {

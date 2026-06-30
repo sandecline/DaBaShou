@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, PersonalOverviewVo, TrendDataVo, SkillHeatVo, CategoryStatVo, PlatformOverviewVo, DailyStatVo, UserActiveStatVo, TrustDistributionVo } from '@/types/api'
 
 export function getPersonalOverview(): Promise<ApiResponse<PersonalOverviewVo>> {

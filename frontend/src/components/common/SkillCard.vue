@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="skill-card card-hover" @click="goDetail">
     <!-- 技能图片区域 -->
     <div class="card-image">

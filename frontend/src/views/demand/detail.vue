@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="demand-detail-page">
     <div class="page-container">
       <LoadingSpinner v-if="loading" text="加载中..." fullscreen />
@@ -118,7 +118,7 @@ async function fetchDetail() {
   loading.value = true
   try {
     const result = await getDemandDetail(Number(props.id))
-    demand.value = result.data
+    demand.value = result
   } catch {
     demand.value = null
   } finally {

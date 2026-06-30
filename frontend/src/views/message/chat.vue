@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="chat-view">
     <!-- 聊天头部 -->
     <div class="chat-header">
@@ -78,9 +78,9 @@ async function loadMessages() {
   try {
     // Try to create or get session
     const sessionResult = await createSession(props.targetUserId)
-    sessionId.value = sessionResult.data
-    const result = await getChatHistory(sessionResult.data, { pageNum: 1, pageSize: 50 })
-    messages.value = result.data.list.map((m: ChatMessageVo) => ({
+    sessionId.value = sessionResult
+    const result = await getChatHistory(sessionResult, { pageNum: 1, pageSize: 50 })
+    messages.value = result.list.map((m: ChatMessageVo) => ({
       ...m,
       isMine: m.senderId === userStore.user?.id,
     })).reverse()

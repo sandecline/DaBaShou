@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="home-page">
     <!-- 顶部 Banner -->
     <section class="home-banner gradient-primary">
@@ -139,15 +139,15 @@ onMounted(async () => {
     ])
 
     if (skillResult?.data) {
-      hotSkills.value = skillResult.data.list
+      hotSkills.value = skillResult.list
     }
 
     if (demandResult?.data) {
-      latestDemands.value = demandResult.data.list
+      latestDemands.value = demandResult.list
     }
 
     if (overviewResult?.data) {
-      const o = overviewResult.data
+      const o = overviewResult
       stats.value = [
         { label: '注册用户', value: String(o.totalUsers || 0) },
         { label: '技能服务', value: String(o.totalShelves || 0) },
@@ -158,7 +158,7 @@ onMounted(async () => {
 
     // 模拟通知
     if (latestDemands.value.length > 0) {
-      noticeText.value = `🙏 有 ${demandResult?.data?.total || latestDemands.value.length} 个新求助等你来接！`
+      noticeText.value = `🙏 有 ${demandResult?.total || latestDemands.value.length} 个新求助等你来接！`
     }
   } finally {
     skillLoading.value = false

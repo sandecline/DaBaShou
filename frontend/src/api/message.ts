@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, PageResult, NotificationVo, ChatSessionVo, ChatMessageVo } from '@/types/api'
 
 export function getNotifications(params?: {

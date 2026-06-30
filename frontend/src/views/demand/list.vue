@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="demand-list-page">
     <div class="page-container">
       <div class="list-toolbar">
@@ -90,8 +90,8 @@ async function fetchData() {
       status: statusFilter.value || undefined,
       sortBy: sortBy.value as 'time' | 'budget' | 'hot',
     })
-    list.value = result.data.list
-    total.value = result.data.total
+    list.value = result.list
+    total.value = result.total
   } catch {
     // handled
   } finally {

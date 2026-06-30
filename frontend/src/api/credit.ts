@@ -1,4 +1,4 @@
-﻿import request from '@/utils/request'
+import request from '@/utils/request'
 import type { ApiResponse, PageResult, ReviewVo, ReviewDto, ViolationVo, ViolationDto, AppealVo, AppealDto } from '@/types/api'
 
 export function submitReview(data: ReviewDto): Promise<ApiResponse<number>> {
