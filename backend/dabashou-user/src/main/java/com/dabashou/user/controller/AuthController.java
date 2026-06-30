@@ -31,12 +31,8 @@ public class AuthController {
      */
     @PostMapping("/register")
     public AjaxResult<Void> register(@Valid @RequestBody RegisterDto dto) {
-        try {
-            userService.register(dto);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        userService.register(dto);
+        return AjaxResult.ok();
     }
 
     /**
@@ -44,12 +40,8 @@ public class AuthController {
      */
     @PostMapping("/login")
     public AjaxResult<LoginVo> login(@Valid @RequestBody LoginDto dto) {
-        try {
-            LoginVo vo = userService.login(dto);
-            return AjaxResult.ok(vo);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        LoginVo vo = userService.login(dto);
+        return AjaxResult.ok(vo);
     }
 
     /**
@@ -59,7 +51,7 @@ public class AuthController {
     public AjaxResult<Void> sendSmsCode(@RequestBody Map<String, String> body) {
         String phone = body.get("phone");
         if (phone == null || phone.isBlank()) {
-            return AjaxResult.fail(ErrorCode.BAD_REQUEST, "手机号不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "手机号不能为空");
         }
         userService.sendSmsCode(phone);
         return AjaxResult.ok();
@@ -70,12 +62,8 @@ public class AuthController {
      */
     @PostMapping("/sms-login")
     public AjaxResult<LoginVo> smsLogin(@Valid @RequestBody SmsLoginDto dto) {
-        try {
-            LoginVo vo = userService.smsLogin(dto);
-            return AjaxResult.ok(vo);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        LoginVo vo = userService.smsLogin(dto);
+        return AjaxResult.ok(vo);
     }
 
     /**
@@ -85,13 +73,13 @@ public class AuthController {
     public AjaxResult<LoginVo> refresh(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
         if (refreshToken == null || refreshToken.isBlank()) {
-            return AjaxResult.fail(ErrorCode.BAD_REQUEST, "refreshToken不能为空");
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "refreshToken不能为空");
         }
         try {
             LoginVo vo = userService.refreshToken(refreshToken);
             return AjaxResult.ok(vo);
         } catch (Exception e) {
-            return AjaxResult.fail(ErrorCode.UNAUTHORIZED, "刷新令牌无效或已过期");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "刷新令牌无效或已过期");
         }
     }
 

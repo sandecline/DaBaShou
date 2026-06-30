@@ -96,6 +96,7 @@ import { searchShelves } from '@/api/shelf'
 import { searchDemands } from '@/api/demand'
 import { getPersonalOverview } from '@/api/stat'
 import { getCategoryTree } from '@/api/skill'
+import { isLoggedIn } from '@/utils/auth'
 import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -145,7 +146,7 @@ onMounted(async () => {
     const [skillResult, demandResult, overview] = await Promise.all([
       searchShelves({ page: 1, size: 8, sort: 'heat' }).catch(() => ({ records: [] as ShelfItemVo[], total: 0, page: 1, size: 8 })),
       searchDemands({ page: 1, size: 8 }).catch(() => ({ records: [] as DemandItemVo[], total: 0, page: 1, size: 8 })),
-      getPersonalOverview().catch(() => null as OverviewStat | null),
+      isLoggedIn() ? getPersonalOverview().catch(() => null as OverviewStat | null) : Promise.resolve(null),
     ])
 
     hotSkills.value = skillResult.records

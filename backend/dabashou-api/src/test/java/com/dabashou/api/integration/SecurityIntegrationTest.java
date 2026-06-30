@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest(classes = DabashouApplication.class)
 @AutoConfigureMockMvc
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 class SecurityIntegrationTest {
 
     @Autowired
@@ -26,7 +26,7 @@ class SecurityIntegrationTest {
     @DisplayName("未携带Token访问受保护接口 → 401")
     void shouldRejectWithoutToken() throws Exception {
         mockMvc.perform(get("/api/v1/user/profile"))
-                .andExpect(status().isOk())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401));
     }
 
@@ -35,7 +35,7 @@ class SecurityIntegrationTest {
     void shouldRejectWithInvalidToken() throws Exception {
         mockMvc.perform(get("/api/v1/user/profile")
                         .header("Authorization", "Bearer invalid-token-xxx"))
-                .andExpect(status().isOk())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401));
     }
 
@@ -70,8 +70,8 @@ class SecurityIntegrationTest {
     @DisplayName("管理员接口需 ADMIN 角色")
     void adminEndpointsShouldRequireRole() throws Exception {
         // 无Token访问 admin 接口
-        mockMvc.perform(get("/api/admin/v1/stats/overview"))
-                .andExpect(status().isOk())
+        mockMvc.perform(get("/api/v1/admin/stats/overview"))
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401));
     }
 }

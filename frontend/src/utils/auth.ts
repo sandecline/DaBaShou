@@ -1,8 +1,38 @@
 const TOKEN_KEY = 'dabashou_token'
 const USER_KEY = 'dabashou_user'
 
+function parseJwtPayload(token: string): Record<string, any> | null {
+  const [, payload] = token.split('.')
+  if (!payload) return null
+  try {
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const json = decodeURIComponent(
+      atob(normalized)
+        .split('')
+        .map(char => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join(''),
+    )
+    return JSON.parse(json)
+  } catch {
+    return null
+  }
+}
+
+export function isTokenExpired(token: string | null): boolean {
+  if (!token) return true
+  const payload = parseJwtPayload(token)
+  if (!payload?.exp) return false
+  return payload.exp * 1000 <= Date.now()
+}
+
 export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY)
+  const token = localStorage.getItem(TOKEN_KEY)
+  if (isTokenExpired(token)) {
+    removeToken()
+    removeUserInfo()
+    return null
+  }
+  return token
 }
 
 export function setToken(token: string): void {

@@ -7,6 +7,7 @@ import com.dabashou.common.enums.ErrorCode;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -54,6 +55,12 @@ public class SecurityConfig {
                     "/v3/api-docs/**",                   // OpenAPI
                     "/swagger-ui/**",                    // Swagger UI
                     "/webjars/**"                         // 静态资源
+                ).permitAll()
+                .requestMatchers(HttpMethod.GET,
+                    "/api/v1/skills/categories/**",       // 技能分类（公开）
+                    "/api/v1/skills/tags/**",             // 技能标签（公开）
+                    "/api/v1/shelves",                    // 货架列表（公开）
+                    "/api/v1/demands"                     // 需求看板（公开）
                 ).permitAll()
                 // 管理后台接口（需 ADMIN 角色）
                 .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasRole("ADMIN")

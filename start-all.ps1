@@ -2,7 +2,10 @@
 # DaBaShou Service Manager
 # Usage: .\start-all.ps1 [start|stop|restart|status]
 # ============================================================================
-param([string]$Action = "start")
+param(
+    [string]$Action = "start",
+    [switch]$NoPause
+)
 
 $ErrorActionPreference = "Continue"
 $ProjectRoot = $PSScriptRoot
@@ -11,20 +14,42 @@ New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 
 # ======================== Config ==============================
 
-$RedisPath = "C:\Redis"
-$RedisExe = "$RedisPath\redis-server.exe"
-$RedisCli = "$RedisPath\redis-cli.exe"
+$RedisCandidates = @(
+    "C:\Redis\redis-server.exe",
+    "C:\Program Files\Redis\redis-server.exe",
+    "C:\Program Files\Redis-x64\redis-server.exe"
+)
+$RedisExe = $null
+$RedisCli = $null
+
+function Resolve-Redis {
+    $redisFromPath = Get-Command redis-server.exe -EA 0
+    if ($redisFromPath) {
+        $script:RedisExe = $redisFromPath.Source
+    } else {
+        $script:RedisExe = $RedisCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+    }
+
+    if ($script:RedisExe) {
+        $script:RedisCli = Join-Path (Split-Path -Parent $script:RedisExe) "redis-cli.exe"
+    }
+}
 
 function Start-Redis {
-    if (-not (Test-Path $RedisExe)) {
-        Write-Warning "Redis not found: $RedisExe"
+    Resolve-Redis
+    if (-not $RedisExe -or -not (Test-Path $RedisExe)) {
+        Write-Warning "Redis not found. Please install Redis, add redis-server.exe to PATH, or start Redis on port 6379 manually."
+        Write-Warning "Checked: $($RedisCandidates -join ', ')"
         return $false
     }
     if (Check-Tcp 6379) {
         Write-Host "(already running)" -NoNewline -ForegroundColor DarkGray
         return $true
     }
-    Start-Process -FilePath $RedisExe -WindowStyle Hidden
+    Start-Process -FilePath $RedisExe `
+        -WindowStyle Hidden `
+        -RedirectStandardOutput "$LogDir\redis.log" `
+        -RedirectStandardError "$LogDir\redis-error.log"
     return $true
 }
 
@@ -186,6 +211,10 @@ function Invoke-Start {
         foreach ($a in $alerts) {
             Write-Host "      - $($a.N):" -ForegroundColor Red
             Write-Host "        Log: $($a.L)" -ForegroundColor DarkGray
+        }
+        if (-not $NoPause) {
+            Write-Host ""
+            Read-Host "  Press Enter to exit" | Out-Null
         }
     }
     Write-Host ""

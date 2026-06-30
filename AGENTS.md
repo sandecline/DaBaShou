@@ -79,6 +79,16 @@ backend/
 - **向后兼容**：新版本接口必须向后兼容
 - **废弃接口标记**：废弃的接口必须标记为`@Deprecated`
 
+### 3.4 前后端API文件分工约束
+- **后端API实现归属**：后端接口入口必须放在对应业务模块的`controller`包中，DTO/VO放在对应模块的`dto`/`vo`包中；`dabashou-api`仅作为聚合启动、安全配置、全局异常、网关类配置模块，不承载业务Controller。
+- **后端API契约目录**：后端接口契约说明统一维护在`docs/api/`，按模块拆分为`auth-user.md`、`skill.md`、`shelf.md`、`demand.md`、`order.md`、`point.md`、`message.md`、`credit.md`、`stat.md`、`admin.md`等文件。
+- **前端API调用目录**：前端接口调用文件统一维护在`frontend/src/api/`，必须按模块拆分为`auth.ts`、`user.ts`、`skill.ts`、`shelf.ts`、`demand.ts`、`order.ts`、`point.ts`、`message.ts`、`credit.ts`、`stat.ts`、`admin.ts`等文件。
+- **前端类型目录**：前端接口类型统一维护在`frontend/src/types/api.ts`或`frontend/src/types/`下的模块化类型文件，禁止在页面组件中重复定义后端响应类型。
+- **接口变更同步**：任何接口路径、方法、参数、响应字段、错误码或鉴权要求变更，必须同步修改后端Controller/DTO/VO、`docs/api/`文档、`frontend/src/api/`调用文件和前端类型定义。
+- **禁止散落接口**：禁止在Vue页面、组件或组合式函数中直接硬编码后端URL；禁止在后端非Controller层声明HTTP路由；禁止新增未归档到模块API文件的临时接口。
+- **命名一致性**：前端API方法名、请求参数名、响应类型名必须与后端DTO/VO语义一致，例如分页统一使用`pageNum`、`pageSize`，不得混用`page`、`size`。
+- **评审要求**：涉及接口的PR必须说明影响的模块、接口文件、鉴权规则、请求/响应示例和兼容性处理。
+
 ## 四、业务逻辑约束
 
 ### 4.1 订单状态机约束
@@ -232,5 +242,5 @@ backend/
 - 紧急联系：[待填写]
 
 ---
-**最后更新时间**：2026年6月28日
-**文档版本**：v1.0.0
+**最后更新时间**：2026年6月30日
+**文档版本**：v1.1.0

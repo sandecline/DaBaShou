@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest(classes = DabashouApplication.class)
 @AutoConfigureMockMvc
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class OrderIntegrationTest {
 
@@ -154,8 +154,8 @@ class OrderIntegrationTest {
     void rejectInvalidTransition() throws Exception {
         // 尝试跳过服务直接确认（状态2→5非法）
         mockMvc.perform(post("/api/v1/orders/" + orderId + "/confirm")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(409));
     }
 
@@ -165,8 +165,8 @@ class OrderIntegrationTest {
     void rejectNonSellerStartService() throws Exception {
         // zhangsan 是买家，不是卖家
         mockMvc.perform(put("/api/v1/orders/" + orderId + "/start")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
 
@@ -175,8 +175,8 @@ class OrderIntegrationTest {
     @DisplayName("8. 验证订单不存在返回404")
     void rejectNonExistentOrder() throws Exception {
         mockMvc.perform(get("/api/v1/orders/99999/detail")
-                        .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
+                .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404));
     }
 }

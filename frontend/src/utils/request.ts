@@ -13,6 +13,7 @@ const instance: AxiosInstance = axios.create({
 instance.interceptors.request.use(
   (config) => {
     const token = getToken()
+    ;(config as any).__hadAuthToken = !!token
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -20,6 +21,23 @@ instance.interceptors.request.use(
   },
   (error) => Promise.reject(error),
 )
+
+function redirectToLogin() {
+  const current = window.location.pathname + window.location.search
+  if (window.location.pathname !== '/login') {
+    window.location.replace(`/login?redirect=${encodeURIComponent(current)}`)
+  }
+}
+
+function handleUnauthorized(hadAuthToken: boolean, msg?: string) {
+  if (hadAuthToken) {
+    ElMessage.error('登录已过期，请重新登录')
+    logout()
+    redirectToLogin()
+    return
+  }
+  ElMessage.error(msg || '请先登录')
+}
 
 // 响应拦截器
 instance.interceptors.response.use(
@@ -32,9 +50,7 @@ instance.interceptors.response.use(
 
     // token过期
     if (code === 401) {
-      ElMessage.error('登录已过期，请重新登录')
-      logout()
-      window.location.href = '/login'
+      handleUnauthorized(!!(response.config as any).__hadAuthToken, msg)
       return Promise.reject(new Error(msg))
     }
 
@@ -43,9 +59,7 @@ instance.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      ElMessage.error('登录已过期，请重新登录')
-      logout()
-      window.location.href = '/login'
+      handleUnauthorized(!!(error.config as any)?.__hadAuthToken, error.response?.data?.msg)
     } else if (error.response?.status === 403) {
       ElMessage.error('没有权限访问')
     } else if (error.response?.status === 500) {

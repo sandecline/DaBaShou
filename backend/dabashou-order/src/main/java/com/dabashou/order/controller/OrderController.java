@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @Tag(name = "订单管理", description = "订单创建、状态流转、支付、核销等")
 @RestController
-@RequestMapping("/api/v1/order")
+@RequestMapping({"/api/v1/orders", "/api/v1/order"})
 public class OrderController {
 
     private final OrderService orderService;
@@ -52,7 +52,7 @@ public class OrderController {
     }
 
     @Operation(summary = "订单详情")
-    @GetMapping("/{orderId}")
+    @GetMapping({"/{orderId}", "/{orderId}/detail"})
     public AjaxResult<OrderDetailVo> getOrderDetail(@PathVariable Long orderId) {
         Long userId = SecurityUtil.requireCurrentUserId();
         return AjaxResult.ok(orderService.getOrderDetail(userId, orderId));
@@ -69,8 +69,10 @@ public class OrderController {
     @PostMapping("/{orderId}/pay")
     public AjaxResult<PayResultVo> payOrder(
             @PathVariable Long orderId,
-            @RequestHeader("X-Idempotent-Token") String idempotentToken) {
+            @RequestHeader(value = "X-Idempotent-Token", required = false) String headerToken,
+            @RequestParam(value = "idempotentToken", required = false) String paramToken) {
         Long userId = SecurityUtil.requireCurrentUserId();
+        String idempotentToken = headerToken != null ? headerToken : paramToken;
         return AjaxResult.ok(orderService.payOrder(userId, orderId, idempotentToken));
     }
 
@@ -83,7 +85,7 @@ public class OrderController {
     }
 
     @Operation(summary = "开始服务(2→3)")
-    @PostMapping("/{orderId}/start")
+    @RequestMapping(value = "/{orderId}/start", method = {RequestMethod.POST, RequestMethod.PUT})
     public AjaxResult<Void> startService(@PathVariable Long orderId) {
         Long userId = SecurityUtil.requireCurrentUserId();
         orderService.startService(userId, orderId);

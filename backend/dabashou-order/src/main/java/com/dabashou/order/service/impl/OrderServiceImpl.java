@@ -16,6 +16,7 @@ import com.dabashou.point.service.PointService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -268,6 +269,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BusinessException(ErrorCode.CONFLICT, "订单状态不允许核销: " + OrderStatus.ofCode(order.getStatus()).getDesc());
         }
         String verifyCode = getVerifyCodeFromRedis(orderId);
+        if (verifyCode == null && order.getVerifyCode() != null
+                && order.getVerifyCodeExpire() != null
+                && order.getVerifyCodeExpire().isAfter(LocalDateTime.now())) {
+            verifyCode = order.getVerifyCode();
+        }
         if (verifyCode == null || !verifyCode.equals(dto.getCode())) {
             throw new BusinessException(ErrorCode.CONFLICT, "核销码无效或已过期");
         }
@@ -275,7 +281,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setServiceEndTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
-        redisTemplate.delete(ORDER_VERIFY_KEY_PREFIX + orderId);
+        try {
+            redisTemplate.delete(ORDER_VERIFY_KEY_PREFIX + orderId);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis不可用，跳过核销码缓存删除: {}", e.getMessage());
+        }
         log.info("订单核销: orderId={}", orderId);
     }
 
@@ -539,20 +549,34 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     private String getVerifyCodeFromRedis(Long orderId) {
-        return redisTemplate.opsForValue().get(ORDER_VERIFY_KEY_PREFIX + orderId);
+        try {
+            return redisTemplate.opsForValue().get(ORDER_VERIFY_KEY_PREFIX + orderId);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis不可用，读取核销码缓存失败: {}", e.getMessage());
+            return null;
+        }
     }
 
     private void setVerifyCodeToRedis(Long orderId, String code) {
-        redisTemplate.opsForValue().set(ORDER_VERIFY_KEY_PREFIX + orderId, code,
-                VERIFY_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+        try {
+            redisTemplate.opsForValue().set(ORDER_VERIFY_KEY_PREFIX + orderId, code,
+                    VERIFY_CODE_TTL_MINUTES, TimeUnit.MINUTES);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis不可用，跳过核销码缓存写入: {}", e.getMessage());
+        }
     }
 
     private boolean markIdempotent(String prefix, String token) {
         if (token == null || token.isBlank()) {
             return false;
         }
-        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(prefix + token, "1",
-                IDEM_TTL_MINUTES, TimeUnit.MINUTES));
+        try {
+            return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(prefix + token, "1",
+                    IDEM_TTL_MINUTES, TimeUnit.MINUTES));
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Redis不可用，跳过幂等缓存校验: {}", e.getMessage());
+            return true;
+        }
     }
 
     private String generateOrderNo() {
