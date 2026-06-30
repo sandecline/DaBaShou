@@ -48,6 +48,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/api/v1/auth/**",                  // 注册/登录
                     "/api/v1/files/download/**",         // 文件下载
+                    "/api/skill/**",                      // 技能分类/标签（公开）
                     "/ws/chat/**",                       // WebSocket 握手
                     "/doc.html",                         // Knife4j 文档
                     "/v3/api-docs/**",                   // OpenAPI

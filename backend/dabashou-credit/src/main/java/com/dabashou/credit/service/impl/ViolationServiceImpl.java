@@ -46,9 +46,11 @@ public class ViolationServiceImpl implements ViolationService {
         }
 
         // 构建 description，包含原因和证据
-        String description = dto.getReason();
+        final String desc;
         if (evidenceStr != null && !evidenceStr.isEmpty()) {
-            description = description + "\n[证据]:" + evidenceStr;
+            desc = dto.getReason() + "\n[证据]:" + evidenceStr;
+        } else {
+            desc = dto.getReason();
         }
 
         // 插入违规记录，reporter_id = 当前用户，status = 1（有效）
@@ -63,7 +65,7 @@ public class ViolationServiceImpl implements ViolationService {
                 ps.setNull(2, java.sql.Types.BIGINT);
             }
             ps.setString(3, dto.getType());
-            ps.setString(4, description);
+            ps.setString(4, desc);
             ps.setLong(5, userId);
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             ps.setTimestamp(6, now);

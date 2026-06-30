@@ -60,9 +60,11 @@ public class AppealServiceImpl implements AppealService {
         }
 
         // 处理证据
-        String evidenceFileIdStr = null;
+        final String evidenceFileId;
         if (dto.getEvidence() != null && dto.getEvidence().length > 0) {
-            evidenceFileIdStr = String.join(",", dto.getEvidence());
+            evidenceFileId = String.join(",", dto.getEvidence());
+        } else {
+            evidenceFileId = null;
         }
 
         // 插入申诉，status = 0（待审核）
@@ -73,7 +75,7 @@ public class AppealServiceImpl implements AppealService {
             ps.setLong(1, dto.getViolationId());
             ps.setLong(2, userId);
             ps.setString(3, dto.getReason());
-            ps.setString(4, evidenceFileIdStr);
+            ps.setString(4, evidenceFileId);
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
             ps.setTimestamp(5, now);
             ps.setTimestamp(6, now);

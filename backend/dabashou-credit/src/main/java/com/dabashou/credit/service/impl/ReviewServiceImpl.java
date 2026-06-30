@@ -71,12 +71,14 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         // 处理图片
-        String images = null;
+        final String imageUrls;
         if (dto.getImages() != null && dto.getImages().length > 0) {
-            images = String.join(",", dto.getImages());
+            imageUrls = String.join(",", dto.getImages());
+        } else {
+            imageUrls = null;
         }
 
-        int isAnonymous = Boolean.TRUE.equals(dto.getIsAnonymous()) ? 1 : 0;
+        final int isAnonymous = Boolean.TRUE.equals(dto.getIsAnonymous()) ? 1 : 0;
 
         // 插入评价
         String insertSql = "INSERT INTO dbs_review (order_id, reviewer_id, reviewee_id, rating, content, images, is_anonymous, create_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -88,7 +90,7 @@ public class ReviewServiceImpl implements ReviewService {
             ps.setLong(3, revieweeId);
             ps.setInt(4, dto.getRating());
             ps.setString(5, dto.getContent());
-            ps.setString(6, images);
+            ps.setString(6, imageUrls);
             ps.setInt(7, isAnonymous);
             ps.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
             return ps;

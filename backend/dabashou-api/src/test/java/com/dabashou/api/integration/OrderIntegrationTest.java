@@ -1,6 +1,6 @@
 package com.dabashou.api.integration;
 
-import com.dabashou.api.DaBaShouApplication;
+import com.dabashou.api.DabashouApplication;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * 依赖: 真实 MySQL + Flyway 迁移脚本 + 种子数据
  */
-@SpringBootTest(classes = DaBaShouApplication.class)
+@SpringBootTest(classes = DabashouApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

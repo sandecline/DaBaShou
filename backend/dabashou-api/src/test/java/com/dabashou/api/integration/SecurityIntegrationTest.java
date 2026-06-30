@@ -1,6 +1,6 @@
 package com.dabashou.api.integration;
 
-import com.dabashou.api.DaBaShouApplication;
+import com.dabashou.api.DabashouApplication;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * 安全与鉴权集成测试
  */
-@SpringBootTest(classes = DaBaShouApplication.class)
+@SpringBootTest(classes = DabashouApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("dev")
 class SecurityIntegrationTest {

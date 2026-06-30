@@ -73,7 +73,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
                 return false;
             }
             try {
-                Long userId = JwtUtil.parseUserId(token, jwtSecret);
+                Long userId = JwtUtil.getUserId(JwtUtil.parseToken(token, jwtSecret));
                 if (userId == null) {
                     log.warn("WebSocket 握手失败: token 无效或已过期");
                     return false;

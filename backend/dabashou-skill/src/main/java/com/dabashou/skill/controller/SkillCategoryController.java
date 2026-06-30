@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Tag(name = "技能分类", description = "分类树查询")
 @RestController
-@RequestMapping("/api/v1/skills/categories")
+@RequestMapping({"/api/v1/skills/categories", "/api/skill/categories"})
 public class SkillCategoryController {
 
     private final SkillCategoryService skillCategoryService;
@@ -28,6 +28,12 @@ public class SkillCategoryController {
     @Operation(summary = "获取分类树")
     @GetMapping("/tree")
     public AjaxResult<List<CategoryTreeVo>> getTree() {
+        return AjaxResult.ok(skillCategoryService.getTree());
+    }
+
+    @Operation(summary = "获取分类列表")
+    @GetMapping
+    public AjaxResult<List<CategoryTreeVo>> list() {
         return AjaxResult.ok(skillCategoryService.getTree());
     }
 }
