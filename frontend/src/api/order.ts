@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import type { ApiResponse, PageResult, OrderItemVo, OrderDetailVo, CreateOrderFromShelfDto, CreateOrderFromDemandDto, PayOrderDto } from '@/types/api'
 import { generateIdempotentToken } from '@/utils/request'
 
@@ -61,4 +61,20 @@ export function arbitrateOrder(id: number, result: string, reason: string, refun
 
 export function refundOrder(id: number, reason: string): Promise<ApiResponse<null>> {
   return request({ url: `/v1/order/${id}/refund`, method: 'post', data: { reason } })
+}
+
+export function createOrder(data: any): Promise<ApiResponse<number>> {
+  return request({ url: '/v1/orders', method: 'post', data, headers: { 'X-Idempotent-Token': generateIdempotentToken() } })
+}
+
+export function getMyOrders(params?: any): Promise<ApiResponse<any>> {
+  return request({ url: '/v1/orders', method: 'get', params })
+}
+
+export function getMyTakenOrders(params?: any): Promise<ApiResponse<any>> {
+  return request({ url: '/v1/orders', method: 'get', params })
+}
+
+export function confirmComplete(id: number): Promise<ApiResponse<null>> {
+  return request({ url: `/v1/orders/${id}/confirm`, method: 'post' })
 }

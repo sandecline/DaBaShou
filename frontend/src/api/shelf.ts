@@ -1,5 +1,6 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import type { ApiResponse, PageResult, ShelfItemVo, ShelfDetailVo, SkillShelfDto, TimeSlotVo, TimeSlotDto, ShelfSearchParams } from '@/types/api'
+import type { SkillShelf } from '@/types'
 
 export function publishShelf(data: SkillShelfDto): Promise<ApiResponse<number>> {
   return request({ url: '/v1/shelves', method: 'post', data })
@@ -14,6 +15,10 @@ export function getShelfDetail(id: number): Promise<ApiResponse<ShelfDetailVo>> 
 }
 
 export function searchShelves(params: ShelfSearchParams): Promise<ApiResponse<PageResult<ShelfItemVo>>> {
+  return request({ url: '/v1/shelves', method: 'get', params })
+}
+
+export function getShelfList(params: any): Promise<ApiResponse<any>> {
   return request({ url: '/v1/shelves', method: 'get', params })
 }
 
@@ -48,3 +53,17 @@ export function getTimeSlots(shelfId: number): Promise<ApiResponse<TimeSlotVo[]>
 export function deleteTimeSlot(shelfId: number, slotId: number): Promise<ApiResponse<null>> {
   return request({ url: `/v1/shelves/${shelfId}/timeslots/${slotId}`, method: 'delete' })
 }
+
+export function publishSkill(data: any): Promise<ApiResponse<number>> {
+  return request({ url: '/v1/shelves', method: 'post', data })
+}
+
+export function getMyShelfList(params?: any): Promise<ApiResponse<any>> {
+  return request({ url: '/v1/shelves/mine', method: 'get', params })
+}
+
+// Shim: createOrder used in skill/detail.vue
+export function createOrder(data?: any): any {
+  return request({ url: '/v1/orders/from-shelf', method: 'post', data })
+}
+

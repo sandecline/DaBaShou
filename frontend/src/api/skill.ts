@@ -1,12 +1,16 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import type { ApiResponse, SkillCategoryVo, SkillTagVo, UserSkillVo, UserSkillDto } from '@/types/api'
 
 export function getCategoryTree(): Promise<ApiResponse<SkillCategoryVo[]>> {
   return request({ url: '/v1/skills/categories/tree', method: 'get' })
 }
 
-export function getTags(categoryId: number): Promise<ApiResponse<SkillTagVo[]>> {
+export function getTags(categoryId?: number): Promise<ApiResponse<SkillTagVo[]>> {
   return request({ url: '/v1/skills/tags', method: 'get', params: { categoryId } })
+}
+
+export function getCategories(): Promise<ApiResponse<SkillCategoryVo[]>> {
+  return request({ url: '/v1/skills/categories/tree', method: 'get' })
 }
 
 export function getHotTags(limit = 20): Promise<ApiResponse<SkillTagVo[]>> {

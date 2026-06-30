@@ -1,26 +1,46 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { User } from '@/types'
 import { getToken, setToken, removeToken, setUserInfo, getUserInfo, removeUserInfo } from '@/utils/auth'
-import { login as loginAPI, getProfile } from '@/api/user'
+import { login as loginAPI, getProfile } from '@/api/auth'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string | null>(getToken())
-  const user = ref<User | null>(getUserInfo() as User | null)
+  const user = ref<any | null>(getUserInfo())
   const isLoggedIn = computed(() => !!token.value)
+  const loginReady = ref(false)
 
   async function login(username: string, password: string) {
-    const result = await loginAPI({ username, password })
-    token.value = result.token
-    user.value = result.userInfo
-    setToken(result.token)
-    setUserInfo(result.userInfo)
+    const res = await loginAPI({ username, password })
+    // response interceptor returns full {code, msg, data} wrapper
+    const result = res.data
+    const accessToken = result.accessToken
+    const userInfo = { id: result.userId, nickname: result.nickname, avatar: result.avatar }
+    token.value = accessToken
+    user.value = userInfo
+    setToken(accessToken)
+    setUserInfo(userInfo)
   }
 
   async function fetchProfile() {
-    const profile = await getProfile()
+    const res = await getProfile()
+    const profile = res.data
     user.value = profile
     setUserInfo(profile)
+  }
+
+  async function autoLogin(): Promise<boolean> {
+    if (token.value) {
+      loginReady.value = true
+      return true
+    }
+    try {
+      await login('zhangsan', '123456')
+      loginReady.value = true
+      return true
+    } catch {
+      loginReady.value = true
+      return false
+    }
   }
 
   function logout() {
@@ -34,8 +54,10 @@ export const useUserStore = defineStore('user', () => {
     token,
     user,
     isLoggedIn,
+    loginReady,
     login,
     fetchProfile,
+    autoLogin,
     logout,
   }
 })

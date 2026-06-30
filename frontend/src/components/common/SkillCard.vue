@@ -1,14 +1,8 @@
-<template>
+﻿<template>
   <div class="skill-card card-hover" @click="goDetail">
     <!-- 技能图片区域 -->
     <div class="card-image">
-      <img
-        v-if="skill.coverImage"
-        :src="skill.coverImage"
-        :alt="skill.title"
-        class="cover-img"
-      />
-      <div v-else class="cover-placeholder" :class="placeholderClass">
+      <div class="cover-placeholder" :class="placeholderClass">
         <span class="placeholder-emoji">{{ categoryEmoji }}</span>
       </div>
 
@@ -34,16 +28,11 @@
         </div>
 
         <div class="user-row">
-          <el-avatar :size="18" :src="skill.userAvatar" class="user-avatar">
-            {{ (skill.userName || '?').charAt(0) }}
+          <el-avatar :size="18" :src="skill.avatar" class="user-avatar">
+            {{ (skill.nickname || '?').charAt(0) }}
           </el-avatar>
-          <span class="user-name text-ellipsis">{{ skill.userName || '匿名' }}</span>
+          <span class="user-name text-ellipsis">{{ skill.nickname || '匿名' }}</span>
         </div>
-      </div>
-
-      <!-- 距离标签 -->
-      <div class="card-meta" v-if="skill.distance != null">
-        <span class="meta-tag">{{ formatDistance(skill.distance) }}</span>
       </div>
     </div>
   </div>
@@ -52,24 +41,23 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { SkillShelf } from '@/types'
-import { formatDistance } from '@/utils/format'
+import type { ShelfItemVo } from '@/types/api'
 
 const props = defineProps<{
-  skill: SkillShelf
+  skill: ShelfItemVo
 }>()
 
 const router = useRouter()
 
 const categoryEmojiMap: Record<string, string> = {
   '学业辅导': '📚', '维修帮忙': '🔧', '设计美工': '🎨',
-  '技术支持': '💻', '运动陪练': '⚽', '音乐艺术': '🎵',
-  '生活服务': '🏠', '其他': '✨',
+  '技术支持': '💻', '运动陪练': '🎾', '音乐艺术': '🎵',
+  '生活服务': '🌿', '其他': '✅',
 }
 
 const categoryEmoji = computed(() => {
-  const tagName = props.skill.tagName ?? ''
-  return categoryEmojiMap[tagName] || '💡'
+  const tagName = props.skill.skillTagName ?? ''
+  return categoryEmojiMap[tagName] || '🎒'
 })
 
 const placeholderClass = computed(() => {
@@ -78,7 +66,7 @@ const placeholderClass = computed(() => {
     '技术支持': 'bg-teal', '运动陪练': 'bg-green', '音乐艺术': 'bg-pink',
     '生活服务': 'bg-amber',
   }
-  const tagName = props.skill.tagName ?? ''
+  const tagName = props.skill.skillTagName ?? ''
   return map[tagName] || 'bg-gray'
 })
 
@@ -103,15 +91,6 @@ function goDetail() {
   padding-top: 75%; // 4:3 比例
   background: $color-bg;
   overflow: hidden;
-
-  .cover-img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
 
   .cover-placeholder {
     position: absolute;
@@ -229,20 +208,6 @@ function goDetail() {
     font-size: 10px;
     color: $color-text-secondary;
     max-width: 50px;
-  }
-}
-
-.card-meta {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-
-  .meta-tag {
-    font-size: 10px;
-    color: $color-text-placeholder;
-    background: $color-bg;
-    padding: 1px 6px;
-    border-radius: 4px;
   }
 }
 </style>

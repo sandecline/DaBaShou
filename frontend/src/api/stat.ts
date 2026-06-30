@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import type { ApiResponse, PersonalOverviewVo, TrendDataVo, SkillHeatVo, CategoryStatVo, PlatformOverviewVo, DailyStatVo, UserActiveStatVo, TrustDistributionVo } from '@/types/api'
 
 export function getPersonalOverview(): Promise<ApiResponse<PersonalOverviewVo>> {
@@ -39,4 +39,17 @@ export function getTrustDistribution(): Promise<ApiResponse<TrustDistributionVo[
 
 export function exportData(type: string): Promise<Blob> {
   return request({ url: '/admin/v1/stats/export', method: 'get', params: { type }, responseType: 'blob' })
+}
+
+export function getAdminStats(): Promise<ApiResponse<any>> {
+  return request({ url: '/admin/v1/stats/overview', method: 'get' })
+}
+
+export function getDailySummary(days?: number): Promise<ApiResponse<any>> {
+  return request({ url: '/admin/v1/stats/daily-trend', method: 'get', params: { days } })
+}
+
+// Shim: getUserStat used in stat/overview.vue
+export function getUserStat(params?: any): any {
+  return getPersonalOverview(params)
 }

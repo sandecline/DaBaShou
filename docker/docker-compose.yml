@@ -1,3 +1,8 @@
+<<<<<<< Updated upstream
+=======
+﻿# 搭把手 — 本地开发环境
+# 使用方式: docker-compose up -d
+>>>>>>> Stashed changes
 version: "3.8"
 
 services:
@@ -5,6 +10,7 @@ services:
     image: mysql:8.0
     container_name: dabashou-mysql
     restart: unless-stopped
+<<<<<<< Updated upstream
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-dabashou}
@@ -18,6 +24,24 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root123456}"]
+=======
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: dabashou
+      MYSQL_CHARSET: utf8mb4
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../database/migration:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123456"]
+>>>>>>> Stashed changes
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,16 +51,23 @@ services:
     container_name: dabashou-redis
     restart: unless-stopped
     ports:
+<<<<<<< Updated upstream
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+=======
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+>>>>>>> Stashed changes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+<<<<<<< Updated upstream
   backend:
     build:
       context: ..
@@ -77,3 +108,8 @@ volumes:
   mysql-data:
   redis-data:
   upload-data:
+=======
+volumes:
+  mysql_data:
+  redis_data:
+>>>>>>> Stashed changes

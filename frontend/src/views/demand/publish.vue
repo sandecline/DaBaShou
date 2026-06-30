@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="demand-publish-page">
     <div class="page-container">
       <el-button text @click="$router.back()" class="back-btn">
@@ -19,7 +19,7 @@
           <el-form-item label="需求标题" prop="title">
             <el-input
               v-model="form.title"
-              placeholder="简洁描述你的需求，如：『急求明天下午帮忙搬宿舍』"
+              placeholder="简洁描述你的需求，如：【急求明天下午帮忙搬宿舍】"
               maxlength="100"
               show-word-limit
             />
@@ -54,7 +54,7 @@
                 <el-date-picker
                   v-model="form.deadline"
                   type="datetime"
-                  placeholder="选择截止时间（可不选）"
+                  placeholder="选择截止时间"
                   style="width: 100%"
                   value-format="YYYY-MM-DD HH:mm:ss"
                 />
@@ -70,7 +70,7 @@
             </el-radio-group>
           </el-form-item>
 
-          <el-form-item label="需求分类（选填）">
+          <el-form-item label="需求分类">
             <el-select v-model="form.skillTagId" placeholder="选择所需技能分类" clearable style="width: 100%">
               <el-option
                 v-for="tag in tags"
@@ -79,10 +79,6 @@
                 :value="tag.id"
               />
             </el-select>
-          </el-form-item>
-
-          <el-form-item>
-            <el-checkbox v-model="form.isUrgent">标记为急单（12小时内加急完成）</el-checkbox>
           </el-form-item>
 
           <el-form-item>
@@ -109,21 +105,21 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { publishDemand } from '@/api/demand'
 import { getTags } from '@/api/skill'
-import type { SkillTag, DemandForm } from '@/types'
+import type { SkillTagVo } from '@/types/api'
 
 const router = useRouter()
 const formRef = ref()
 const submitting = ref(false)
-const tags = ref<SkillTag[]>([])
+const tags = ref<SkillTagVo[]>([])
 
-const form = reactive<DemandForm>({
-  skillTagId: null,
+const form = reactive({
+  skillTagId: null as number | null,
   title: '',
   description: '',
+  demandType: 1,
   pointReward: 50,
-  deadline: null,
+  deadline: '' as string,
   locationType: 1,
-  isUrgent: false,
 })
 
 const rules = {
@@ -145,7 +141,15 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    await publishDemand({ ...form })
+    await publishDemand({
+      skillTagId: form.skillTagId!,
+      title: form.title,
+      description: form.description,
+      demandType: form.demandType,
+      pointReward: form.pointReward,
+      deadline: form.deadline || undefined,
+      locationType: form.locationType,
+    })
     ElMessage.success('求助发布成功！等待热心同学接单 🎉')
     router.push('/demand')
   } catch {
@@ -157,8 +161,8 @@ async function handleSubmit() {
 
 onMounted(async () => {
   try {
-    const result = await getTags()
-    tags.value = result.filter((t) => t.status === 1)
+    const result = await getTags(0)
+    tags.value = result.data.filter((t: SkillTagVo) => t.status === 1)
   } catch {
     // ignore
   }

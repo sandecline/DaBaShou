@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { getUnreadCount } from '@/api/message'
 
@@ -9,7 +9,14 @@ export const useMessageStore = defineStore('message', () => {
   async function fetchUnreadCount() {
     try {
       const result = await getUnreadCount()
-      unreadCount.value = result.count
+      // mock returns { code, msg, data } where data is number
+      if (typeof result === 'number') {
+        unreadCount.value = result
+      } else if (result && typeof (result as any).count === 'number') {
+        unreadCount.value = (result as any).count
+      } else if (result && typeof (result as any).data === 'number') {
+        unreadCount.value = (result as any).data
+      }
     } catch {
       // ignore
     }

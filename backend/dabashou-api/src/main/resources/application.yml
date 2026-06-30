@@ -1,5 +1,10 @@
+<<<<<<< Updated upstream
 server:
   port: 8080
+=======
+﻿server:
+  port: 9090
+>>>>>>> Stashed changes
   servlet:
     context-path: /
 
@@ -11,8 +16,11 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+<<<<<<< Updated upstream
     baseline-on-migrate: true
     baseline-version: 0
+=======
+>>>>>>> Stashed changes
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
@@ -47,5 +55,9 @@ dabashou:
     refresh-expiration: 604800000
     header: Authorization
     prefix: "Bearer "
+<<<<<<< Updated upstream
   file:
     upload-dir: ${FILE_UPLOAD_DIR:./uploads/}
+=======
+
+>>>>>>> Stashed changes

@@ -1,6 +1,6 @@
-<template>
+﻿<template>
   <div class="home-page">
-    <!-- 顶部 Banner 轮播 / 通知 -->
+    <!-- 顶部 Banner -->
     <section class="home-banner gradient-primary">
       <div class="banner-content">
         <div class="banner-text">
@@ -13,7 +13,7 @@
       </div>
     </section>
 
-    <!-- 八大分类入口（闲鱼风格圆形图标网格） -->
+    <!-- 八大分类入口 -->
     <section class="category-section">
       <div class="category-grid">
         <div
@@ -65,26 +65,26 @@
       <section class="section">
         <div class="section-header">
           <h2 class="section-title">🔥 热门技能</h2>
-          <router-link to="/skill" class="see-all">全部 ›</router-link>
+          <router-link to="/skill" class="see-all">全部 →</router-link>
         </div>
         <LoadingSpinner v-if="skillLoading" text="加载中..." />
         <div v-else-if="hotSkills.length > 0" class="card-grid">
           <SkillCard v-for="skill in hotSkills" :key="skill.id" :skill="skill" />
         </div>
-        <EmptyState v-else icon="💡" title="还没有技能服务" action-text="发布第一个技能" @action="$router.push('/skill/publish')" />
+        <EmptyState v-else icon="🎒" title="还没有技能服务" action-text="发布第一个技能" @action="$router.push('/skill/publish')" />
       </section>
 
       <!-- 最新求助 -->
       <section class="section">
         <div class="section-header">
-          <h2 class="section-title">📋 最新求助</h2>
-          <router-link to="/demand" class="see-all">全部 ›</router-link>
+          <h2 class="section-title">🙏 最新求助</h2>
+          <router-link to="/demand" class="see-all">全部 →</router-link>
         </div>
         <LoadingSpinner v-if="demandLoading" text="加载中..." />
         <div v-else-if="latestDemands.length > 0" class="card-grid">
           <DemandCard v-for="demand in latestDemands" :key="demand.id" :demand="demand" />
         </div>
-        <EmptyState v-else icon="📝" title="暂无求助需求" action-text="发布第一个需求" @action="$router.push('/demand/publish')" />
+        <EmptyState v-else icon="📭" title="暂无求助需求" action-text="发布第一个需求" @action="$router.push('/demand/publish')" />
       </section>
 
       <!-- 底部品牌语 -->
@@ -97,17 +97,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getShelfList } from '@/api/shelf'
-import { getDemandList } from '@/api/demand'
-import { getOverview } from '@/api/stat'
+import { searchShelves } from '@/api/shelf'
+import { searchDemands } from '@/api/demand'
+import { getPlatformOverview } from '@/api/stat'
 import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, Demand, OverviewStat } from '@/types'
+import type { ShelfItemVo, DemandItemVo, PlatformOverviewVo } from '@/types/api'
 
-const hotSkills = ref<SkillShelf[]>([])
-const latestDemands = ref<Demand[]>([])
+const hotSkills = ref<ShelfItemVo[]>([])
+const latestDemands = ref<DemandItemVo[]>([])
 const skillLoading = ref(true)
 const demandLoading = ref(true)
 const noticeText = ref('')
@@ -116,46 +116,49 @@ const categories = [
   { key: 'tutor', name: '学业辅导', icon: '📚', route: '/skill?cat=tutor', bgClass: 'bg-blue' },
   { key: 'repair', name: '维修帮忙', icon: '🔧', route: '/skill?cat=repair', bgClass: 'bg-orange' },
   { key: 'design', name: '设计美工', icon: '🎨', route: '/skill?cat=design', bgClass: 'bg-purple' },
-  { key: 'tech', name: '技术支持', icon: '💻', route: '/skill?cat=tech', bgClass: 'bg-teal' },
-  { key: 'sports', name: '运动陪练', icon: '⚽', route: '/skill?cat=sports', bgClass: 'bg-green' },
-  { key: 'music', name: '音乐艺术', icon: '🎵', route: '/skill?cat=music', bgClass: 'bg-pink' },
-  { key: 'daily', name: '生活服务', icon: '🏠', route: '/skill?cat=daily', bgClass: 'bg-amber' },
-  { key: 'other', name: '更多', icon: '✨', route: '/skill', bgClass: 'bg-gray' },
+  { key: 'tech', name: '电脑数码', icon: '💻', route: '/skill?cat=tech', bgClass: 'bg-teal' },
+  { key: 'delivery', name: '跑腿代取', icon: '🏃', route: '/skill?cat=delivery', bgClass: 'bg-green' },
+  { key: 'photo', name: '摄影摄像', icon: '📷', route: '/skill?cat=photo', bgClass: 'bg-pink' },
+  { key: 'move', name: '搬家帮手', icon: '📦', route: '/skill?cat=move', bgClass: 'bg-amber' },
+  { key: 'other', name: '其他服务', icon: '💡', route: '/skill?cat=other', bgClass: 'bg-gray' },
 ]
 
 const stats = ref([
   { label: '注册用户', value: '0' },
   { label: '技能服务', value: '0' },
   { label: '完成订单', value: '0' },
-  { label: '好评率', value: '0%' },
+  { label: '完成率', value: '0%' },
 ])
 
 onMounted(async () => {
   try {
-    const [skillResult, demandResult, overview] = await Promise.all([
-      getShelfList({ page: 1, size: 8, sort: 'heat' }).catch(() => ({ records: [] as SkillShelf[], total: 0, page: 1, size: 8 })),
-      getDemandList({ page: 1, size: 8 }).catch(() => ({ records: [] as Demand[], total: 0, page: 1, size: 8 })),
-      getOverview().catch(() => null as OverviewStat | null),
+    const [skillResult, demandResult, overviewResult] = await Promise.all([
+      searchShelves({ pageNum: 1, pageSize: 6, sortBy: 'heat' }).catch(() => null),
+      searchDemands({ pageNum: 1, pageSize: 4, status: 1, sortBy: 'time' }).catch(() => null),
+      getPlatformOverview().catch(() => null),
     ])
 
-    hotSkills.value = skillResult.records
-    latestDemands.value = demandResult.records
+    if (skillResult?.data) {
+      hotSkills.value = skillResult.data.list
+    }
 
-    if (overview) {
+    if (demandResult?.data) {
+      latestDemands.value = demandResult.data.list
+    }
+
+    if (overviewResult?.data) {
+      const o = overviewResult.data
       stats.value = [
-        { label: '注册用户', value: String(overview.totalUsers) },
-        { label: '技能服务', value: String(overview.totalSkills) },
-        { label: '完成订单', value: String(overview.completedOrders) },
-        { label: '好评率', value: `${Math.round(overview.orderCompletionRate * 100)}%` },
+        { label: '注册用户', value: String(o.totalUsers || 0) },
+        { label: '技能服务', value: String(o.totalShelves || 0) },
+        { label: '完成订单', value: String(o.totalOrders || 0) },
+        { label: '今日新增', value: String(o.todayNewUsers || 0) },
       ]
     }
 
     // 模拟通知
     if (latestDemands.value.length > 0) {
-      const urgent = latestDemands.value.find(d => d.isUrgent)
-      noticeText.value = urgent
-        ? `🔥 紧急求助：${urgent.title} - 悬赏${urgent.pointReward}积分`
-        : `📋 有 ${demandResult.total || latestDemands.value.length} 个新求助等你来接！`
+      noticeText.value = `🙏 有 ${demandResult?.data?.total || latestDemands.value.length} 个新求助等你来接！`
     }
   } finally {
     skillLoading.value = false

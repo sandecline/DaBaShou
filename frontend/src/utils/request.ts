@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import type { ApiResponse } from '@/types/api'
 
@@ -10,7 +10,7 @@ const service: AxiosInstance = axios.create({
 
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('accessToken')
+    const token = localStorage.getItem('dabashou_token')
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -29,9 +29,9 @@ service.interceptors.response.use(
       return res as any
     }
     if (res.code === 401) {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      window.location.href = '/login'
+      localStorage.removeItem('dabashou_token')
+      localStorage.removeItem('dabashou_user')
+      // 不再跳转，避免死循环
       return Promise.reject(new Error('未授权'))
     }
     return Promise.reject(new Error(res.msg || '请求失败'))
@@ -50,3 +50,4 @@ export function generateIdempotentToken(): string {
 }
 
 export default service
+

@@ -1,0 +1,31 @@
+/* 搭把手全局样式变量 */
+$dabashou-primary: #2979ff;
+$dabashou-success: #19be6b;
+$dabashou-warning: #ff9900;
+$dabashou-error: #fa3534;
+$dabashou-bg: #f5f5f5;
+$dabashou-border: #e4e7ed;
+$dabashou-text: #303133;
+$dabashou-text-secondary: #909399;
+
+/* uView Plus 主题覆盖 */
+$u-type-primary: $dabashou-primary;
+$u-type-success: $dabashou-success;
+$u-type-warning: $dabashou-warning;
+$u-type-error: $dabashou-error;
+$u-bg-color: $dabashou-bg;
+$u-border-color: $dabashou-border;
+$u-main-color: $dabashou-text;
+$u-content-color: $dabashou-text-secondary;
+
+/* 订单状态颜色映射 */
+$status-colors: (
+  cancelled: #909399,
+  pending: #ff9900,
+  paid: #2979ff,
+  in_service: #19be6b,
+  pending_confirm: #2979ff,
+  completed: #19be6b,
+  refunded: #fa3534,
+  disputing: #e6a23c
+);

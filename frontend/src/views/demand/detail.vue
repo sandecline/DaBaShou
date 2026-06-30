@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="demand-detail-page">
     <div class="page-container">
       <LoadingSpinner v-if="loading" text="加载中..." fullscreen />
@@ -14,8 +14,8 @@
             <el-card class="detail-card">
               <div class="detail-header">
                 <div class="header-tags">
-                  <el-tag v-if="demand.isUrgent" type="danger" size="small" effect="dark">急单</el-tag>
-                  <el-tag type="info" size="small" effect="plain">{{ demand.tagName || '求助' }}</el-tag>
+                  <el-tag v-if="isUrgent" type="danger" size="small" effect="dark">急单</el-tag>
+                  <el-tag type="info" size="small" effect="plain">{{ demand.skillTagName || '求助' }}</el-tag>
                   <span :class="['status-badge', statusClass]">{{ statusText }}</span>
                 </div>
                 <div class="reward-box">
@@ -33,21 +33,21 @@
                 </div>
                 <div class="meta-item">
                   <span class="meta-label">截止时间</span>
-                  <span :class="{ 'text-danger': demand.isUrgent }">{{ demand.deadline ? formatDateTime(demand.deadline) : '不限' }}</span>
+                  <span :class="{ 'text-danger': isUrgent }">{{ demand.deadline ? formatDateTime(demand.deadline) : '不限' }}</span>
                 </div>
                 <div class="meta-item">
                   <span class="meta-label">发布时间</span>
                   <span>{{ formatDateTime(demand.createTime) }}</span>
                 </div>
                 <div class="meta-item">
-                  <span class="meta-label">校区/楼栋</span>
-                  <span>{{ demand.campus || '未设置' }} {{ demand.building || '' }}</span>
+                  <span class="meta-label">需求类型</span>
+                  <span>{{ demand.demandTypeDesc }}</span>
                 </div>
               </div>
 
               <div class="detail-desc">
                 <h3>需求描述</h3>
-                <p>{{ demand.description || '暂无详细描述' }}</p>
+                <p>{{ demand.demandTypeDesc || '暂无详细描述' }}</p>
               </div>
             </el-card>
           </div>
@@ -55,12 +55,11 @@
           <div class="detail-sidebar">
             <el-card class="user-card">
               <div class="user-info">
-                <el-avatar :size="56" :src="demand.userAvatar">
-                  {{ (demand.userName || '?').charAt(0) }}
+                <el-avatar :size="56" :src="demand.avatar">
+                  {{ (demand.nickname || '?').charAt(0) }}
                 </el-avatar>
                 <div class="user-detail">
-                  <span class="user-name">{{ demand.userName || '匿名用户' }}</span>
-                  <span class="user-campus">{{ demand.campus || '' }}</span>
+                  <span class="user-name">{{ demand.nickname || '匿名用户' }}</span>
                 </div>
               </div>
 
@@ -83,7 +82,7 @@
         </div>
       </template>
 
-      <EmptyState v-else icon="🔍" title="需求不存在或已关闭" />
+      <EmptyState v-else icon="📭" title="需求不存在或已关闭" />
     </div>
   </div>
 </template>
@@ -93,30 +92,33 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getDemandDetail } from '@/api/demand'
-import { createOrder } from '@/api/order'
+import { createOrderFromDemand } from '@/api/order'
 import { formatDateTime } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Demand } from '@/types'
+import type { DemandItemVo } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
 
 const loading = ref(true)
-const demand = ref<Demand | null>(null)
+const demand = ref<DemandItemVo | null>(null)
 
 const statusMap: Record<number, string> = { 0: '已关闭', 1: '待接单', 2: '进行中', 3: '已完成' }
 const statusClassMap: Record<number, string> = { 0: 'status-closed', 1: 'status-open', 2: 'status-active', 3: 'status-done' }
-const statusText = computed(() => demand.value ? statusMap[demand.value.status] : '')
+const statusText = computed(() => demand.value ? (demand.value.statusDesc || statusMap[demand.value.status] || '') : '')
 const statusClass = computed(() => demand.value ? statusClassMap[demand.value.status] : '')
+
+const isUrgent = computed(() => {
+  if (!demand.value?.deadline) return false
+  return new Date(demand.value.deadline).getTime() - Date.now() < 12 * 3600 * 1000
+})
 
 async function fetchDetail() {
   loading.value = true
   try {
-    demand.value = await getDemandDetail(Number(props.id))
-    if (demand.value.deadline) {
-      demand.value.isUrgent = new Date(demand.value.deadline).getTime() - Date.now() < 12 * 3600 * 1000
-    }
+    const result = await getDemandDetail(Number(props.id))
+    demand.value = result.data
   } catch {
     demand.value = null
   } finally {
@@ -132,7 +134,7 @@ async function handleTakeOrder() {
       '确认接单',
       { confirmButtonText: '确认接单', cancelButtonText: '再看看', type: 'warning' },
     )
-    await createOrder({ demandId: demand.value.id })
+    await createOrderFromDemand({ demandId: demand.value.id, sellerId: 0 })
     ElMessage.success('接单成功！请前往订单页查看')
     router.push('/order')
   } catch {
@@ -269,11 +271,6 @@ onMounted(fetchDetail)
     .user-name {
       font-weight: 600;
       display: block;
-    }
-
-    .user-campus {
-      font-size: $font-size-xs;
-      color: $color-text-secondary;
     }
   }
 

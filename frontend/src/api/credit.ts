@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import type { ApiResponse, PageResult, ReviewVo, ReviewDto, ViolationVo, ViolationDto, AppealVo, AppealDto } from '@/types/api'
 
 export function submitReview(data: ReviewDto): Promise<ApiResponse<number>> {
@@ -43,4 +43,19 @@ export function getMyAppeals(params?: {
   pageSize?: number
 }): Promise<ApiResponse<PageResult<AppealVo>>> {
   return request({ url: '/v1/appeals/mine', method: 'get', params })
+}
+
+// Shim: alias for getMyViolations used as getViolations in views
+export function getViolations(params?: any): any {
+  return getMyViolations(params)
+}
+
+// Shim: alias for getMyAppeals used as getAppeals in views
+export function getAppeals(params?: any): any {
+  return getMyAppeals(params)
+}
+
+// Shim: alias for getMyReviews used as getReviews in views
+export function getReviews(params?: any): any {
+  return getMyReviews(params)
 }

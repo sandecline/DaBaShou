@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import type { ApiResponse, PageResult, DemandItemVo, DemandDto, DemandMatchVo } from '@/types/api'
 
 export function publishDemand(data: DemandDto): Promise<ApiResponse<number>> {
@@ -44,4 +44,9 @@ export function bidDemand(id: number): Promise<ApiResponse<null>> {
 
 export function getMatchRecommendations(id: number, limit = 10): Promise<ApiResponse<DemandMatchVo[]>> {
   return request({ url: `/v1/demands/${id}/match`, method: 'get', params: { limit } })
+}
+
+// Shim: alias for createOrderFromShelf used as createOrderFromDemand in views
+export function createOrderFromDemand(data?: any): any {
+  return request({ url: '/v1/orders/from-demand', method: 'post', data })
 }

@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import type { ApiResponse, PageResult, NotificationVo, ChatSessionVo, ChatMessageVo } from '@/types/api'
 
 export function getNotifications(params?: {
@@ -42,4 +42,16 @@ export function getChatHistory(sessionId: number, params?: {
 
 export function createSession(userId: number): Promise<ApiResponse<number>> {
   return request({ url: '/v1/chat/sessions', method: 'post', data: { userId } })
+}
+
+export function getConversations(params?: any): Promise<ApiResponse<any>> {
+  return request({ url: '/v1/chat/sessions', method: 'get', params })
+}
+
+export function getMessages(sessionId: number, params?: any): Promise<ApiResponse<any>> {
+  return request({ url: `/v1/chat/sessions/${sessionId}/messages`, method: 'get', params })
+}
+
+export function sendMessage(data: any): Promise<ApiResponse<null>> {
+  return request({ url: '/v1/chat/send', method: 'post', data })
 }

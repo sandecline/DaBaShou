@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="chat-view">
     <!-- 聊天头部 -->
     <div class="chat-header">
@@ -50,12 +50,12 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getMessages, sendMessage } from '@/api/message'
+import { getChatHistory, createSession } from '@/api/message'
 import { useUserStore } from '@/stores/user'
 import { fromNow } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { ChatMessage } from '@/types'
+import type { ChatMessageVo } from '@/types/api'
 
 const props = defineProps<{
   targetUserId: number
@@ -69,14 +69,18 @@ const myName = ref(userStore.user?.nickname || '')
 
 const msgListRef = ref<HTMLElement>()
 const loading = ref(false)
-const messages = ref<ChatMessage[]>([])
+const messages = ref<Array<ChatMessageVo & { isMine: boolean }>>([])
 const inputText = ref('')
+const sessionId = ref<number | null>(null)
 
 async function loadMessages() {
   loading.value = true
   try {
-    const result = await getMessages(props.targetUserId, { page: 1, size: 50 })
-    messages.value = result.records.map((m) => ({
+    // Try to create or get session
+    const sessionResult = await createSession(props.targetUserId)
+    sessionId.value = sessionResult.data
+    const result = await getChatHistory(sessionResult.data, { pageNum: 1, pageSize: 50 })
+    messages.value = result.data.list.map((m: ChatMessageVo) => ({
       ...m,
       isMine: m.senderId === userStore.user?.id,
     })).reverse()
@@ -93,16 +97,18 @@ async function handleSend() {
   if (!text) return
 
   try {
-    await sendMessage(props.targetUserId, text)
+    // Optimistic push
     messages.value.push({
       id: Date.now(),
-      senderId: userStore.user?.id!,
-      receiverId: props.targetUserId,
+      senderId: userStore.user?.id || 0,
+      senderNickname: myName.value,
+      senderAvatar: myAvatar.value,
       content: text,
-      type: 'text',
+      msgType: 1,
+      isRead: 0,
       createTime: new Date().toISOString(),
       isMine: true,
-    })
+    } as ChatMessageVo & { isMine: boolean })
     inputText.value = ''
     scrollToBottom()
   } catch {

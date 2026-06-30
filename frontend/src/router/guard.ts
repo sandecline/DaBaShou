@@ -1,24 +1,28 @@
-import type { Router } from 'vue-router'
+﻿import type { Router } from 'vue-router'
 import { isLoggedIn } from '@/utils/auth'
-import { ElMessage } from 'element-plus'
-
-const whiteList = ['/login', '/register', '/']
+import { useUserStore } from '@/stores/user'
 
 export function setupRouterGuard(router: Router) {
-  router.beforeEach((to, _from, next) => {
-    // 设置页面标题
-    document.title = `${to.meta.title || '搭把手'} - 搭把手`
+  router.beforeEach(async (to, _from, next) => {
+    document.title = `${(to.meta as any).title || '搭把手'} - 搭把手`
 
-    const requiresAuth = to.meta.requiresAuth
+    const userStore = useUserStore()
 
+    // 首次加载：等待自动登录完成
+    if (!userStore.loginReady) {
+      await userStore.autoLogin()
+    }
+
+    const requiresAuth = to.meta.requiresAuth as boolean | undefined
+
+    // 需要登录但未登录 → 跳登录页
     if (requiresAuth && !isLoggedIn()) {
-      ElMessage.warning('请先登录')
       next({ name: 'Login', query: { redirect: to.fullPath } })
       return
     }
 
-    // 已登录用户访问登录页，重定向到首页
-    if (isLoggedIn() && whiteList.includes(to.path)) {
+    // 已登录用户访问登录/注册页 → 重定向首页
+    if (isLoggedIn() && (to.path === '/login' || to.path === '/register')) {
       next({ name: 'Home' })
       return
     }

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="demand-list-page">
     <div class="page-container">
       <div class="list-toolbar">
@@ -12,7 +12,7 @@
         <div class="toolbar-right">
           <el-input
             v-model="keyword"
-            placeholder="搜索需求..."
+            placeholder="搜索需求.."
             prefix-icon="Search"
             clearable
             class="search-input"
@@ -31,11 +31,10 @@
         </el-radio-group>
 
         <div class="filter-actions">
-          <el-checkbox v-model="onlyUrgent" size="small" @change="search">仅看急单</el-checkbox>
           <el-select v-model="sortBy" size="small" style="width: 130px" @change="search">
-            <el-option label="最新发布" value="latest" />
-            <el-option label="悬赏最高" value="reward" />
-            <el-option label="距离最近" value="distance" />
+            <el-option label="最新发布" value="time" />
+            <el-option label="悬赏最高" value="budget" />
+            <el-option label="最热门" value="hot" />
           </el-select>
         </div>
       </div>
@@ -45,7 +44,7 @@
         <div v-if="list.length > 0" class="card-grid">
           <DemandCard v-for="demand in list" :key="demand.id" :demand="demand" />
         </div>
-        <EmptyState v-else icon="📝" title="暂无求助需求" description="你是第一个发出求助的人吗？">
+        <EmptyState v-else icon="🙏" title="暂无求助需求" description="你是第一个发出求助的人吗？">
           <el-button type="primary" @click="$router.push('/demand/publish')">发布求助</el-button>
         </EmptyState>
       </template>
@@ -66,38 +65,33 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getDemandList } from '@/api/demand'
+import { searchDemands } from '@/api/demand'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Demand } from '@/types'
+import type { DemandItemVo } from '@/types/api'
 
 const loading = ref(true)
-const list = ref<Demand[]>([])
+const list = ref<DemandItemVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(12)
 const keyword = ref('')
 const statusFilter = ref(0)
-const onlyUrgent = ref(false)
-const sortBy = ref('latest')
+const sortBy = ref('time')
 
 async function fetchData() {
   loading.value = true
   try {
-    const result = await getDemandList({
-      page: page.value,
-      size: size.value,
+    const result = await searchDemands({
+      pageNum: page.value,
+      pageSize: size.value,
       keyword: keyword.value || undefined,
       status: statusFilter.value || undefined,
-      urgent: onlyUrgent.value ? 1 : undefined,
-      sort: sortBy.value,
+      sortBy: sortBy.value as 'time' | 'budget' | 'hot',
     })
-    list.value = result.records.map((d) => ({
-      ...d,
-      isUrgent: d.deadline ? new Date(d.deadline).getTime() - Date.now() < 12 * 3600 * 1000 : false,
-    }))
-    total.value = result.total
+    list.value = result.data.list
+    total.value = result.data.total
   } catch {
     // handled
   } finally {
