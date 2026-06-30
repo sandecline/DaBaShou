@@ -82,7 +82,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAdminUserList, updateUserStatus } from '@/api/admin'
 import { formatDateTime } from '@/utils/format'
 import Sidebar from '@/components/layout/Sidebar.vue'
-import type { User } from '@/types'
+import type { UserProfileVo } from '@/types/api'
 
 const adminMenu = [
   { path: '/admin/users', title: '用户管理', icon: 'User' },
@@ -93,7 +93,7 @@ const adminMenu = [
 ]
 
 const loading = ref(false)
-const list = ref<User[]>([])
+const list = ref<UserAdminVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(15)
@@ -109,7 +109,7 @@ async function fetchData() {
       keyword: keyword.value || undefined,
       status: statusFilter.value,
     })
-    list.value = result.records
+    list.value = result.list
     total.value = result.total
   } catch {
     // handled

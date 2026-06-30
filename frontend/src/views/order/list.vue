@@ -47,14 +47,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getMyOrders, getMyTakenOrders } from '@/api/order'
+import { getOrderList } from '@/api/order'
 import OrderCard from '@/components/common/OrderCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Order } from '@/types'
+import type { OrderItemVo } from '@/types/api'
 
 const loading = ref(true)
-const list = ref<Order[]>([])
+const list = ref<OrderItemVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(10)
@@ -70,7 +70,7 @@ async function fetchData() {
       size: size.value,
       status: statusFilter.value >= 0 ? statusFilter.value : undefined,
     })
-    list.value = result.records
+    list.value = result.list
     total.value = result.total
   } catch {
     // handled

@@ -62,18 +62,18 @@
           <!-- 双方信息 -->
           <div class="users-section">
             <div class="user-box">
-              <el-avatar :size="40" :src="order.buyerAvatar">{{ (order.buyerName || '买').charAt(0) }}</el-avatar>
+              <el-avatar :size="40" :src="''">{{ (order.buyerNickname || '买').charAt(0) }}</el-avatar>
               <div>
                 <div class="user-role">买家</div>
-                <div class="user-name">{{ order.buyerName }}</div>
+                <div class="user-name">{{ order.buyerNickname }}</div>
               </div>
             </div>
             <el-icon :size="20"><Right /></el-icon>
             <div class="user-box">
-              <el-avatar :size="40" :src="order.sellerAvatar">{{ (order.sellerName || '卖').charAt(0) }}</el-avatar>
+              <el-avatar :size="40" :src="''">{{ (order.sellerNickname || '卖').charAt(0) }}</el-avatar>
               <div>
                 <div class="user-role">卖家</div>
-                <div class="user-name">{{ order.sellerName }}</div>
+                <div class="user-name">{{ order.sellerNickname }}</div>
               </div>
             </div>
           </div>
@@ -129,13 +129,13 @@ import { formatDateTime, getOrderStatusText } from '@/utils/format'
 import VerifyCode from '@/components/common/VerifyCode.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Order, OrderStatus } from '@/types'
+import type { OrderDetailVo, OrderStatus } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
 
 const loading = ref(true)
-const order = ref<Order | null>(null)
+const order = ref<OrderDetailVo | null>(null)
 
 const activeStep = computed(() => {
   if (!order.value) return 0

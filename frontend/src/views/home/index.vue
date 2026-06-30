@@ -92,18 +92,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getShelfList } from '@/api/shelf'
-import { getDemandList } from '@/api/demand'
-import { getOverview } from '@/api/stat'
-import { getCategories } from '@/api/skill'
+import { searchShelves } from '@/api/shelf'
+import { searchDemands } from '@/api/demand'
+import { getPersonalOverview } from '@/api/stat'
+import { getCategoryTree } from '@/api/skill'
 import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, Demand, OverviewStat, SkillCategory } from '@/types'
+import type { SkillShelf, Demand, OverviewStat, SkillCategory } from '@/types/api'
 
-const hotSkills = ref<SkillShelf[]>([])
-const latestDemands = ref<Demand[]>([])
+const hotSkills = ref<ShelfItemVo[]>([])
+const latestDemands = ref<DemandItemVo[]>([])
 const skillLoading = ref(true)
 const demandLoading = ref(true)
 const noticeText = ref('')
@@ -112,7 +112,7 @@ const categories = ref<Array<{ key: string; name: string; icon: string; route: s
 
 async function loadCategories() {
   try {
-    const cats = await getCategories()
+    const cats = await getCategoryTree()
     const iconMap: Record<string, string> = {
       '学业辅导': '📚', '维修帮忙': '🔧', '设计美工': '🎨',
       '技术支持': '💻', '运动陪练': '⚽', '音乐艺术': '🎵',
@@ -143,9 +143,9 @@ onMounted(async () => {
   loadCategories()
   try {
     const [skillResult, demandResult, overview] = await Promise.all([
-      getShelfList({ page: 1, size: 8, sort: 'heat' }).catch(() => ({ records: [] as SkillShelf[], total: 0, page: 1, size: 8 })),
-      getDemandList({ page: 1, size: 8 }).catch(() => ({ records: [] as Demand[], total: 0, page: 1, size: 8 })),
-      getOverview().catch(() => null as OverviewStat | null),
+      searchShelves({ page: 1, size: 8, sort: 'heat' }).catch(() => ({ records: [] as ShelfItemVo[], total: 0, page: 1, size: 8 })),
+      searchDemands({ page: 1, size: 8 }).catch(() => ({ records: [] as DemandItemVo[], total: 0, page: 1, size: 8 })),
+      getPersonalOverview().catch(() => null as OverviewStat | null),
     ])
 
     hotSkills.value = skillResult.records

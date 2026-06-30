@@ -50,12 +50,12 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getMessages, sendMessage } from '@/api/message'
+import { getChatMessages, sendChatMessage } from '@/api/message'
 import { useUserStore } from '@/stores/user'
 import { fromNow } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { ChatMessage } from '@/types'
+import type { ChatMessage } from '@/types/api'
 
 const props = defineProps<{
   targetUserId: number
@@ -69,14 +69,14 @@ const myName = ref(userStore.user?.nickname || '')
 
 const msgListRef = ref<HTMLElement>()
 const loading = ref(false)
-const messages = ref<ChatMessage[]>([])
+const messages = ref<ChatMessageVo[]>([])
 const inputText = ref('')
 
 async function loadMessages() {
   loading.value = true
   try {
-    const result = await getMessages(props.targetUserId, { page: 1, size: 50 })
-    messages.value = result.records.map((m) => ({
+    const result = await getChatMessages(props.targetUserId, { page: 1, size: 50 })
+    messages.value = result.list.map((m) => ({
       ...m,
       isMine: m.senderId === userStore.user?.id,
     })).reverse()
@@ -93,7 +93,7 @@ async function handleSend() {
   if (!text) return
 
   try {
-    await sendMessage(props.targetUserId, text, 1)
+    await sendChatMessage(props.targetUserId, text, 1)
     messages.value.push({
       id: Date.now(),
       senderId: userStore.user?.id!,

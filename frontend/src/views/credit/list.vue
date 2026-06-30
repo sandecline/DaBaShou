@@ -54,14 +54,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getReviews } from '@/api/credit'
+import { getMySentReviews } from '@/api/credit'
 import { formatDateTime } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Review } from '@/types'
+import type { ReviewVo } from '@/types/api'
 
 const loading = ref(true)
-const reviews = ref<Review[]>([])
+const reviews = ref<ReviewVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(10)
@@ -70,12 +70,12 @@ const activeTab = ref<'received' | 'sent'>('received')
 async function fetchData() {
   loading.value = true
   try {
-    const result = await getReviews({
+    const result = await getMySentReviews({
       page: page.value,
       size: size.value,
       type: activeTab.value,
     })
-    reviews.value = result.records
+    reviews.value = result.list
     total.value = result.total
   } catch {
     // handled

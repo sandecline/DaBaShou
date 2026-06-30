@@ -24,8 +24,8 @@
           <el-table :data="list" stripe v-loading="loading" border>
             <el-table-column prop="orderNo" label="订单号" width="180" />
             <el-table-column prop="title" label="服务标题" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="buyerName" label="买家" width="100" />
-            <el-table-column prop="sellerName" label="卖家" width="100" />
+            <el-table-column prop="buyerNickname" label="买家" width="100" />
+            <el-table-column prop="sellerNickname" label="卖家" width="100" />
             <el-table-column label="金额" width="90">
               <template #default="{ row }">{{ row.pointAmount }} 积分</template>
             </el-table-column>
@@ -86,11 +86,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAdminOrderList, handleDisputeOrder } from '@/api/admin'
+import { getAdminOrderList, adminArbitrateOrder } from '@/api/admin'
 import { getOrderStatusText, getOrderStatusColor, formatDateTime } from '@/utils/format'
-import { OrderStatusMap } from '@/types'
+import { OrderStatusMap } from '@/types/api'
 import Sidebar from '@/components/layout/Sidebar.vue'
-import type { Order } from '@/types'
+import type { OrderItemVo } from '@/types/api'
 
 const adminMenu = [
   { path: '/admin/users', title: '用户管理', icon: 'User' },
@@ -101,7 +101,7 @@ const adminMenu = [
 ]
 
 const loading = ref(false)
-const list = ref<Order[]>([])
+const list = ref<OrderItemVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(15)
@@ -110,7 +110,7 @@ const statusFilter = ref<number | undefined>(undefined)
 
 // Dispute
 const disputeDialog = ref(false)
-const disputeOrder = ref<Order | null>(null)
+const disputeOrder = ref<OrderDetailVo | null>(null)
 const disputeAction = ref<'complete' | 'refund'>('complete')
 const disputing = ref(false)
 
@@ -123,7 +123,7 @@ async function fetchData() {
       keyword: keyword.value || undefined,
       status: statusFilter.value,
     })
-    list.value = result.records
+    list.value = result.list
     total.value = result.total
   } catch {
     // handled
@@ -152,7 +152,7 @@ async function confirmDispute() {
   if (!disputeOrder.value) return
   disputing.value = true
   try {
-    await handleDisputeOrder(disputeOrder.value.id, disputeAction.value)
+    await adminArbitrateOrder(disputeOrder.value.id, { result: disputeAction.value, reason: '管理员处理争议' })
     ElMessage.success('争议已处理')
     disputeDialog.value = false
     fetchData()

@@ -48,12 +48,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getConversations } from '@/api/message'
+import { getChatSessions } from '@/api/message'
 import { fromNow } from '@/utils/format'
 import ChatView from './chat.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Conversation } from '@/types'
+import type { Conversation } from '@/types/api'
 
 const loading = ref(true)
 const conversations = ref<Conversation[]>([])
@@ -65,10 +65,10 @@ function selectConv(targetUserId: number) {
 
 onMounted(async () => {
   try {
-    const result = await getConversations({ page: 1, size: 50 })
-    conversations.value = result.records
-    if (result.records.length > 0) {
-      activeConv.value = result.records[0].otherUserId
+    const result = await getChatSessions({ page: 1, size: 50 })
+    conversations.value = result.list
+    if (result.list.length > 0) {
+      activeConv.value = result.list[0].otherUserId
     }
   } catch {
     // handled

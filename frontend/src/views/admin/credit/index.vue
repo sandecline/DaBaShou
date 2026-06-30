@@ -14,14 +14,14 @@
           <!-- 违规记录 -->
           <template v-if="activeTab === 'violations'">
             <el-table :data="violations" stripe v-loading="vLoading" border>
-              <el-table-column prop="userName" label="用户" width="120" />
+              <el-table-column prop="targetNickname" label="用户" width="120" />
               <el-table-column label="违规类型" width="120">
                 <template #default="{ row }">
                   <el-tag type="danger" size="small">{{ ViolationTypeMap[row.type as ViolationType] }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-              <el-table-column prop="penaltyPoints" label="扣分" width="80" />
+              <el-table-column prop="handleResult" label="扣分" width="80" />
               <el-table-column label="状态" width="100">
                 <template #default="{ row }">
                   <el-tag :type="row.status === 0 ? 'warning' : 'info'" size="small">
@@ -32,8 +32,8 @@
               <el-table-column label="操作" width="180">
                 <template #default="{ row }">
                   <template v-if="row.status === 0">
-                    <el-button size="small" type="success" @click="handleViolationClick(row, 'confirm')">确认违规</el-button>
-                    <el-button size="small" @click="handleViolationClick(row, 'dismiss')">撤销</el-button>
+                    <el-button size="small" type="success" @click="adminHandleViolationClick(row, 'confirm')">确认违规</el-button>
+                    <el-button size="small" @click="adminHandleViolationClick(row, 'dismiss')">撤销</el-button>
                   </template>
                   <span v-else>-</span>
                 </template>
@@ -44,7 +44,7 @@
           <!-- 申诉审核 -->
           <template v-if="activeTab === 'appeals'">
             <el-table :data="appeals" stripe v-loading="aLoading" border>
-              <el-table-column prop="userName" label="申诉人" width="100" />
+              <el-table-column prop="targetNickname" label="申诉人" width="100" />
               <el-table-column prop="reason" label="申诉理由" min-width="200" show-overflow-tooltip />
               <el-table-column label="状态" width="100">
                 <template #default="{ row }">
@@ -56,8 +56,8 @@
               <el-table-column label="操作" width="180">
                 <template #default="{ row }">
                   <template v-if="row.status === 0">
-                    <el-button size="small" type="success" @click="handleAppealClick(row, 'approve')">通过</el-button>
-                    <el-button size="small" type="danger" @click="handleAppealClick(row, 'reject')">驳回</el-button>
+                    <el-button size="small" type="success" @click="adminHandleAppealClick(row, 'approve')">通过</el-button>
+                    <el-button size="small" type="danger" @click="adminHandleAppealClick(row, 'reject')">驳回</el-button>
                   </template>
                   <span v-else>{{ row.reply || '-' }}</span>
                 </template>
@@ -73,10 +73,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAdminViolations, handleViolation, getAdminAppeals, handleAppeal } from '@/api/admin'
-import { ViolationTypeMap } from '@/types'
+import { getAdminViolations, adminHandleViolation, getAdminAppeals, adminHandleAppeal } from '@/api/admin'
+// ViolationTypeMap removed
 import Sidebar from '@/components/layout/Sidebar.vue'
-import type { Violation, Appeal, ViolationType } from '@/types'
+import type { ViolationVo, AppealVo } from '@/types/api'
 
 const adminMenu = [
   { path: '/admin/users', title: '用户管理', icon: 'User' },
@@ -87,41 +87,41 @@ const adminMenu = [
 ]
 
 const activeTab = ref('violations')
-const violations = ref<Violation[]>([])
-const appeals = ref<Appeal[]>([])
+const violations = ref<ViolationVo[]>([])
+const appeals = ref<AppealVo[]>([])
 const vLoading = ref(false)
 const aLoading = ref(false)
 
 async function loadViolations() {
   vLoading.value = true
   try {
-    const result = await getAdminViolations({ page: 1, size: 50 })
-    violations.value = result.records
+    const result = await getAdminCampusAuths({ page: 1, size: 50 })
+    violations.value = result.list
   } catch { /* handled */ } finally { vLoading.value = false }
 }
 
 async function loadAppeals() {
   aLoading.value = true
   try {
-    const result = await getAdminAppeals({ page: 1, size: 50 })
-    appeals.value = result.records
+    const result = await getAdminCampusAuths({ page: 1, size: 50 })
+    appeals.value = result.list
   } catch { /* handled */ } finally { aLoading.value = false }
 }
 
-async function handleViolationClick(row: Violation, action: 'confirm' | 'dismiss') {
+async function adminHandleViolationClick(row: Violation, action: 'confirm' | 'dismiss') {
   try {
-    await handleViolation(row.id, action)
+    await adminHandleViolation(row.id, action)
     ElMessage.success(action === 'confirm' ? '已确认违规' : '已撤销')
     loadViolations()
   } catch { /* handled */ }
 }
 
-async function handleAppealClick(row: Appeal, action: 'approve' | 'reject') {
+async function adminHandleAppealClick(row: Appeal, action: 'approve' | 'reject') {
   try {
     const { value: reply } = action === 'reject'
       ? await ElMessageBox.prompt('请输入驳回理由', '驳回申诉')
       : { value: undefined }
-    await handleAppeal(row.id, action, reply || undefined)
+    await adminHandleAppeal(row.id, action, reply || undefined)
     ElMessage.success(action === 'approve' ? '申诉已通过' : '申诉已驳回')
     loadAppeals()
   } catch { /* cancelled */ }

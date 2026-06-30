@@ -35,11 +35,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
-import { getAdminStats, getSkillHeat } from '@/api/stat'
-import { getDailySummary } from '@/api/stat'
+import { getAdminOverview, getAdminDailyTrend, getAdminUserActive, getAdminTrustDistribution } from '@/api/admin'
+import { getSkillHeat } from '@/api/stat'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import * as echarts from 'echarts'
-import type { OverviewStat, DailySummary, SkillHeat } from '@/types'
+import type { OverviewStat, TrendItem, SkillHeatItem } from '@/types/api'
 
 const adminMenu = [
   { path: '/admin/users', title: '用户管理', icon: 'User' },
@@ -63,9 +63,9 @@ const statCards = ref([
 
 onMounted(async () => {
   const [overview, dailyData, heatData] = await Promise.all([
-    getAdminStats().catch(() => null as OverviewStat | null),
-    getDailySummary(30).catch(() => [] as DailySummary[]),
-    getSkillHeat().catch(() => [] as SkillHeat[]),
+    getAdminOverview().catch(() => null as OverviewStat | null),
+    getAdminDailyTrend(30).catch(() => [] as TrendItem[]),
+    getSkillHeat().catch(() => [] as SkillHeatItemItem[]),
   ])
 
   if (overview) {

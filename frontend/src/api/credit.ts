@@ -1,22 +1,30 @@
-import request from '@/utils/request'
-import type { Review, Violation, Appeal, ReviewForm, AppealForm, PageResult, PageParams } from '@/types'
+﻿import request from '@/utils/request'
+import type { ReviewVo, ViolationVo, AppealVo, PageResult, PageParams } from '@/types/api'
 
-export function submitReview(data: ReviewForm): Promise<any> {
-  return request.post('/credit/review', data)
+export function submitReview(data: { orderId: number; rating: number; content?: string; images?: string[]; isAnonymous?: boolean }): Promise<number> {
+  return request.post('/v1/reviews', data)
 }
 
-export function getReviews(params: PageParams & { type?: 'sent' | 'received' }): Promise<PageResult<Review>> {
-  return request.get('/credit/reviews', params)
+export function getMySentReviews(params?: PageParams): Promise<PageResult<ReviewVo>> {
+  return request.get('/v1/reviews/mine', params)
 }
 
-export function getViolations(params: PageParams): Promise<PageResult<Violation>> {
-  return request.get('/credit/violations', params)
+export function getMyReceivedReviews(params?: PageParams): Promise<PageResult<ReviewVo>> {
+  return request.get('/v1/reviews/received', params)
 }
 
-export function submitAppeal(data: AppealForm): Promise<any> {
-  return request.post('/credit/appeal', data)
+export function reportViolation(data: { targetUserId: number; orderId?: number; type: number; reason: string; evidence?: string[] }): Promise<number> {
+  return request.post('/v1/violations', data)
 }
 
-export function getAppeals(params: PageParams): Promise<PageResult<Appeal>> {
-  return request.get('/credit/appeals', params)
+export function getMyViolations(params?: PageParams): Promise<PageResult<ViolationVo>> {
+  return request.get('/v1/violations/mine', params)
+}
+
+export function submitAppeal(data: { violationId: number; reason: string; evidence?: string[] }): Promise<number> {
+  return request.post('/v1/appeals', data)
+}
+
+export function getMyAppeals(params?: PageParams): Promise<PageResult<AppealVo>> {
+  return request.get('/v1/appeals/mine', params)
 }

@@ -79,16 +79,15 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getViolations, submitAppeal, getAppeals } from '@/api/credit'
+import { getMyViolations, submitAppeal, getMyAppeals } from '@/api/credit'
 import { formatDateTime } from '@/utils/format'
-import { ViolationTypeMap } from '@/types'
-import type { Violation, Appeal } from '@/types'
+import type { Violation, Appeal } from '@/types/api'
 
 const formRef = ref()
 const submitting = ref(false)
 const appealLoading = ref(false)
-const violations = ref<Violation[]>([])
-const appeals = ref<Appeal[]>([])
+const violations = ref<ViolationVo[]>([])
+const appeals = ref<AppealVo[]>([])
 
 const form = reactive({
   violationId: null as number | null,
@@ -136,8 +135,8 @@ async function handleSubmit() {
 
 async function loadViolations() {
   try {
-    const result = await getViolations({ page: 1, size: 50 })
-    violations.value = result.records.filter((v) => v.status === 0)
+    const result = await getMyViolations({ page: 1, size: 50 })
+    violations.value = result.list.filter((v) => v.status === 0)
   } catch {
     // handled
   }
@@ -146,8 +145,8 @@ async function loadViolations() {
 async function loadAppeals() {
   appealLoading.value = true
   try {
-    const result = await getAppeals({ page: 1, size: 50 })
-    appeals.value = result.records
+    const result = await getMyAppeals({ page: 1, size: 50 })
+    appeals.value = result.list
   } catch {
     // handled
   } finally {

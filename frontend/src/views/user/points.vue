@@ -79,11 +79,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { getBalance, getTransactions } from '@/api/point'
 import { formatDateTime, formatPoints } from '@/utils/format'
-import { PointTransactionTypeMap } from '@/types'
-import type { PointTransaction, PointTransactionType } from '@/types'
+import { PointTransactionTypeMap } from '@/types/api'
+import type { PointTransVo } from '@/types/api'
 
 const balance = reactive({ available: 0, frozen: 0, total: 0 })
-const transactions = ref<PointTransaction[]>([])
+const transactions = ref<PointTransVo[]>([])
 const txLoading = ref(false)
 const txPage = ref(1)
 const txSize = ref(10)
@@ -109,7 +109,7 @@ async function fetchTransactions() {
       size: txSize.value,
       type: typeFilter.value,
     })
-    transactions.value = result.records
+    transactions.value = result.list
     txTotal.value = result.total
   } catch {
     // handled

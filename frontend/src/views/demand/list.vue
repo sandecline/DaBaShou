@@ -66,14 +66,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getDemandList } from '@/api/demand'
+import { searchDemands } from '@/api/demand'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Demand } from '@/types'
+import type { DemandItemVo } from '@/types/api'
 
 const loading = ref(true)
-const list = ref<Demand[]>([])
+const list = ref<DemandItemVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(12)
@@ -85,7 +85,7 @@ const sortBy = ref('latest')
 async function fetchData() {
   loading.value = true
   try {
-    const result = await getDemandList({
+    const result = await searchDemands({
       page: page.value,
       size: size.value,
       keyword: keyword.value || undefined,
@@ -93,7 +93,7 @@ async function fetchData() {
       urgent: onlyUrgent.value ? 1 : undefined,
       sort: sortBy.value,
     })
-    list.value = result.records.map((d) => ({
+    list.value = result.list.map((d) => ({
       ...d,
       isUrgent: d.deadline ? new Date(d.deadline).getTime() - Date.now() < 12 * 3600 * 1000 : false,
     }))

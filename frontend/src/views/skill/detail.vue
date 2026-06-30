@@ -15,7 +15,7 @@
           <div class="detail-main">
             <el-card class="detail-card">
               <div class="detail-header">
-                <el-tag size="small" effect="plain">{{ skill.tagName || '技能' }}</el-tag>
+                <el-tag size="small" effect="plain">{{ skill.skillTagName || '技能' }}</el-tag>
                 <span class="status-tag" :class="statusClass">{{ statusText }}</span>
               </div>
 
@@ -53,13 +53,13 @@
             <el-card class="user-card">
               <div class="user-info">
                 <router-link :to="`/user/shop/${skill.userId}`">
-                  <el-avatar :size="56" :src="skill.userAvatar">
-                    {{ (skill.userName || '?').charAt(0) }}
+                  <el-avatar :size="56" :src="skill.avatar">
+                    {{ (skill.nickname || '?').charAt(0) }}
                   </el-avatar>
                 </router-link>
                 <div class="user-detail">
                   <router-link :to="`/user/shop/${skill.userId}`" class="user-name">
-                    {{ skill.userName || '匿名用户' }}
+                    {{ skill.nickname || '匿名用户' }}
                   </router-link>
                   <TrustBadge :score="skill.trustScore || 0" />
                 </div>
@@ -131,18 +131,18 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getShelfDetail } from '@/api/shelf'
-import { createOrder } from '@/api/order'
+import { createOrderFromShelf } from '@/api/order'
 import { formatDateTime } from '@/utils/format'
 import TrustBadge from '@/components/common/TrustBadge.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, TimeSlot } from '@/types'
+import type { ShelfDetailVo, TimeSlotVo } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
 
 const loading = ref(true)
-const skill = ref<SkillShelf | null>(null)
+const skill = ref<ShelfDetailVo | null>(null)
 const showOrderDialog = ref(false)
 const selectedSlotId = ref<number | null>(null)
 const availableSlots = ref<TimeSlot[]>([])
@@ -175,7 +175,7 @@ async function confirmOrder() {
   if (!skill.value) return
   ordering.value = true
   try {
-    await createOrder({
+    await createOrderFromShelf({
       skillShelfId: skill.value.id,
       timeSlotId: selectedSlotId.value ?? undefined,
     })

@@ -1,30 +1,49 @@
-import request from '@/utils/request'
-import type { Demand, DemandForm, PageResult, PageParams } from '@/types'
+﻿import request from '@/utils/request'
+import type { DemandItemVo, DemandDetailVo, DemandMatchVo, PageResult, PageParams } from '@/types/api'
 
-export function publishDemand(data: DemandForm): Promise<any> {
-  return request.post('/demand', data)
+export function publishDemand(data: {
+  skillTagId: number; title: string; description?: string;
+  pointReward?: number; deadline?: string; locationType: number;
+  demandType?: number; longitude?: number; latitude?: number
+}): Promise<number> {
+  return request.post('/v1/demands', data)
 }
 
-export function getDemandList(params: PageParams): Promise<PageResult<Demand>> {
-  return request.get('/demand/list', params)
+export function updateDemand(id: number, data: Partial<{
+  skillTagId: number; title: string; description: string;
+  pointReward: number; deadline: string; locationType: number
+}>): Promise<null> {
+  return request.put('/v1/demands/' + id, data)
 }
 
-export function getDemandDetail(id: number): Promise<Demand> {
-  return request.get(`/demand/${id}`)
+export function closeDemand(id: number): Promise<null> {
+  return request.put('/v1/demands/' + id + '/close')
 }
 
-export function updateDemand(id: number, data: Partial<DemandForm>): Promise<any> {
-  return request.put(`/demand/${id}`, data)
+export function deleteDemand(id: number): Promise<null> {
+  return request.delete('/v1/demands/' + id)
 }
 
-export function deleteDemand(id: number): Promise<any> {
-  return request.delete(`/demand/${id}`)
+export function getDemandDetail(id: number): Promise<DemandDetailVo> {
+  return request.get('/v1/demands/' + id)
 }
 
-export function closeDemand(id: number): Promise<any> {
-  return request.put(`/demand/${id}/close`)
+export function searchDemands(params: {
+  keyword?: string; categoryId?: number; skillTagId?: number;
+  demandType?: number; status?: number; sortBy?: string;
+  pageNum?: number; pageSize?: number
+}): Promise<PageResult<DemandItemVo>> {
+  return request.get('/v1/demands', params)
 }
 
-export function getMyDemandList(params: PageParams): Promise<PageResult<Demand>> {
-  return request.get('/demand/my', params)
+export function getMyDemands(params?: PageParams): Promise<PageResult<DemandItemVo>> {
+  return request.get('/v1/demands/mine', params)
+}
+
+export function bidDemand(id: number): Promise<null> {
+  return request.post('/v1/demands/' + id + '/bid')
+}
+
+export function matchDemands(id: number, limit?: number): Promise<DemandMatchVo[]> {
+  return request.get('/v1/demands/' + id + '/match', { limit })
 }

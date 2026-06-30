@@ -93,11 +93,11 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getDemandDetail } from '@/api/demand'
-import { createOrder } from '@/api/order'
+import { createOrderFromDemand } from '@/api/order'
 import { formatDateTime } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { Demand } from '@/types'
+import type { DemandItemVo } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
@@ -132,7 +132,7 @@ async function handleTakeOrder() {
       '确认接单',
       { confirmButtonText: '确认接单', cancelButtonText: '再看看', type: 'warning' },
     )
-    await createOrder({ demandId: demand.value.id })
+    await createOrderFromDemand({ demandId: demand.value.id })
     ElMessage.success('接单成功！请前往订单页查看')
     router.push('/order')
   } catch (e: any) {

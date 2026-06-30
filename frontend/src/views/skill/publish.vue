@@ -115,10 +115,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { publishSkill } from '@/api/shelf'
-import { getCategories, getTags } from '@/api/skill'
+import { publishShelf } from '@/api/shelf'
+import { getCategoryTree, getTags } from '@/api/skill'
 import TimeSlotPicker from '@/components/common/TimeSlotPicker.vue'
-import type { SkillCategory, SkillTag, SkillShelfForm } from '@/types'
+import type { CategoryTreeNode, SkillTagVo } from '@/types/api'
 
 const router = useRouter()
 const isEdit = ref(false)
@@ -128,7 +128,7 @@ const submitting = ref(false)
 const cascaderValue = ref<number | null>(null)
 const cascaderOptions = ref<Array<{ id: number; name: string; children: Array<{ id: number; name: string }> }>>([])
 
-const form = reactive<SkillShelfForm>({
+const form = reactive({
   skillTagId: null,
   title: '',
   description: '',
@@ -163,7 +163,7 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    await publishSkill({ ...form })
+    await publishShelf({ ...form })
     ElMessage.success(isEdit.value ? '修改成功！' : '发布成功！🎉')
     router.push('/user/shop')
   } catch {
@@ -176,12 +176,12 @@ async function handleSubmit() {
 onMounted(async () => {
   try {
     const [categories, tags] = await Promise.all([
-      getCategories(),
+      getCategoryTree(),
       getTags(),
     ])
 
     cascaderOptions.value = categories
-      .filter((c) => c.status === 1)
+      .filter((c: any) => c.id)
       .map((cat) => ({
         id: cat.id,
         name: cat.name,

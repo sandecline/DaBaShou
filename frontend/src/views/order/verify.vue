@@ -45,16 +45,16 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getOrderDetail, verifyOrder, confirmComplete } from '@/api/order'
+import { getOrderDetail, verifyOrder, confirmOrder } from '@/api/order'
 import { useUserStore } from '@/stores/user'
 import VerifyCode from '@/components/common/VerifyCode.vue'
-import type { Order } from '@/types'
+import type { OrderItemVo } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
 const userStore = useUserStore()
 
-const order = ref<Order | null>(null)
+const order = ref<OrderDetailVo | null>(null)
 const isBuyer = ref(false)
 const errorMsg = ref('')
 
@@ -72,10 +72,10 @@ async function handleVerify(code: string) {
   try {
     if (order.value?.status === 4) {
       // 待确认 -> 确认完成
-      await confirmComplete(Number(props.id))
+      await confirmOrder(Number(props.id))
       ElMessage.success('确认完成！积分已结算 🎉')
     } else {
-      await verifyOrder({ orderId: Number(props.id), verifyCode: code })
+      await verifyOrder(Number(props.id), code)
       ElMessage.success('核销成功！积分已结算 🎉')
     }
     router.push('/order')

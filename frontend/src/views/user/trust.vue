@@ -74,12 +74,12 @@ import { useUserStore } from '@/stores/user'
 import { getTrustLevel, formatDateTime } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { TrustScoreLog } from '@/types'
+import type { TrustLogItem } from '@/types/api'
 
 const userStore = useUserStore()
 const loading = ref(false)
 const logLoading = ref(false)
-const logs = ref<TrustScoreLog[]>([])
+const logs = ref<TrustLogItem[]>([])
 
 const score = ref(userStore.user?.trustScore || 5.0)
 const trustLevel = ref(getTrustLevel(score.value))

@@ -72,7 +72,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { register } from '@/api/user'
+import { register } from '@/api/auth'
 
 const router = useRouter()
 const formRef = ref()

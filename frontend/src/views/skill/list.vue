@@ -79,36 +79,36 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { getShelfList } from '@/api/shelf'
-import { getCategories } from '@/api/skill'
+import { searchShelves } from '@/api/shelf'
+import { getCategoryTree } from '@/api/skill'
 import SkillCard from '@/components/common/SkillCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, SkillCategory } from '@/types'
+import type { ShelfItemVo, CategoryTreeNode } from '@/types/api'
 
 const route = useRoute()
 
 const loading = ref(true)
-const list = ref<SkillShelf[]>([])
+const list = ref<ShelfItemVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(12)
 const keyword = ref((route.query.keyword as string) || '')
 const selectedCategory = ref(Number(route.query.categoryId) || 0)
 const sortBy = ref('heat')
-const categories = ref<SkillCategory[]>([])
+const categories = ref<CategoryTreeNode[]>([])
 
 async function fetchData() {
   loading.value = true
   try {
-    const result = await getShelfList({
+    const result = await searchShelves({
       page: page.value,
       size: size.value,
       keyword: keyword.value || undefined,
       categoryId: selectedCategory.value || undefined,
       sort: sortBy.value,
     })
-    list.value = result.records
+    list.value = result.list
     total.value = result.total
   } catch {
     // handled
@@ -129,7 +129,7 @@ function changePage(p: number) {
 
 onMounted(async () => {
   try {
-    const cats = await getCategories()
+    const cats = await getCategoryTree()
     categories.value = cats
   } catch {
     // ignore

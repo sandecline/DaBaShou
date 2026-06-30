@@ -68,17 +68,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
-import { getUserStat, getDailySummary, getSkillHeat } from '@/api/stat'
+import { getPersonalOverview, getOrderTrend, getSkillHeat } from '@/api/stat'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import * as echarts from 'echarts'
-import type { UserStat, DailySummary, SkillHeat } from '@/types'
+import type { PersonalOverviewVo, TrendItem, SkillHeatItemItem } from '@/types/api'
 
 const loading = ref(true)
 const lineChartRef = ref()
 const barChartRef = ref()
 const pieChartRef = ref()
 
-const userStat = ref<UserStat>({
+const userStat = ref<PersonalOverviewVo>({
   publishedSkills: 0,
   publishedDemands: 0,
   takenOrders: 0,
@@ -99,8 +99,8 @@ async function loadData() {
   loading.value = true
   try {
     const [userStatResult, dailyData, heatData] = await Promise.all([
-      getUserStat().catch(() => null),
-      getDailySummary(7).catch(() => []),
+      getPersonalOverview().catch(() => null),
+      getOrderTrend(7).catch(() => []),
       getSkillHeat().catch(() => []),
     ])
 
@@ -125,7 +125,7 @@ async function loadData() {
   }
 }
 
-function initLineChart(data: DailySummary[]) {
+function initLineChart(data: TrendItem[]) {
   if (!lineChartRef.value) return
   const chart = echarts.init(lineChartRef.value)
   chart.setOption({
@@ -151,7 +151,7 @@ function initLineChart(data: DailySummary[]) {
   })
 }
 
-function initBarChart(data: SkillHeat[]) {
+function initBarChart(data: SkillHeatItemItem[]) {
   if (!barChartRef.value) return
   const chart = echarts.init(barChartRef.value)
   chart.setOption({
@@ -169,7 +169,7 @@ function initBarChart(data: SkillHeat[]) {
   })
 }
 
-function initPieChart(stat: UserStat) {
+function initPieChart(stat: PersonalOverviewVo) {
   if (!pieChartRef.value) return
   const chart = echarts.init(pieChartRef.value)
   chart.setOption({
