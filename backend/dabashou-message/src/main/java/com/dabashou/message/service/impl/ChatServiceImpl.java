@@ -208,6 +208,72 @@ public class ChatServiceImpl implements ChatService {
         log.info("聊天消息发送成功: sessionId={}, senderId={}, msgType={}", sessionId, senderId, msgType);
     }
 
+    @Override
+    public PageResult<ChatMessageVo> getMessagesByTargetUserId(Long userId, Long targetUserId, int pageNum, int pageSize) {
+        // 校验对方用户存在
+        List<Map<String, Object>> users = jdbcTemplate.queryForList(
+                "SELECT id FROM dbs_user WHERE id = ?", targetUserId
+        );
+        if (users.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "对方用户不存在");
+        }
+
+        // 查找会话
+        Long smallerId = userId < targetUserId ? userId : targetUserId;
+        Long largerId = userId > targetUserId ? userId : targetUserId;
+
+        LambdaQueryWrapper<ChatSession> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatSession::getUser1Id, smallerId)
+                .eq(ChatSession::getUser2Id, largerId);
+        ChatSession session = chatSessionMapper.selectOne(wrapper);
+
+        if (session == null) {
+            // 会话不存在，返回空结果
+            return PageResult.of(0, new ArrayList<>(), pageNum, pageSize);
+        }
+
+        return getMessages(userId, session.getId(), pageNum, pageSize);
+    }
+
+    @Override
+    public void sendMessageToUser(Long senderId, Long receiverId, String content, Integer msgType) {
+        // 校验对方用户存在
+        List<Map<String, Object>> users = jdbcTemplate.queryForList(
+                "SELECT id FROM dbs_user WHERE id = ?", receiverId
+        );
+        if (users.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "对方用户不存在");
+        }
+
+        // 不能给自己发消息
+        if (senderId.equals(receiverId)) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "不能给自己发消息");
+        }
+
+        // 查找或创建会话
+        Long smallerId = senderId < receiverId ? senderId : receiverId;
+        Long largerId = senderId > receiverId ? senderId : receiverId;
+
+        LambdaQueryWrapper<ChatSession> sessionWrapper = new LambdaQueryWrapper<>();
+        sessionWrapper.eq(ChatSession::getUser1Id, smallerId)
+                .eq(ChatSession::getUser2Id, largerId);
+        ChatSession session = chatSessionMapper.selectOne(sessionWrapper);
+
+        if (session == null) {
+            // 创建新会话
+            session = new ChatSession();
+            session.setUser1Id(smallerId);
+            session.setUser2Id(largerId);
+            session.setUnreadCount(0);
+            session.setCreateTime(LocalDateTime.now());
+            session.setUpdateTime(LocalDateTime.now());
+            chatSessionMapper.insert(session);
+            log.info("聊天会话创建成功: sessionId={}, user1={}, user2={}", session.getId(), smallerId, largerId);
+        }
+
+        sendMessage(senderId, session.getId(), content, msgType);
+    }
+
     private String asString(Object value) {
         if (value == null) return null;
         return value.toString();

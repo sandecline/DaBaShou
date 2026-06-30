@@ -1,11 +1,11 @@
 /** 消息会话 */
 export interface Conversation {
   id: number
-  targetUserId: number
-  targetUserName: string
-  targetAvatar: string
+  otherUserId: number
+  otherNickname: string
+  otherAvatar: string
   lastMessage: string
-  lastMessageTime: string
+  lastTime: string
   unreadCount: number
 }
 
@@ -13,9 +13,11 @@ export interface Conversation {
 export interface ChatMessage {
   id: number
   senderId: number
-  receiverId: number
+  senderNickname: string
+  senderAvatar: string
   content: string
-  type: 'text' | 'image'
+  msgType: number
+  isRead: number
   createTime: string
   // 前端附加字段
   isMine?: boolean

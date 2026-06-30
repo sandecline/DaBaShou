@@ -93,13 +93,15 @@ async function handleSend() {
   if (!text) return
 
   try {
-    await sendMessage(props.targetUserId, text)
+    await sendMessage(props.targetUserId, text, 1)
     messages.value.push({
       id: Date.now(),
       senderId: userStore.user?.id!,
-      receiverId: props.targetUserId,
+      senderNickname: userStore.user?.nickname || '',
+      senderAvatar: userStore.user?.avatar || '',
       content: text,
-      type: 'text',
+      msgType: 1,
+      isRead: 0,
       createTime: new Date().toISOString(),
       isMine: true,
     })

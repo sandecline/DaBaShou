@@ -55,7 +55,7 @@ public class ChatController {
     }
 
     /**
-     * 分页查消息
+     * 分页查消息（按会话ID）
      */
     @GetMapping("/sessions/{sessionId}/messages")
     public AjaxResult<PageResult<ChatMessageVo>> getMessages(
@@ -68,6 +68,70 @@ public class ChatController {
             return AjaxResult.ok(result);
         } catch (BusinessException e) {
             return AjaxResult.fail(e.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 分页查消息（按对方用户ID，自动查找或创建会话）
+     */
+    @GetMapping("/messages")
+    public AjaxResult<PageResult<ChatMessageVo>> getMessagesByTargetUserId(
+            @RequestParam Long targetUserId,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        Long userId = SecurityUtil.requireCurrentUserId();
+        try {
+            PageResult<ChatMessageVo> result = chatService.getMessagesByTargetUserId(userId, targetUserId, pageNum, pageSize);
+            return AjaxResult.ok(result);
+        } catch (BusinessException e) {
+            return AjaxResult.fail(e.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 发送消息（REST接口）
+     */
+    @PostMapping("/send")
+    public AjaxResult<Void> send(@RequestBody SendDto dto) {
+        Long senderId = SecurityUtil.requireCurrentUserId();
+        try {
+            chatService.sendMessageToUser(senderId, dto.getReceiverId(), dto.getContent(), dto.getMsgType());
+            return AjaxResult.ok();
+        } catch (BusinessException e) {
+            return AjaxResult.fail(e.getCode(), e.getMessage());
+        }
+    }
+
+    /**
+     * 发送消息请求体
+     */
+    public static class SendDto {
+        private Long receiverId;
+        private String content;
+        private Integer msgType;
+
+        public Long getReceiverId() {
+            return receiverId;
+        }
+
+        public void setReceiverId(Long receiverId) {
+            this.receiverId = receiverId;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+
+        public Integer getMsgType() {
+            return msgType;
+        }
+
+        public void setMsgType(Integer msgType) {
+            this.msgType = msgType;
         }
     }
 }

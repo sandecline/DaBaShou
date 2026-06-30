@@ -26,6 +26,16 @@ public interface ChatService {
     PageResult<ChatMessageVo> getMessages(Long userId, Long sessionId, int pageNum, int pageSize);
 
     /**
+     * 按对方用户ID查消息（自动查找或创建会话）
+     */
+    PageResult<ChatMessageVo> getMessagesByTargetUserId(Long userId, Long targetUserId, int pageNum, int pageSize);
+
+    /**
+     * 发送消息（REST接口）
+     */
+    void sendMessageToUser(Long senderId, Long receiverId, String content, Integer msgType);
+
+    /**
      * 发送消息
      */
     void sendMessage(Long senderId, Long sessionId, String content, Integer msgType);

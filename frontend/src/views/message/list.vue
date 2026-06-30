@@ -11,18 +11,18 @@
               v-for="conv in conversations"
               :key="conv.id"
               class="conv-item"
-              :class="{ active: activeConv === conv.targetUserId }"
-              @click="selectConv(conv.targetUserId)"
+              :class="{ active: activeConv === conv.otherUserId }"
+              @click="selectConv(conv.otherUserId)"
             >
               <el-badge :value="conv.unreadCount" :hidden="conv.unreadCount === 0" :max="99">
-                <el-avatar :size="44" :src="conv.targetAvatar">
-                  {{ (conv.targetUserName || '?').charAt(0) }}
+                <el-avatar :size="44" :src="conv.otherAvatar">
+                  {{ (conv.otherNickname || '?').charAt(0) }}
                 </el-avatar>
               </el-badge>
               <div class="conv-info">
                 <div class="conv-header">
-                  <span class="conv-name">{{ conv.targetUserName }}</span>
-                  <span class="conv-time">{{ fromNow(conv.lastMessageTime) }}</span>
+                  <span class="conv-name">{{ conv.otherNickname }}</span>
+                  <span class="conv-time">{{ fromNow(conv.lastTime) }}</span>
                 </div>
                 <p class="conv-last-msg text-ellipsis">{{ conv.lastMessage }}</p>
               </div>
@@ -65,10 +65,10 @@ function selectConv(targetUserId: number) {
 
 onMounted(async () => {
   try {
-    const result = await getConversations()
-    conversations.value = result
-    if (result.length > 0) {
-      activeConv.value = result[0].targetUserId
+    const result = await getConversations({ page: 1, size: 50 })
+    conversations.value = result.records
+    if (result.records.length > 0) {
+      activeConv.value = result.records[0].otherUserId
     }
   } catch {
     // handled

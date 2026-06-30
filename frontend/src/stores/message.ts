@@ -8,8 +8,8 @@ export const useMessageStore = defineStore('message', () => {
 
   async function fetchUnreadCount() {
     try {
-      const result = await getUnreadCount()
-      unreadCount.value = result.count
+      const count = await getUnreadCount()
+      unreadCount.value = count
     } catch {
       // ignore
     }

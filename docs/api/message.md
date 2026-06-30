@@ -79,7 +79,20 @@
 
 - **响应**: `data = PageResult<ChatMessageVo>`
 
-### 2.3 发起会话
+### 2.3 按对方用户查消息
+- **URL**: `GET /api/v1/chat/messages`
+- **说明**: 按对方用户ID查询聊天记录，自动查找或创建会话。若会话不存在则返回空列表。
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| targetUserId | Long | 是 | 对方用户ID |
+| pageNum | Integer | 否 | 页码 |
+| pageSize | Integer | 否 | 每页条数 |
+
+- **响应**: `data = PageResult<ChatMessageVo>`
+- **错误码**: 404-对方用户不存在
+
+### 2.4 发起会话
 - **URL**: `POST /api/v1/chat/sessions`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -88,6 +101,19 @@
 
 - **响应**: `data = 1`（会话ID，Long）
 - **错误码**: 404-用户不存在
+
+### 2.5 发送消息（REST）
+- **URL**: `POST /api/v1/chat/send`
+- **说明**: 通过REST接口发送聊天消息，自动查找或创建会话。
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| receiverId | Long | 是 | 接收方用户ID |
+| content | String | 是 | 消息内容 |
+| msgType | Integer | 否 | 消息类型：1-文字（默认），2-图片 |
+
+- **响应**: `data = null`
+- **错误码**: 404-对方用户不存在, 400-不能给自己发消息
 
 ---
 
