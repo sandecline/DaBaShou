@@ -2,7 +2,7 @@
 
 ## 模块信息
 - **模块**: dabashou-user
-- **前缀**: `/api/v1/auth`, `/api/v1/user`
+- **前缀**: `/api/v1/auth`, `/api/v1/user`, `/api/v1/users`
 - **依赖**: dabashou-common, dabashou-system
 
 ---
@@ -146,6 +146,28 @@
 
 - **响应**: `data = null`
 
+### 2.5 公开脱敏用户详情
+- **URL**: `GET /api/v1/users/{userId}`
+- **认证**: 无需
+
+- **响应**:
+```json
+{
+  "id": 1,
+  "nickname": "张三",
+  "avatar": "string (URL)",
+  "trustScore": 4.5,
+  "trustLevel": "金牌",
+  "campus": "主校区",
+  "building": "一号楼",
+  "bio": "string",
+  "status": 1,
+  "createTime": "2026-01-01 00:00:00"
+}
+```
+- **脱敏规则**: 不返回用户名、手机号、邮箱、经纬度、积分余额等个人敏感字段。
+- **错误码**: 404-用户不存在或已禁用
+
 ---
 
 ## 三、校园认证接口
@@ -270,4 +292,4 @@ public class TrustLogItem {
 ---
 
 **文档版本**: v1.3.0
-**最后更新**: 2026-06-28
+**最后更新**: 2026-07-01

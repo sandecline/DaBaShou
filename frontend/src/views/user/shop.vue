@@ -61,22 +61,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getMyShelves } from '@/api/shelf'
-import { getUserById } from '@/api/auth'
+import { getMyShelves, getUserShelves } from '@/api/shelf'
+import { getUserById } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import SkillCard from '@/components/common/SkillCard.vue'
 import TimeSlotPicker from '@/components/common/TimeSlotPicker.vue'
 import TrustBadge from '@/components/common/TrustBadge.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { ShelfItemVo, UserProfileVo } from '@/types/api'
+import type { PublicUserVo, ShelfItemVo, UserProfileVo } from '@/types/api'
 
 const route = useRoute()
 const userStore = useUserStore()
 
 const loading = ref(true)
 const skills = ref<ShelfItemVo[]>([])
-const shopUser = ref<UserProfileVo | null>(null)
+const shopUser = ref<UserProfileVo | PublicUserVo | null>(null)
 const timeSlots = ref<Array<{ date: string; startTime: string; endTime: string }>>([])
 const savingSlots = ref(false)
 
@@ -95,7 +95,9 @@ async function loadData() {
     } else {
       shopUser.value = userStore.user
     }
-    const result = await getMyShelves({ page: 1, size: 50 })
+    const result = userId && !isOwner.value
+      ? await getUserShelves(Number(userId), { pageNum: 1, pageSize: 50 })
+      : await getMyShelves({ pageNum: 1, pageSize: 50 })
     skills.value = result.list
   } catch {
     // handled

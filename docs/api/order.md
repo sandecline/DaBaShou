@@ -2,7 +2,8 @@
 
 ## 模块信息
 - **模块**: dabashou-order
-- **前缀**: `/api/v1/order`
+- **前缀**: `/api/v1/orders`
+- **兼容入口**: `/api/v1/order` 暂时保留，后续版本废弃
 - **核心**: 8状态机硬流转
 
 ---
@@ -25,7 +26,7 @@
 ## 二、订单接口
 
 ### 2.1 创建订单（从货架）
-- **URL**: `POST /api/v1/order/from-shelf`
+- **URL**: `POST /api/v1/orders/from-shelf`
 - **请求头**: `X-Idempotent-Token: {uuid}`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -46,7 +47,7 @@
 - **错误码**: 400-参数错误, 404-货架不存在, 409-货架已下架
 
 ### 2.2 创建订单（从需求）
-- **URL**: `POST /api/v1/order/from-demand`
+- **URL**: `POST /api/v1/orders/from-demand`
 - **请求头**: `X-Idempotent-Token: {uuid}`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -66,7 +67,7 @@
 - **错误码**: 400-参数错误, 404-需求不存在, 409-需求已关闭
 
 ### 2.3 订单列表
-- **URL**: `GET /api/v1/order`
+- **URL**: `GET /api/v1/orders`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -79,7 +80,7 @@
 - **错误码**: 无
 
 ### 2.4 订单详情
-- **URL**: `GET /api/v1/order/{id}`
+- **URL**: `GET /api/v1/orders/{id}`
 - **响应**:
 ```json
 {
@@ -108,7 +109,7 @@
 - **错误码**: 404-订单不存在, 403-无权查看
 
 ### 2.5 查询订单状态
-- **URL**: `GET /api/v1/order/{id}/status`
+- **URL**: `GET /api/v1/orders/{id}/status`
 - **响应**: `data = { "status": 1, "statusDesc": "待支付" }`
 - **错误码**: 404-订单不存在
 
@@ -117,7 +118,7 @@
 ## 三、订单操作接口
 
 ### 3.1 支付订单（1→2）
-- **URL**: `POST /api/v1/order/{id}/pay`
+- **URL**: `POST /api/v1/orders/{id}/pay`
 - **请求头**: `X-Idempotent-Token: {uuid}`
 - **响应**:
 ```json
@@ -131,7 +132,7 @@
 - **错误码**: 400-积分不足, 409-状态不允许, 429-重复提交
 
 ### 3.2 取消订单（→0）
-- **URL**: `POST /api/v1/order/{id}/cancel`
+- **URL**: `POST /api/v1/orders/{id}/cancel`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -144,24 +145,24 @@
 - **错误码**: 409-状态不允许
 
 ### 3.3 开始服务（2→3）
-- **URL**: `POST /api/v1/order/{id}/start`
+- **URL**: `POST /api/v1/orders/{id}/start`
 - **响应**: `data = null`
 - **角色**: 卖家
 - **错误码**: 403-非卖家, 409-状态不允许
 
 ### 3.4 获取核销码
-- **URL**: `GET /api/v1/order/{id}/verify-code`
+- **URL**: `GET /api/v1/orders/{id}/verify-code`
 - **响应**: `{ "verifyCode": "A1B2C3", "expireTime": "2026-07-01 10:30:00" }`
 - **错误码**: 409-状态不允许
 
 ### 3.5 刷新核销码
-- **URL**: `PUT /api/v1/order/{id}/verify-code`
+- **URL**: `PUT /api/v1/orders/{id}/verify-code`
 - **响应**: `{ "verifyCode": "D4E5F6", "expireTime": "2026-07-01 11:00:00" }`
 - **业务**: 重新生成核销码，重置30分钟TTL
 - **错误码**: 409-状态不允许
 
 ### 3.6 核销订单（3→4）
-- **URL**: `POST /api/v1/order/{id}/verify`
+- **URL**: `POST /api/v1/orders/{id}/verify`
 - **请求头**: `X-Idempotent-Token: {uuid}`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -172,13 +173,13 @@
 - **错误码**: 400-核销码错误, 409-已过期, 429-重复提交
 
 ### 3.7 买家确认（4→5）
-- **URL**: `POST /api/v1/order/{id}/confirm`
+- **URL**: `POST /api/v1/orders/{id}/confirm`
 - **响应**: `data = null`
 - **业务**: 结算积分给卖家
 - **错误码**: 403-非买家, 409-状态不允许
 
 ### 3.8 发起争议（4→7）
-- **URL**: `POST /api/v1/order/{id}/dispute`
+- **URL**: `POST /api/v1/orders/{id}/dispute`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -188,7 +189,7 @@
 - **错误码**: 403-非买家, 409-状态不允许
 
 ### 3.9 仲裁订单（7→5或7→6）
-- **URL**: `POST /api/v1/order/{id}/arbitrate`
+- **URL**: `POST /api/v1/orders/{id}/arbitrate`
 - **请求头**: `X-Idempotent-Token: {uuid}`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -202,7 +203,7 @@
 - **错误码**: 409-状态不允许, 429-重复提交
 
 ### 3.10 退款（→6）
-- **URL**: `POST /api/v1/order/{id}/refund`
+- **URL**: `POST /api/v1/orders/{id}/refund`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -299,14 +300,14 @@ public class OrderItemVo {
 ---
 
 **文档版本**: v1.3.0
-**最后更新**: 2026-06-28
+**最后更新**: 2026-07-01
 
 ---
 
 ## 2026-07-01 补充：接单防重复
 
-- `POST /api/v1/order/from-demand` 成功创建订单后，服务端会在同一事务内将对应 `dbs_demand.status` 从 `1` 更新为 `2`。
+- `POST /api/v1/orders/from-demand` 成功创建订单后，服务端会在同一事务内将对应 `dbs_demand.status` 从 `1` 更新为 `2`。
 - 同一需求被再次用于创建订单时返回 `409`，避免原需求详情链接反复接单。
 - `shelfId` 可选；未提供可用货架时，订单标题、标签和积分按需求本身生成，接单方取当前登录用户。
-- `POST /api/v1/order/from-shelf` 成功创建订单后，服务端会在同一事务内将对应 `dbs_skill_shelf.status` 从 `1` 更新为 `0`。
+- `POST /api/v1/orders/from-shelf` 成功创建订单后，服务端会在同一事务内将对应 `dbs_skill_shelf.status` 从 `1` 更新为 `0`。
 - 同一服务被再次用于创建订单时返回 `409`，避免原服务详情链接反复接取。

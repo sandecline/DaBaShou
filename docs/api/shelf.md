@@ -99,7 +99,7 @@
 - **响应**: `data = PageResult<ShelfItemVo>`
 
 ### 2.3 用户小铺页
-- **URL**: `GET /api/v1/users/{userId}/shelves`
+- **URL**: `GET /api/v1/shelves/users/{userId}/shelves`
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
@@ -200,4 +200,4 @@ public class TimeSlotDto {
 ---
 
 **文档版本**: v1.3.0
-**最后更新**: 2026-06-28
+**最后更新**: 2026-07-01

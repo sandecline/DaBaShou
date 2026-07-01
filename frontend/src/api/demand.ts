@@ -43,9 +43,11 @@ export function getMyDemands(params?: PageParams): Promise<PageResult<DemandItem
   return request.get('/v1/demands/mine', normalizePageParams(params))
 }
 
-export function bidDemand(id: number): Promise<null> {
-  return request.post('/v1/demands/' + id + '/bid')
+export function acceptDemand(id: number, data: { shelfId?: number; remark?: string } = {}): Promise<null> {
+  return request.post('/v1/demands/' + id + '/accept', data)
 }
+
+export const bidDemand = acceptDemand
 
 export function matchDemands(id: number, limit?: number): Promise<DemandMatchVo[]> {
   return request.get('/v1/demands/' + id + '/match', { limit })

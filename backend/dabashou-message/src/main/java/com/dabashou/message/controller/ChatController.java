@@ -2,7 +2,6 @@ package com.dabashou.message.controller;
 
 import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
-import com.dabashou.common.exception.BusinessException;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.message.dto.ChatSessionDto;
 import com.dabashou.message.service.ChatService;
@@ -32,12 +31,8 @@ public class ChatController {
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "20") int pageSize) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            PageResult<ChatSessionVo> result = chatService.listSessions(userId, pageNum, pageSize);
-            return AjaxResult.ok(result);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        PageResult<ChatSessionVo> result = chatService.listSessions(userId, pageNum, pageSize);
+        return AjaxResult.ok(result);
     }
 
     /**
@@ -46,12 +41,8 @@ public class ChatController {
     @PostMapping("/sessions")
     public AjaxResult<Long> createSession(@Valid @RequestBody ChatSessionDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            Long sessionId = chatService.createSession(userId, dto);
-            return AjaxResult.ok(sessionId);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        Long sessionId = chatService.createSession(userId, dto);
+        return AjaxResult.ok(sessionId);
     }
 
     /**
@@ -63,12 +54,8 @@ public class ChatController {
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "20") int pageSize) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            PageResult<ChatMessageVo> result = chatService.getMessages(userId, sessionId, pageNum, pageSize);
-            return AjaxResult.ok(result);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        PageResult<ChatMessageVo> result = chatService.getMessages(userId, sessionId, pageNum, pageSize);
+        return AjaxResult.ok(result);
     }
 
     /**
@@ -80,12 +67,8 @@ public class ChatController {
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "20") int pageSize) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            PageResult<ChatMessageVo> result = chatService.getMessagesByTargetUserId(userId, targetUserId, pageNum, pageSize);
-            return AjaxResult.ok(result);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        PageResult<ChatMessageVo> result = chatService.getMessagesByTargetUserId(userId, targetUserId, pageNum, pageSize);
+        return AjaxResult.ok(result);
     }
 
     /**
@@ -94,12 +77,8 @@ public class ChatController {
     @PostMapping("/send")
     public AjaxResult<Void> send(@RequestBody SendDto dto) {
         Long senderId = SecurityUtil.requireCurrentUserId();
-        try {
-            chatService.sendMessageToUser(senderId, dto.getReceiverId(), dto.getContent(), dto.getMsgType());
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        chatService.sendMessageToUser(senderId, dto.getReceiverId(), dto.getContent(), dto.getMsgType());
+        return AjaxResult.ok();
     }
 
     /**

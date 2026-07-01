@@ -33,18 +33,18 @@
 
 ### 错误码与HTTP状态码映射
 
-> **说明**: 业务错误码位于响应体`code`字段，HTTP状态码位于HTTP响应头。正常情况下HTTP状态码始终为200，业务错误码在body中体现。
+> **说明**: 业务错误码位于响应体`code`字段，HTTP状态码位于HTTP响应头。业务异常由全局异常处理器统一返回，HTTP状态码与响应体`code`保持一致。
 
 | 业务错误码 | HTTP状态码 | 场景 |
 |-----------|-----------|------|
 | 200 | 200 | 操作成功 |
-| 400 | 200 | 参数校验失败、请求体解析失败 |
-| 401 | 200 | 未登录、token过期、密码错误 |
-| 403 | 200 | 无权限访问 |
-| 404 | 200 | 资源不存在 |
-| 409 | 200 | 状态机冲突、业务规则冲突 |
-| 429 | 200 | 限流触发 |
-| 500 | 500 | 系统异常（仅系统异常时HTTP状态码非200） |
+| 400 | 400 | 参数校验失败、请求体解析失败 |
+| 401 | 401 | 未登录、token过期、密码错误 |
+| 403 | 403 | 无权限访问 |
+| 404 | 404 | 资源不存在 |
+| 409 | 409 | 状态机冲突、业务规则冲突 |
+| 429 | 429 | 限流触发 |
+| 500 | 500 | 系统异常 |
 
 ## 三、分页规范
 
@@ -80,6 +80,9 @@
 - `POST /api/v1/auth/login` - 密码登录
 - `POST /api/v1/auth/sms-code` - 发送验证码
 - `POST /api/v1/auth/sms-login` - 短信登录
+- `GET /api/v1/users/{userId}` - 公开脱敏用户详情
+- `GET /api/v1/shelves`、`GET /api/v1/shelves/{id}`、`GET /api/v1/shelves/users/{userId}/shelves` - 公开货架浏览
+- `GET /api/v1/demands`、`GET /api/v1/demands/{id}` - 公开需求浏览
 - `GET /api/v1/files/download/**` - 文件下载
 - `/doc.html` - Knife4j文档
 - `/v3/api-docs/**` - OpenAPI文档
@@ -148,7 +151,7 @@
 - 资源使用复数名词: `/api/v1/shelves`, `/api/v1/demands`, `/api/v1/points`
 - 子资源使用嵌套: `/api/v1/orders/{id}/verify`
 - 操作使用动词: `/api/v1/orders/{id}/pay`, `/api/v1/orders/{id}/cancel`
-- **存量例外**: order模块使用单数`/api/v1/order`（已上线，不做回改）
+- 订单模块主路径统一为复数`/api/v1/orders`；旧`/api/v1/order`仅保留兼容期入口。
 
 ### 字段命名
 - 使用小驼峰: `createTime`, `userId`, `orderNo`
@@ -177,4 +180,4 @@
 ---
 
 **文档版本**: v1.3.0
-**最后更新**: 2026-06-28
+**最后更新**: 2026-07-01

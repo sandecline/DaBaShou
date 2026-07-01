@@ -251,6 +251,19 @@ export interface OrderItemVo {
   createTime: string
 }
 
+export interface PublicUserVo {
+  id: number
+  nickname: string
+  avatar: string
+  trustScore: number
+  trustLevel: string
+  campus: string
+  building: string
+  bio: string
+  status: number
+  createTime: string
+}
+
 export interface OrderDetailVo {
   id: number
   orderNo: string

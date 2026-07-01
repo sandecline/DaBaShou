@@ -2,7 +2,6 @@ package com.dabashou.message.controller;
 
 import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
-import com.dabashou.common.exception.BusinessException;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.message.service.NotificationService;
 import com.dabashou.message.vo.NotificationVo;
@@ -31,12 +30,8 @@ public class NotificationController {
             @RequestParam(defaultValue = "1") int pageNum,
             @RequestParam(defaultValue = "20") int pageSize) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            PageResult<NotificationVo> result = notificationService.list(userId, type, isRead, pageNum, pageSize);
-            return AjaxResult.ok(result);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        PageResult<NotificationVo> result = notificationService.list(userId, type, isRead, pageNum, pageSize);
+        return AjaxResult.ok(result);
     }
 
     /**
@@ -45,12 +40,8 @@ public class NotificationController {
     @GetMapping("/unread-count")
     public AjaxResult<Long> unreadCount() {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            long count = notificationService.unreadCount(userId);
-            return AjaxResult.ok(count);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        long count = notificationService.unreadCount(userId);
+        return AjaxResult.ok(count);
     }
 
     /**
@@ -59,12 +50,8 @@ public class NotificationController {
     @PutMapping("/{id}/read")
     public AjaxResult<Void> markRead(@PathVariable Long id) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            notificationService.markRead(userId, id);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        notificationService.markRead(userId, id);
+        return AjaxResult.ok();
     }
 
     /**
@@ -73,12 +60,8 @@ public class NotificationController {
     @PutMapping("/read-all")
     public AjaxResult<Void> markAllRead() {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            notificationService.markAllRead(userId);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        notificationService.markAllRead(userId);
+        return AjaxResult.ok();
     }
 
     /**
@@ -87,11 +70,7 @@ public class NotificationController {
     @DeleteMapping("/{id}")
     public AjaxResult<Void> delete(@PathVariable Long id) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            notificationService.delete(userId, id);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        notificationService.delete(userId, id);
+        return AjaxResult.ok();
     }
 }

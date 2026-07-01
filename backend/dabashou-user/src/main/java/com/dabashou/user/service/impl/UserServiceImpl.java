@@ -115,9 +115,16 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.selectOne(wrapper);
 
         if (user == null) {
-            // 模拟自动注册
+            // 模拟自动注册，确保用户名唯一
+            String baseUsername = "u_" + dto.getPhone();
+            String username = baseUsername;
+            int suffix = 1;
+            while (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, username)) > 0) {
+                username = baseUsername + "_" + suffix++;
+            }
+
             user = new User();
-            user.setUsername("u_" + dto.getPhone());
+            user.setUsername(username);
             user.setNickname("用户" + dto.getPhone().substring(Math.max(0, dto.getPhone().length() - 4)));
             user.setPhone(dto.getPhone());
             user.setPasswordHash(passwordEncoder.encode("default"));
@@ -157,6 +164,15 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");
         }
         return toUserProfileVo(user);
+    }
+
+    @Override
+    public PublicUserVo getPublicUser(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null || Integer.valueOf(0).equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");
+        }
+        return toPublicUserVo(user);
     }
 
     @Override
@@ -324,6 +340,24 @@ public class UserServiceImpl implements UserService {
 
         vo.setLongitude(user.getLongitude());
         vo.setLatitude(user.getLatitude());
+        vo.setCampus(user.getCampus());
+        vo.setBuilding(user.getBuilding());
+        vo.setBio(user.getBio());
+        vo.setStatus(user.getStatus());
+        vo.setCreateTime(user.getCreateTime());
+        return vo;
+    }
+
+    private PublicUserVo toPublicUserVo(User user) {
+        PublicUserVo vo = new PublicUserVo();
+        vo.setId(user.getId());
+        vo.setNickname(user.getNickname());
+        vo.setAvatar(user.getAvatar());
+        vo.setTrustScore(user.getTrustScore());
+
+        double score = user.getTrustScore() != null ? user.getTrustScore().doubleValue() : 0;
+        vo.setTrustLevel(TrustLevel.ofScore(score).getLabel());
+
         vo.setCampus(user.getCampus());
         vo.setBuilding(user.getBuilding());
         vo.setBio(user.getBio());

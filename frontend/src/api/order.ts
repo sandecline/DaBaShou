@@ -4,7 +4,7 @@ import { normalizePageParams } from './_params'
 
 export function createOrderFromShelf(data: { skillShelfId?: number; shelfId?: number; timeSlotId?: number; remark?: string }): Promise<number> {
   const shelfId = data.shelfId ?? data.skillShelfId
-  return request.post('/v1/order/from-shelf', {
+  return request.post('/v1/orders/from-shelf', {
     ...data,
     shelfId,
     idempotentToken: crypto.randomUUID(),
@@ -12,7 +12,7 @@ export function createOrderFromShelf(data: { skillShelfId?: number; shelfId?: nu
 }
 
 export function createOrderFromDemand(data: { demandId: number; sellerId?: number; shelfId?: number; remark?: string }): Promise<number> {
-  return request.post('/v1/order/from-demand', {
+  return request.post('/v1/orders/from-demand', {
     ...data,
     shelfId: data.shelfId ?? 0,
     idempotentToken: crypto.randomUUID(),
@@ -20,58 +20,58 @@ export function createOrderFromDemand(data: { demandId: number; sellerId?: numbe
 }
 
 export function getOrderList(params: { role?: 'buyer' | 'seller'; status?: number; pageNum?: number; pageSize?: number }): Promise<PageResult<OrderItemVo>> {
-  return request.get('/v1/order', normalizePageParams(params))
+  return request.get('/v1/orders', normalizePageParams(params))
 }
 
 export const getMyOrders = (params?: PageParams): Promise<PageResult<OrderItemVo>> => getOrderList({ ...params, role: 'buyer' })
 export const getMyTakenOrders = (params?: PageParams): Promise<PageResult<OrderItemVo>> => getOrderList({ ...params, role: 'seller' })
 
 export function getOrderDetail(id: number): Promise<OrderDetailVo> {
-  return request.get('/v1/order/' + id)
+  return request.get('/v1/orders/' + id)
 }
 
 export function getOrderStatus(id: number): Promise<{ status: number; statusDesc: string }> {
-  return request.get('/v1/order/' + id + '/status')
+  return request.get('/v1/orders/' + id + '/status')
 }
 
 export function payOrder(id: number): Promise<PayResultVo> {
-  return request.post('/v1/order/' + id + '/pay')
+  return request.post('/v1/orders/' + id + '/pay')
 }
 
 export function cancelOrder(id: number, reason: string): Promise<null> {
-  return request.post('/v1/order/' + id + '/cancel', { reason })
+  return request.post('/v1/orders/' + id + '/cancel', { reason })
 }
 
 export function startService(id: number): Promise<null> {
-  return request.post('/v1/order/' + id + '/start')
+  return request.post('/v1/orders/' + id + '/start')
 }
 
 export function getVerifyCode(id: number): Promise<VerifyCodeVo> {
-  return request.get('/v1/order/' + id + '/verify-code')
+  return request.get('/v1/orders/' + id + '/verify-code')
 }
 
 export function refreshVerifyCode(id: number): Promise<VerifyCodeVo> {
-  return request.put('/v1/order/' + id + '/verify-code')
+  return request.put('/v1/orders/' + id + '/verify-code')
 }
 
 export function verifyOrder(id: number, verifyCode: string): Promise<null> {
-  return request.post('/v1/order/' + id + '/verify', { verifyCode })
+  return request.post('/v1/orders/' + id + '/verify', { verifyCode })
 }
 
 export function confirmOrder(id: number): Promise<null> {
-  return request.post('/v1/order/' + id + '/confirm')
+  return request.post('/v1/orders/' + id + '/confirm')
 }
 
 export function disputeOrder(id: number, reason: string): Promise<null> {
-  return request.post('/v1/order/' + id + '/dispute', { reason })
+  return request.post('/v1/orders/' + id + '/dispute', { reason })
 }
 
 export function arbitrateOrder(id: number, data: { result: string; reason: string; refundAmount?: number }): Promise<null> {
-  return request.post('/v1/order/' + id + '/arbitrate', data)
+  return request.post('/v1/orders/' + id + '/arbitrate', data)
 }
 
 export function refundOrder(id: number, reason: string): Promise<null> {
-  return request.post('/v1/order/' + id + '/refund', { reason })
+  return request.post('/v1/orders/' + id + '/refund', { reason })
 }
 
 export function getOrderReview(orderId: number): Promise<any> {

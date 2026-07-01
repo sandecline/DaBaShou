@@ -47,7 +47,7 @@ export function getMyShelves(params?: PageParams): Promise<PageResult<ShelfItemV
 }
 
 export function getUserShelves(userId: number, params?: PageParams): Promise<PageResult<ShelfItemVo>> {
-  return request.get('/v1/users/' + userId + '/shelves', normalizePageParams(params))
+  return request.get('/v1/shelves/users/' + userId + '/shelves', normalizePageParams(params))
 }
 
 export function setTimeSlots(shelfId: number, slots: { date?: string; dayOfWeek: number; startTime: string; endTime: string }[]): Promise<null> {
