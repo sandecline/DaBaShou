@@ -92,10 +92,10 @@ Page({
     this.messageHandler = (data: unknown) => {
       const msg = data as ChatMessage & { type: string };
       if (msg.type === 'new_message' && msg.sessionId === this.data.sessionId) {
-        // 追加到消息列表并滚动到底部
-        const messages = [...this.data.messages, msg];
+        // 增量追加，避免传输整个数组
+        const idx = this.data.messages.length;
         this.setData({
-          messages,
+          [`messages[${idx}]`]: msg,
           scrollIntoId: `msg-${msg.id}`,
         });
         // 标记已读
@@ -157,7 +157,13 @@ Page({
   // ===== 消息发送 =====
 
   onInputChange(e: WechatMiniprogram.Input) {
-    this.setData({ inputValue: e.detail.value });
+    // 只存到实例变量，失焦时才同步到 data（减少 setData 频率）
+    (this as unknown as Record<string, unknown>)._inputCache = e.detail.value;
+  },
+
+  onInputBlur() {
+    const v = (this as unknown as Record<string, unknown>)._inputCache;
+    if (v !== undefined) this.setData({ inputValue: v as string });
   },
 
   async onSendText() {
@@ -183,8 +189,11 @@ Page({
         senderAvatar: this.data.myAvatar,
         createTime: new Date().toISOString(),
       };
-      const messages = [...this.data.messages, localMsg];
-      this.setData({ messages, scrollIntoId: `msg-${localMsg.id}` });
+      const idx = this.data.messages.length;
+      this.setData({
+        [`messages[${idx}]`]: localMsg,
+        scrollIntoId: `msg-${localMsg.id}`,
+      });
       // 通过 WebSocket 推送消息给服务器
       send('chat_message', {
         sessionId,
@@ -256,8 +265,11 @@ Page({
         senderAvatar: this.data.myAvatar,
         createTime: new Date().toISOString(),
       };
-      const messages = [...this.data.messages, localMsg];
-      this.setData({ messages, scrollIntoId: `msg-${localMsg.id}` });
+      const idx = this.data.messages.length;
+      this.setData({
+        [`messages[${idx}]`]: localMsg,
+        scrollIntoId: `msg-${localMsg.id}`,
+      });
 
       wx.hideLoading();
     } catch (err) {

@@ -84,6 +84,16 @@ export const orderService = {
     return api.post<void>(`/v1/order/${orderId}/start`);
   },
 
+  /** 接单 */
+  accept(orderId: number) {
+    return api.post<{ status: number; statusDesc: string }>(`/v1/order/${orderId}/accept`);
+  },
+
+  /** 完成服务（双向验证） */
+  completeService(orderId: number, role: 'buyer' | 'seller', code: string) {
+    return api.post<{ status: number; statusDesc: string }>(`/v1/order/${orderId}/complete`, { role, code } as unknown as Record<string, unknown>);
+  },
+
   /** 获取核销码 */
   getVerifyCode(orderId: number) {
     return api.get<{ verifyCode: string; expireTime: string }>(`/v1/order/${orderId}/verify-code`);

@@ -25,14 +25,7 @@ export interface PointAccount {
 export type PointTransactionType = 1 | 2 | 3 | 4 | 5 | 6;
 
 /** 积分交易类型中文（与前端一致：5=签到奖励 6=系统调整） */
-export const POINT_TRANSACTION_TYPE_MAP: Record<PointTransactionType, string> = {
-  1: '收入',
-  2: '支出',
-  3: '冻结',
-  4: '解冻',
-  5: '签到奖励',
-  6: '系统调整',
-};
+/** 运行时常量见 utils/point-transaction.ts */
 
 /** 积分流水记录（与前端 PointTransVo 一致） */
 export interface PointTransaction {

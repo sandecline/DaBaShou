@@ -43,7 +43,7 @@
         <t-avatar
           wx:if="{{!item.isAnonymous}}"
           size="medium"
-          image="{{item.reviewerInfo.avatar}}"
+          image="{{item.reviewerAvatar}}"
         />
         <t-avatar
           wx:else
@@ -51,7 +51,7 @@
           icon="user"
         />
         <view class="review-meta">
-          <text class="review-nickname">{{item.isAnonymous ? '匿名用户' : item.reviewerInfo.nickname}}</text>
+          <text class="review-nickname">{{item.isAnonymous ? '匿名用户' : item.reviewerNickname}}</text>
           <t-rate value="{{item.rating}}" readonly size="small" color="#ff8c00" />
         </view>
         <text class="review-time">{{item.createTime}}</text>

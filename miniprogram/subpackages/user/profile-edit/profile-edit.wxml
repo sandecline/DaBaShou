@@ -1,72 +1,95 @@
 <view class="page">
-  <!-- 头像区域 -->
-  <view class="avatar-section">
-    <t-avatar
-      size="large"
-      image="{{avatar}}"
-      icon="user"
-      bind:tap="onChooseAvatar"
-    />
-    <view class="avatar-tip" bindtap="onChooseAvatar">点击更换头像</view>
+  <!-- 顶部渐变背景区 -->
+  <view class="hero">
+    <view class="avatar-ring" bindtap="onChooseAvatar">
+      <t-avatar size="large" image="{{avatar}}" icon="user" class="avatar-img" />
+      <view class="avatar-edit-badge">
+        <t-icon name="camera" size="28rpx" color="#fff" />
+      </view>
+    </view>
+    <view class="hero-nickname">{{nickname || '未设置昵称'}}</view>
+    <view class="hero-tip" bindtap="onChooseAvatar">点击头像更换</view>
   </view>
 
-  <!-- 表单区域 -->
-  <view class="form-section">
-    <t-cell-group>
+  <!-- 卡片区 -->
+  <view class="card-section">
+    <!-- 基本信息 -->
+    <view class="info-card">
+      <view class="card-header">
+        <text class="card-title">基本信息</text>
+      </view>
+
       <!-- 昵称 -->
-      <t-cell title="昵称">
-        <t-input
-          slot="note"
-          value="{{nickname}}"
-          placeholder="请输入昵称"
-          maxlength="{{20}}"
-          clearable
-          bind:change="onNicknameInput"
-        />
-      </t-cell>
+      <view class="info-row">
+        <text class="info-label">昵称</text>
+        <view class="info-value">
+          <input
+            class="info-input {{!canEditNickname ? 'disabled' : ''}}"
+            value="{{nickname}}"
+            placeholder="请输入昵称"
+            placeholder-class="ph"
+            maxlength="{{20}}"
+            disabled="{{!canEditNickname}}"
+            bindinput="onNicknameInput"
+          />
+          <view wx:if="{{!canEditNickname}}" class="cooldown-badge">
+            <t-icon name="time" size="20rpx" color="#FF6E14" />
+            <text>{{nicknameDaysLeft}}天后可改</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="divider" />
 
       <!-- 校区 -->
-      <t-cell title="校区" arrow>
-        <view slot="note" class="picker-trigger" bindtap="onCampusTap">
-          <text class="{{campus ? '' : 'placeholder'}}">{{campus || '请选择校区'}}</text>
+      <view class="info-row" bindtap="onCampusTap">
+        <text class="info-label">校区</text>
+        <view class="info-value">
+          <text class="info-text {{campus ? '' : 'ph'}}">{{campus || '请选择校区'}}</text>
+          <t-icon name="chevron-right" size="32rpx" color="#c9cdd4" />
         </view>
-      </t-cell>
+      </view>
+
+      <view class="divider" />
 
       <!-- 楼栋 -->
-      <t-cell title="楼栋">
-        <t-input
-          slot="note"
-          value="{{building}}"
-          placeholder="请输入楼栋"
-          maxlength="{{30}}"
-          clearable
-          bind:change="onBuildingInput"
-        />
-      </t-cell>
+      <view class="info-row" bindtap="onBuildingTap">
+        <text class="info-label">楼栋</text>
+        <view class="info-value">
+          <text class="info-text {{building ? '' : 'ph'}}">{{building || '请选择楼栋'}}</text>
+          <t-icon name="chevron-right" size="32rpx" color="#c9cdd4" />
+        </view>
+      </view>
+    </view>
 
-      <!-- 个人简介 -->
-      <t-cell title="个人简介">
-        <t-textarea
-          slot="note"
-          value="{{bio}}"
-          placeholder="介绍下自己吧..."
-          maxlength="{{200}}"
-          autosize
-          bind:change="onBioInput"
-        />
-      </t-cell>
-    </t-cell-group>
+    <!-- 个人简介 -->
+    <view class="info-card">
+      <view class="card-header">
+        <text class="card-title">个人简介</text>
+        <text class="char-counter {{bio.length >= 200 ? 'over' : ''}}">{{bio.length}}/200</text>
+      </view>
+      <textarea
+        class="bio-textarea"
+        value="{{bio}}"
+        placeholder="介绍下自己吧，让别人更了解你..."
+        placeholder-class="ph"
+        maxlength="{{200}}"
+        auto-height
+        bindinput="onBioInput"
+      />
+    </view>
   </view>
 
-  <!-- 保存按钮 -->
-  <view class="submit-section">
+  <!-- 底部保存 -->
+  <view class="footer">
     <t-button
       theme="primary"
       size="large"
       block
+      shape="round"
       loading="{{submitting}}"
       disabled="{{submitting}}"
       bind:tap="onSubmit"
-    >保存</t-button>
+    >保存修改</t-button>
   </view>
 </view>

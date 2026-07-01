@@ -5,7 +5,7 @@
 
 import { pointService } from '../../../services/point';
 import type { PointAccount, PointTransaction } from '../../../types/point';
-import { POINT_TRANSACTION_TYPE_MAP } from '../../../types/point';
+import { POINT_TRANSACTION_TYPE_MAP } from '../../../utils/point-transaction';
 import type { PageResult } from '../../../types/api-response';
 
 /** 筛选 Tab */
@@ -49,7 +49,7 @@ Page({
   /** 加载积分账户信息 */
   async loadAccount() {
     try {
-      const res = await pointService.getAccount();
+      const res = await pointService.getBalance();
       const data = res.data || res;
       this.setData({ account: data as PointAccount });
     } catch (err) {
@@ -88,7 +88,7 @@ Page({
 
       const res = await pointService.getTransactions(params);
       const result = (res.data || res) as PageResult<PointTransaction>;
-      const list = result.records || [];
+      const list = result.list || [];
 
       this.setData({
         transactions: reset ? list : [...this.data.transactions, ...list],

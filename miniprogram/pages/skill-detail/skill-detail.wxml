@@ -30,7 +30,6 @@
 
     <!-- 信息卡片 -->
     <view class="info-section card">
-      <!-- 标题 + 价格 -->
       <view class="info-header">
         <text class="skill-title">{{skill.title}}</text>
         <view class="price-tag">
@@ -40,61 +39,65 @@
         </view>
       </view>
 
-      <!-- 发布者信息 -->
       <view class="user-row">
-        <t-image
-          src="{{skill.avatar}}"
-          mode="aspectFill"
-          class="user-avatar"
-        />
+        <t-image src="{{skill.avatar}}" mode="aspectFill" class="user-avatar" />
         <view class="user-info">
           <text class="user-name">{{skill.nickname}}</text>
-          <t-tag
-            size="small"
-            variant="light"
-            theme="{{trustTheme}}"
-          >{{trustLabel}} · {{skill.trustScore}}</t-tag>
+          <t-tag size="small" variant="light" theme="{{trustTheme}}">{{trustLabel}} · {{skill.trustScore}}</t-tag>
         </view>
         <t-button size="small" variant="outline" bindtap="onChat">联系TA</t-button>
       </view>
 
-      <!-- 分隔线 -->
       <view class="divider" />
 
-      <!-- 分类标签 -->
       <view class="tag-row">
         <t-tag theme="primary" variant="light">{{skill.categoryName}}</t-tag>
         <t-tag wx:if="{{skill.tagName}}" variant="outline">{{skill.tagName}}</t-tag>
-        <t-tag
-          variant="outline"
-          theme="{{locationTheme}}"
-        >
-          <t-icon name="{{locationIcon}}" size="24rpx" />
-          {{locationLabel}}
+        <t-tag variant="outline" theme="{{locationTheme}}">
+          <t-icon name="{{locationIcon}}" size="24rpx" /> {{locationLabel}}
         </t-tag>
       </view>
 
-      <!-- 分隔线 -->
       <view class="divider" />
 
-      <!-- 描述 -->
       <view class="desc-section">
         <text class="section-title">服务描述</text>
         <text class="desc-content">{{skill.description}}</text>
       </view>
 
-      <!-- 详细信息 -->
       <t-cell-group>
         <t-cell title="预计时长" note="{{skill.durationMinutes}}分钟" arrow="{{false}}" />
         <t-cell title="浏览次数" note="{{skill.viewCount}}次" arrow="{{false}}" />
         <t-cell title="已成交" note="{{skill.orderCount}}单" arrow="{{false}}" />
       </t-cell-group>
+
+      <!-- 空闲时间 -->
+      <view wx:if="{{skill.timeSlots && skill.timeSlots.length > 0}}" class="timeslot-section">
+        <text class="section-title">空闲时间</text>
+        <view class="timeslot-list">
+          <view wx:for="{{skill.timeSlots}}" wx:key="index" class="timeslot-item">
+            <t-tag variant="light" theme="{{item.status === 2 ? 'default' : 'primary'}}">
+              {{item.date}} {{item.startTime}}-{{item.endTime}}
+            </t-tag>
+            <text wx:if="{{item.status === 2}}" class="timeslot-booked">已预约</text>
+          </view>
+        </view>
+      </view>
+      <view wx:else class="timeslot-empty">
+        <text class="empty-text">暂无可用空闲时间</text>
+      </view>
     </view>
   </block>
 
   <!-- 底部下单栏 -->
-  <view class="bottom-bar" wx:if="{{!loading}}">
+  <view class="bottom-bar" wx:if="{{!loading && skill && !isOwner && !hasOrdered}}">
     <t-button theme="primary" block bindtap="onShowOrderDialog">立即下单</t-button>
+  </view>
+  <view class="bottom-bar ordered-bar" wx:elif="{{!loading && hasOrdered}}">
+    <t-button theme="default" block disabled>已下单</t-button>
+  </view>
+  <view class="bottom-bar owner-bar" wx:elif="{{!loading && skill && isOwner}}">
+    <t-button theme="default" block disabled>我的发布</t-button>
   </view>
 
   <!-- 下单弹窗 -->
@@ -112,13 +115,7 @@
         <text class="dialog-price">{{skill.pointPrice}} 积分</text>
       </view>
       <view class="dialog-remark">
-        <t-textarea
-          placeholder="备注信息（选填）"
-          value="{{orderRemark}}"
-          bind:change="onRemarkInput"
-          maxlength="{{200}}"
-          autosize
-        />
+        <t-textarea placeholder="备注信息（选填）" value="{{orderRemark}}" bind:change="onRemarkInput" maxlength="{{200}}" autosize />
       </view>
     </view>
   </t-dialog>

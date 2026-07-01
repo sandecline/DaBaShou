@@ -60,6 +60,11 @@ export const creditService = {
     return api.get<PageResult<ReviewResult>>('/v1/reviews/received', params as unknown as Record<string, unknown>);
   },
 
+  /** 获取用户收到的评价列表（通用接口） */
+  getUserReviews(userId: number, params: { pageNum: number; pageSize: number }) {
+    return api.get<PageResult<ReviewResult>>('/v1/reviews/received', { ...params, userId } as unknown as Record<string, unknown>);
+  },
+
   /** 提交评价 */
   submitReview(params: {
     orderId: number;

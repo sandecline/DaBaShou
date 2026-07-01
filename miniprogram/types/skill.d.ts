@@ -46,12 +46,8 @@ export interface UserSkill {
 export type Proficiency = 1 | 2 | 3 | 4;
 // 1-了解  2-熟悉  3-精通  4-专家
 
-export const ProficiencyMap: Record<Proficiency, string> = {
-  1: '了解',
-  2: '熟悉',
-  3: '精通',
-  4: '专家',
-};
+/** 运行时常量见 utils/enums.ts */
+export const ProficiencyMap: Record<Proficiency, string>;
 
 /** 服务方式 */
 export type LocationType = 1 | 2 | 3;

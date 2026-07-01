@@ -81,7 +81,7 @@ Page({
       });
 
       const result = (res.data || res) as PageResult<Review>;
-      const list = result.records || [];
+      const list = result.list || [];
 
       this.setData({
         reviewList: reset ? list : [...this.data.reviewList, ...list],

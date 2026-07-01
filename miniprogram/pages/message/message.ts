@@ -5,6 +5,9 @@
 import { messageService } from '../../services/message';
 import type { ChatSession } from '../../types/message';
 
+let _lastLoadTime = 0;
+const LOAD_DEBOUNCE = 3000;
+
 Page({
   data: {
     sessions: [] as ChatSession[],
@@ -12,11 +15,16 @@ Page({
   },
 
   onLoad() {
+    _lastLoadTime = Date.now();
     this.loadSessions();
   },
 
   onShow() {
-    this.loadSessions();
+    // 3 秒内不重复请求
+    if (Date.now() - _lastLoadTime > LOAD_DEBOUNCE) {
+      _lastLoadTime = Date.now();
+      this.loadSessions();
+    }
   },
 
   onPullDownRefresh() {

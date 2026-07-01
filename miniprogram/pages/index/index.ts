@@ -55,7 +55,8 @@ Page({
   // 上拉加载更多
   onReachBottom() {
     if (!this.data.hasMore) return;
-    this.setData({ pageNum: this.data.pageNum + 1 });
+    const nextPage = this.data.pageNum + 1;
+    this.data.pageNum = nextPage; // 直接改 data，不走 setData 渲染
     if (this.data.activeTab === 0) {
       this.loadSkillList(true);
     } else {

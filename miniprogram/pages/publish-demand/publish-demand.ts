@@ -274,10 +274,10 @@ Page({
       const res = await demandService.publish(params);
       wx.hideLoading();
 
-      wx.showToast({ title: '发布成功', icon: 'success' });
+      wx.showToast({ title: '发布成功', icon: 'success', duration: 1200 });
       setTimeout(() => {
         wx.redirectTo({ url: `/pages/demand-detail/demand-detail?id=${res.data.id}` });
-      }, 1500);
+      }, 1200);
     } catch (err) {
       wx.hideLoading();
       console.error('发布需求失败:', err);
@@ -287,32 +287,27 @@ Page({
     }
   },
 
-  /**
-   * 上传图片到服务器，返回远程 URL 列表
-   * #103 修复：不再直接使用 tempFilePaths 提交
-   */
+  /** 并行上传图片，返回远程 URL 列表 */
   async uploadImages(filePaths: string[]): Promise<string[]> {
-    const urls: string[] = [];
-    for (const filePath of filePaths) {
-      try {
-        const res = await wx.uploadFile({
+    if (filePaths.length === 0) return [];
+    const results = await Promise.allSettled(
+      filePaths.map((filePath) =>
+        wx.uploadFile({
           url: `${getApp().globalData.apiBaseUrl || 'https://api.dabashou.example.com'}/api/v1/upload/image`,
           filePath,
           name: 'file',
-          header: {
-            Authorization: `Bearer ${getApp().globalData.token || ''}`,
-          },
-        });
-        const data = JSON.parse(res.data);
-        if (data.code === 200 && data.data) {
-          urls.push(data.data as string);
-        } else {
-          console.error('[PublishDemand] 图片上传失败:', data);
-        }
-      } catch (err) {
-        console.error('[PublishDemand] 图片上传异常:', err);
-      }
-    }
-    return urls;
+          header: { Authorization: `Bearer ${getApp().globalData.token || ''}` },
+        })
+      )
+    );
+    return results
+      .filter((r) => r.status === 'fulfilled')
+      .map((r) => {
+        try {
+          const d = JSON.parse((r as PromiseFulfilledResult<WechatMiniprogram.UploadFileSuccessCallbackResult>).value.data);
+          return (d.code === 200 && d.data) ? d.data as string : '';
+        } catch { return ''; }
+      })
+      .filter(Boolean);
   },
 });

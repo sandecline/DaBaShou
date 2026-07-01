@@ -27,8 +27,4 @@ export interface IAppOption {
 export type TrustLevel = '新人' | '靠谱' | '金牌';
 
 /** 根据信任分获取等级 */
-export function getTrustLevel(score: number): TrustLevel {
-  if (score >= 4.0) return '金牌';
-  if (score >= 3.0) return '靠谱';
-  return '新人';
-}
+export function getTrustLevel(score: number): TrustLevel;

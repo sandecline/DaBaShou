@@ -86,6 +86,7 @@ Page({
       const { activeTab, pageNum, pageSize } = this.data;
       const status = TAB_FILTER[activeTab];
       const res = await orderService.getList({
+        role: 'buyer',
         status,
         pageNum,
         pageSize,
