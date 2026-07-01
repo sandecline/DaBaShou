@@ -69,6 +69,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (userId.equals(sellerId)) {
             throw new BusinessException(ErrorCode.CONFLICT, "不能购买自己的服务");
         }
+        claimShelf(dto.getShelfId());
         Long tagId = shelf.get("skill_tag_id") != null ? ((Number) shelf.get("skill_tag_id")).longValue() : null;
         String title = (String) shelf.get("title");
         Integer pointAmount = ((Number) shelf.get("point_price")).intValue();
@@ -109,6 +110,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (userId.equals(buyerId)) {
             throw new BusinessException(ErrorCode.CONFLICT, "不能接自己的需求");
         }
+        claimDemand(dto.getDemandId());
         Map<String, Object> shelf = queryShelfInfo(dto.getShelfId());
         Long tagId;
         String title;
@@ -467,12 +469,33 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     private Map<String, Object> queryShelfInfo(Long shelfId) {
+        if (shelfId == null) {
+            return null;
+        }
         try {
             return jdbcTemplate.queryForMap(
                     "SELECT user_id, skill_tag_id, title, point_price, status FROM dbs_skill_shelf WHERE id = ?",
                     shelfId);
         } catch (EmptyResultDataAccessException e) {
             return null;
+        }
+    }
+
+    private void claimDemand(Long demandId) {
+        int updated = jdbcTemplate.update(
+                "UPDATE dbs_demand SET status = 2, update_time = ? WHERE id = ? AND status = 1",
+                LocalDateTime.now(), demandId);
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.CONFLICT, "需求已被接单或不在待接单状态");
+        }
+    }
+
+    private void claimShelf(Long shelfId) {
+        int updated = jdbcTemplate.update(
+                "UPDATE dbs_skill_shelf SET status = 0, update_time = ? WHERE id = ? AND status = 1",
+                LocalDateTime.now(), shelfId);
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.CONFLICT, "服务已被接取或不在上架状态");
         }
     }
 

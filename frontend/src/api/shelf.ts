@@ -50,7 +50,7 @@ export function getUserShelves(userId: number, params?: PageParams): Promise<Pag
   return request.get('/v1/users/' + userId + '/shelves', normalizePageParams(params))
 }
 
-export function setTimeSlots(shelfId: number, slots: { dayOfWeek: number; startTime: string; endTime: string }[]): Promise<null> {
+export function setTimeSlots(shelfId: number, slots: { date?: string; dayOfWeek: number; startTime: string; endTime: string }[]): Promise<null> {
   return request.post('/v1/shelves/' + shelfId + '/timeslots', slots)
 }
 

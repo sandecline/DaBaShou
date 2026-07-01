@@ -180,4 +180,58 @@ class OrderIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404));
     }
+
+    @Test
+    @Order(9)
+    @DisplayName("9. 同一个需求只能被接单创建一次订单")
+    void rejectRepeatedDemandOrderCreation() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("demandId", 1L);
+        body.put("shelfId", shelfId);
+        body.put("idempotentToken", "demand-once-" + System.currentTimeMillis());
+
+        mockMvc.perform(post("/api/v1/orders/from-demand")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+
+        body.put("idempotentToken", "demand-repeat-" + System.currentTimeMillis());
+        mockMvc.perform(post("/api/v1/orders/from-demand")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(409));
+    }
+
+    @Test
+    @Order(10)
+    @DisplayName("10. 同一个服务只能被接取创建一次订单")
+    void rejectRepeatedShelfOrderCreation() throws Exception {
+        Map<String, Object> body = new HashMap<>();
+        body.put("shelfId", 3L);
+        body.put("idempotentToken", "shelf-repeat-" + System.currentTimeMillis());
+
+        mockMvc.perform(post("/api/v1/orders/from-shelf")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(409));
+    }
+
+    @Test
+    @Order(11)
+    @DisplayName("11. 技能详情空闲时间返回具体日期")
+    void shelfTimeSlotsReturnConcreteDate() throws Exception {
+        mockMvc.perform(get("/api/v1/shelves/3/timeslots")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].date").isNotEmpty())
+                .andExpect(jsonPath("$.data[0].startTime").isNotEmpty())
+                .andExpect(jsonPath("$.data[0].endTime").isNotEmpty());
+    }
 }

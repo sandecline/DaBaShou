@@ -7,6 +7,8 @@ public class TimeSlotVo {
 
     private Long id;
 
+    private String date;
+
     private Integer dayOfWeek;
 
     private String startTime;
@@ -23,6 +25,14 @@ public class TimeSlotVo {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
     }
 
     public Integer getDayOfWeek() {

@@ -281,7 +281,9 @@ public class ShelfServiceImpl implements ShelfService {
         for (TimeSlotDto dto : slots) {
             TimeSlot slot = new TimeSlot();
             slot.setUserId(userId);
-            slot.setDate(monday.plusDays(dto.getDayOfWeek() - 1));
+            slot.setDate(dto.getDate() != null && !dto.getDate().isBlank()
+                    ? LocalDate.parse(dto.getDate())
+                    : monday.plusDays(dto.getDayOfWeek() - 1));
             slot.setStartTime(LocalTime.parse(dto.getStartTime(), timeFormatter));
             slot.setEndTime(LocalTime.parse(dto.getEndTime(), timeFormatter));
             slot.setStatus(1);
@@ -301,6 +303,7 @@ public class ShelfServiceImpl implements ShelfService {
         return slots.stream().map(slot -> {
             TimeSlotVo vo = new TimeSlotVo();
             vo.setId(slot.getId());
+            vo.setDate(slot.getDate().toString());
             vo.setDayOfWeek(slot.getDate().getDayOfWeek().getValue());
             vo.setStartTime(slot.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")));
             vo.setEndTime(slot.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm")));

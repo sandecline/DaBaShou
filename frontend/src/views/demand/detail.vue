@@ -132,9 +132,10 @@ async function handleTakeOrder() {
       '确认接单',
       { confirmButtonText: '确认接单', cancelButtonText: '再看看', type: 'warning' },
     )
-    await createOrderFromDemand({ demandId: demand.value.id })
+    const orderId = await createOrderFromDemand({ demandId: demand.value.id })
+    demand.value.status = 2
     ElMessage.success('接单成功！请前往订单页查看')
-    router.push('/order')
+    router.replace('/order/' + orderId)
   } catch (e: any) {
     if (e !== 'cancel' && e !== 'close') {
       // Error already shown by interceptor, or user cancelled dialog

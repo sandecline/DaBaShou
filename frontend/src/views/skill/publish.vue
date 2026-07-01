@@ -115,7 +115,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { publishShelf } from '@/api/shelf'
+import { publishShelf, setTimeSlots } from '@/api/shelf'
 import { getCategoryTree, getTags } from '@/api/skill'
 import TimeSlotPicker from '@/components/common/TimeSlotPicker.vue'
 import type { SkillTagVo } from '@/types/api'
@@ -172,7 +172,22 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    await publishShelf({ ...form })
+    const shelfId = await publishShelf({
+      skillTagId: form.skillTagId,
+      title: form.title,
+      description: form.description,
+      pointPrice: form.pointPrice,
+      durationMinutes: form.durationMinutes,
+      locationType: form.locationType,
+    })
+    if (form.timeSlots.length > 0) {
+      await setTimeSlots(shelfId, form.timeSlots.map((slot) => ({
+        date: slot.date,
+        dayOfWeek: getDayOfWeek(slot.date),
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      })))
+    }
     ElMessage.success(isEdit.value ? '修改成功！' : '发布成功！🎉')
     router.push('/user/shop')
   } catch {
@@ -180,6 +195,11 @@ async function handleSubmit() {
   } finally {
     submitting.value = false
   }
+}
+
+function getDayOfWeek(date: string) {
+  const day = new Date(`${date}T00:00:00`).getDay()
+  return day === 0 ? 7 : day
 }
 
 onMounted(async () => {

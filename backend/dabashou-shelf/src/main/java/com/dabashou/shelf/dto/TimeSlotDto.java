@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
  */
 public class TimeSlotDto {
 
+    private String date;
+
     @NotNull(message = "星期不能为空")
     private Integer dayOfWeek;
 
@@ -18,6 +20,14 @@ public class TimeSlotDto {
     private String endTime;
 
     // ---- Getters and Setters ----
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
 
     public Integer getDayOfWeek() {
         return dayOfWeek;

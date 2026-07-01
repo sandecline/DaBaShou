@@ -67,7 +67,7 @@
 
               <el-divider />
 
-              <el-button type="primary" size="large" class="order-btn" :disabled="isOwnSkill" @click="handleOrder">
+              <el-button type="primary" size="large" class="order-btn" :disabled="isOwnSkill || skill.status !== 1 || !hasAvailableSlots" @click="handleOrder">
                 预约服务
               </el-button>
               <el-button v-if="!isOwnSkill" size="large" class="chat-btn" @click="handleChat">
@@ -77,6 +77,19 @@
 
             <!-- 闲时格子 -->
             <el-card v-if="skill.status === 1" class="time-card">
+              <div v-if="hasAvailableSlots" class="time-list">
+                <button
+                  v-for="slot in availableSlots"
+                  :key="slot.id"
+                  type="button"
+                  class="time-slot"
+                  :class="{ active: selectedSlotId === slot.id }"
+                  @click="selectedSlotId = slot.id"
+                >
+                  {{ slot.date }} {{ slot.startTime }}-{{ slot.endTime }}
+                </button>
+              </div>
+              <p v-else class="time-hint">暂无可预约时间</p>
               <template #header>
                 <span>可预约时段</span>
               </template>
@@ -133,7 +146,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getShelfDetail } from '@/api/shelf'
+import { getShelfDetail, getTimeSlots } from '@/api/shelf'
 import { createOrderFromShelf } from '@/api/order'
 import { createChatSession } from '@/api/message'
 import { useUserStore } from '@/stores/user'
@@ -159,6 +172,7 @@ const statusClassMap: Record<number, string> = { 0: 'status-down', 1: 'status-on
 const statusText = ref('')
 const statusClass = ref('')
 const isOwnSkill = computed(() => !!skill.value && userStore.user?.id === skill.value.userId)
+const hasAvailableSlots = computed(() => availableSlots.value.length > 0)
 
 async function fetchDetail() {
   loading.value = true
@@ -166,8 +180,13 @@ async function fetchDetail() {
     skill.value = await getShelfDetail(Number(props.id))
     statusText.value = statusMap[skill.value.status]
     statusClass.value = statusClassMap[skill.value.status]
+    availableSlots.value = (await getTimeSlots(skill.value.id))
+      .filter((slot) => slot.available !== false)
+      .sort((a, b) => `${a.date ?? ''} ${a.startTime}`.localeCompare(`${b.date ?? ''} ${b.startTime}`))
+    selectedSlotId.value = availableSlots.value[0]?.id ?? null
   } catch {
     skill.value = null
+    availableSlots.value = []
   } finally {
     loading.value = false
   }
@@ -181,6 +200,14 @@ function handleOrder() {
   }
   if (isOwnSkill.value) {
     ElMessage.warning('不能预约自己的服务')
+    return
+  }
+  if (skill.value.status !== 1) {
+    ElMessage.warning('服务已被接取或已下架')
+    return
+  }
+  if (!hasAvailableSlots.value) {
+    ElMessage.warning('暂无可预约时间')
     return
   }
   showOrderDialog.value = true
@@ -211,14 +238,27 @@ async function confirmOrder() {
     showOrderDialog.value = false
     return
   }
+  if (skill.value.status !== 1) {
+    ElMessage.warning('服务已被接取或已下架')
+    showOrderDialog.value = false
+    return
+  }
+  if (!selectedSlotId.value) {
+    ElMessage.warning('请选择预约时间段')
+    return
+  }
   ordering.value = true
   try {
-    await createOrderFromShelf({
+    const orderId = await createOrderFromShelf({
       shelfId: skill.value.id,
       timeSlotId: selectedSlotId.value ?? undefined,
     })
+    skill.value.status = 0
+    statusText.value = statusMap[0]
+    statusClass.value = statusClassMap[0]
     ElMessage.success('预约成功！请前往订单页支付')
-    router.push('/order')
+    showOrderDialog.value = false
+    router.replace('/order/' + orderId)
   } catch {
     // handled
   } finally {
@@ -380,6 +420,34 @@ onMounted(fetchDetail)
 
 .time-card {
   margin-top: $spacing-md;
+
+  :deep(.el-card__body > .time-hint:last-child) {
+    display: none;
+  }
+
+  .time-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .time-slot {
+    width: 100%;
+    border: 1px solid $color-border;
+    border-radius: 6px;
+    background: #ffffff;
+    color: $color-text-regular;
+    cursor: pointer;
+    font-size: $font-size-xs;
+    padding: 8px 10px;
+    text-align: left;
+
+    &.active,
+    &:hover {
+      border-color: $color-primary;
+      background: #fff8e1;
+      color: $color-primary;
+    }
+  }
 
   .time-hint {
     color: $color-text-secondary;
