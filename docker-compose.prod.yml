@@ -1,0 +1,29 @@
+# =============================================================================
+# DaBaShou Docker Compose - Production Mode Override
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Access: http://localhost (unified entry point via Nginx)
+# =============================================================================
+
+services:
+  # Backend - Production overrides
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend - Use production Dockerfile (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile.prod
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes: []  # Remove source mounts in production
+    depends_on:
+      backend:
+        condition: service_healthy
