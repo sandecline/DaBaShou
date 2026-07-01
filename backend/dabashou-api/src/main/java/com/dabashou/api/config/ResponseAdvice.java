@@ -18,13 +18,22 @@ public class ResponseAdvice implements ResponseBodyAdvice<Object> {
     @Override
     public boolean supports(MethodParameter returnType, Class converterType) {
         // 已经是AjaxResult的不用再包装
-        return !AjaxResult.class.isAssignableFrom(returnType.getParameterType());
+        Class<?> parameterType = returnType.getParameterType();
+        return !AjaxResult.class.isAssignableFrom(parameterType)
+                && !byte[].class.isAssignableFrom(parameterType);
     }
 
     @Override
     public Object beforeBodyWrite(Object body, MethodParameter returnType,
                                   MediaType selectedContentType, Class selectedConverterType,
                                   ServerHttpRequest request, ServerHttpResponse response) {
+        String path = request.getURI().getPath();
+        if (path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/doc.html")
+                || path.startsWith("/webjars")) {
+            return body;
+        }
         // 已经是AjaxResult的不再包装
         if (body instanceof AjaxResult) {
             return body;

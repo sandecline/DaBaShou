@@ -3,11 +3,19 @@ import type { OrderItemVo, OrderDetailVo, VerifyCodeVo, PayResultVo, PageResult,
 import { normalizePageParams } from './_params'
 
 export function createOrderFromShelf(data: { skillShelfId?: number; shelfId?: number; timeSlotId?: number; remark?: string }): Promise<number> {
-  return request.post('/v1/order/from-shelf', data)
+  const shelfId = data.shelfId ?? data.skillShelfId
+  return request.post('/v1/order/from-shelf', {
+    ...data,
+    shelfId,
+    idempotentToken: crypto.randomUUID(),
+  })
 }
 
 export function createOrderFromDemand(data: { demandId: number; sellerId?: number; remark?: string }): Promise<number> {
-  return request.post('/v1/order/from-demand', data)
+  return request.post('/v1/order/from-demand', {
+    ...data,
+    idempotentToken: crypto.randomUUID(),
+  })
 }
 
 export function getOrderList(params: { role?: 'buyer' | 'seller'; status?: number; pageNum?: number; pageSize?: number }): Promise<PageResult<OrderItemVo>> {
@@ -29,7 +37,7 @@ export function payOrder(id: number): Promise<PayResultVo> {
   return request.post('/v1/order/' + id + '/pay')
 }
 
-export function cancelOrder(id: number, reason?: string): Promise<null> {
+export function cancelOrder(id: number, reason: string): Promise<null> {
   return request.post('/v1/order/' + id + '/cancel', { reason })
 }
 

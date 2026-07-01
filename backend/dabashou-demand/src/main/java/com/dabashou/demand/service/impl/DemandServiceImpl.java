@@ -294,8 +294,11 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
     private Map<Long, String> batchQueryAvatars(Collection<Long> userIds) {
         if (userIds == null || userIds.isEmpty()) return Map.of();
         String ph = String.join(", ", Collections.nCopies(userIds.size(), "?"));
-        return jdbcTemplate.queryForList("SELECT id, avatar FROM dbs_user WHERE id IN (" + ph + ")", userIds.toArray())
-                .stream().collect(Collectors.toMap(r -> ((Number) r.get("id")).longValue(), r -> (String) r.get("avatar"), (a, b) -> a));
+        Map<Long, String> result = new HashMap<>();
+        for (Map<String, Object> row : jdbcTemplate.queryForList("SELECT id, avatar FROM dbs_user WHERE id IN (" + ph + ")", userIds.toArray())) {
+            result.put(((Number) row.get("id")).longValue(), (String) row.get("avatar"));
+        }
+        return result;
     }
 
     private Map<Long, String> batchQueryTagNames(Collection<Long> tagIds) {

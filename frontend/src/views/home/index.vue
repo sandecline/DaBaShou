@@ -96,7 +96,7 @@ import { searchShelves } from '@/api/shelf'
 import { searchDemands } from '@/api/demand'
 import { getPersonalOverview } from '@/api/stat'
 import { getCategoryTree } from '@/api/skill'
-import { isLoggedIn } from '@/utils/auth'
+import { getUserInfo, isLoggedIn } from '@/utils/auth'
 import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -140,6 +140,15 @@ const stats = ref([
   { label: '好评率', value: '0%' },
 ])
 
+function pageItems<T>(result: { list?: T[]; records?: T[] } | null | undefined): T[] {
+  return result?.list || result?.records || []
+}
+
+function isNotMine(item: { userId?: number }): boolean {
+  const userId = getUserInfo()?.id
+  return !userId || item.userId !== userId
+}
+
 onMounted(async () => {
   loadCategories()
   try {
@@ -149,8 +158,8 @@ onMounted(async () => {
       isLoggedIn() ? getPersonalOverview().catch(() => null as OverviewStat | null) : Promise.resolve(null),
     ])
 
-    hotSkills.value = skillResult.records
-    latestDemands.value = demandResult.records
+    hotSkills.value = pageItems<ShelfItemVo>(skillResult).filter(isNotMine)
+    latestDemands.value = pageItems<DemandItemVo>(demandResult).filter(isNotMine)
 
     if (overview) {
       stats.value = [

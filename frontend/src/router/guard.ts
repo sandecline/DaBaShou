@@ -11,6 +11,11 @@ export function setupRouterGuard(router: Router) {
 
     const requiresAuth = to.meta.requiresAuth
 
+    if (to.path === '/' && !isLoggedIn()) {
+      next({ name: 'Login' })
+      return
+    }
+
     if (requiresAuth && !isLoggedIn()) {
       ElMessage.warning('请先登录')
       next({ name: 'Login', query: { redirect: to.fullPath } })

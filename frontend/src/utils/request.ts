@@ -48,6 +48,15 @@ instance.interceptors.response.use(
     const { code, msg, data } = response.data
 
     if (code === 200) {
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        const pageData = data as Record<string, any>
+        if (Array.isArray(pageData.list) && !Array.isArray(pageData.records)) {
+          pageData.records = pageData.list
+        }
+        if (Array.isArray(pageData.records) && !Array.isArray(pageData.list)) {
+          pageData.list = pageData.records
+        }
+      }
       return data as any
     }
 
@@ -62,17 +71,20 @@ instance.interceptors.response.use(
     return Promise.reject(new Error(msg))
   },
   (error) => {
+    const msg = error.response?.data?.msg
     if (error.response?.status === 401) {
       const config = error.config as any
-      handleUnauthorized(!!config?.__hadAuthToken && !config?.__isAuthEndpoint, error.response?.data?.msg)
+      handleUnauthorized(!!config?.__hadAuthToken && !config?.__isAuthEndpoint, msg)
     } else if (error.response?.status === 403) {
-      ElMessage.error('没有权限访问')
+      ElMessage.error(msg || '没有权限访问')
+    } else if (error.response?.status === 400 || error.response?.status === 409) {
+      ElMessage.error(msg || '请求参数错误')
     } else if (error.response?.status === 500) {
-      ElMessage.error('服务器异常，请稍后重试')
+      ElMessage.error(msg || '服务器异常，请稍后重试')
     } else if (error.message?.includes('timeout')) {
       ElMessage.error('请求超时，请检查网络')
     } else {
-      ElMessage.error('网络异常，请检查网络连接')
+      ElMessage.error(msg || '网络异常，请检查网络连接')
     }
     return Promise.reject(error)
   },

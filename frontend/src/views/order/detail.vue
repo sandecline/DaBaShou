@@ -206,8 +206,11 @@ async function handleCancel() {
     const { value: reason } = await ElMessageBox.prompt('请输入取消原因', '取消订单', {
       confirmButtonText: '确认取消',
       cancelButtonText: '再看看',
+      inputPlaceholder: '例如：时间不合适，暂时不需要了',
+      inputPattern: /\S+/,
+      inputErrorMessage: '请输入取消原因',
     })
-    await cancelOrder(order.value.id, reason || undefined)
+    await cancelOrder(order.value.id, reason.trim())
     ElMessage.success('订单已取消')
     fetchDetail()
   } catch {

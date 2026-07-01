@@ -1,6 +1,30 @@
 # ============================================================================
 # DaBaShou Service Manager
 # Usage: .\start-all.ps1 [start|stop|restart|status]
+#
+# How to use after opening PowerShell:
+#   1. Go to the project directory:
+#        cd C:\Users\Li\Desktop\Dabashou
+#   2. Start all services:
+#        .\start-all.ps1 start
+#      or simply:
+#        .\start-all.ps1
+#   3. Check service status:
+#        .\start-all.ps1 status
+#   4. Restart all services:
+#        .\start-all.ps1 restart
+#   5. Stop all services:
+#        .\start-all.ps1 stop
+#
+# URLs after startup:
+#   Frontend: http://localhost:5173
+#   Backend API docs: http://localhost:9090/doc.html
+#
+# Logs:
+#   .logs\backend.log
+#   .logs\backend-error.log
+#   .logs\frontend.log
+#   .logs\frontend-error.log
 # ============================================================================
 param(
     [string]$Action = "start",
@@ -145,10 +169,29 @@ function Banner {
     Write-Host ""
 }
 
+function Show-Usage {
+    Write-Host "  Usage:" -ForegroundColor Cyan
+    Write-Host "    cd C:\Users\Li\Desktop\Dabashou" -ForegroundColor DarkGray
+    Write-Host "    .\start-all.ps1 start    # start MySQL check, Redis, backend, frontend" -ForegroundColor DarkGray
+    Write-Host "    .\start-all.ps1 status   # show current status" -ForegroundColor DarkGray
+    Write-Host "    .\start-all.ps1 restart  # stop then start again" -ForegroundColor DarkGray
+    Write-Host "    .\start-all.ps1 stop     # stop services started by this script" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Open after startup:" -ForegroundColor Cyan
+    Write-Host "    Frontend: http://localhost:5173" -ForegroundColor DarkGray
+    Write-Host "    API docs: http://localhost:9090/doc.html" -ForegroundColor DarkGray
+    Write-Host ""
+    Write-Host "  Logs:" -ForegroundColor Cyan
+    Write-Host "    .logs\backend.log, .logs\backend-error.log" -ForegroundColor DarkGray
+    Write-Host "    .logs\frontend.log, .logs\frontend-error.log" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
 # ======================== Core ==============================
 
 function Invoke-Start {
     Banner
+    Show-Usage
     Write-Host "  Starting all services..." -ForegroundColor Cyan
     Write-Host ""
     Remove-Item "$LogDir\*.pid" -EA 0
@@ -222,6 +265,7 @@ function Invoke-Start {
 
 function Invoke-Stop {
     Banner
+    Show-Usage
     Write-Host "  Stopping all services..." -ForegroundColor Cyan
     Write-Host ""
     for ($i = $G.Count - 1; $i -ge 0; $i--) {
@@ -239,6 +283,7 @@ function Invoke-Stop {
 
 function Invoke-Status {
     Banner
+    Show-Usage
     foreach ($svc in $G) {
         if (-not $svc.E) { continue }
         Write-Host "  $($svc.N.PadRight(12)) " -NoNewline
@@ -255,5 +300,10 @@ switch ($Action) {
     "stop"    { Invoke-Stop }
     "restart" { Invoke-Stop; Start-Sleep 2; Invoke-Start }
     "status"  { Invoke-Status }
-    default   { Write-Host "Usage: .\start-all.ps1 [start|stop|restart|status]" -ForegroundColor Yellow }
+    default   { Banner; Show-Usage; Write-Host "  Unknown action: $Action" -ForegroundColor Yellow }
+}
+
+if (-not $NoPause) {
+    Write-Host ""
+    Read-Host "  Press Enter to close this window"
 }

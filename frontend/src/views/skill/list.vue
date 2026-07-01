@@ -81,6 +81,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { searchShelves } from '@/api/shelf'
 import { getCategoryTree } from '@/api/skill'
+import { getUserInfo } from '@/utils/auth'
 import SkillCard from '@/components/common/SkillCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -98,6 +99,11 @@ const selectedCategory = ref(Number(route.query.categoryId) || 0)
 const sortBy = ref('heat')
 const categories = ref<CategoryTreeNode[]>([])
 
+function isNotMine(item: ShelfItemVo): boolean {
+  const userId = getUserInfo()?.id
+  return !userId || item.userId !== userId
+}
+
 async function fetchData() {
   loading.value = true
   try {
@@ -108,7 +114,7 @@ async function fetchData() {
       categoryId: selectedCategory.value || undefined,
       sort: sortBy.value,
     })
-    list.value = result.list
+    list.value = result.list.filter(isNotMine)
     total.value = result.total
   } catch {
     // handled

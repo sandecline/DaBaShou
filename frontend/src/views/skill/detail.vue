@@ -67,8 +67,11 @@
 
               <el-divider />
 
-              <el-button type="primary" size="large" class="order-btn" @click="handleOrder">
+              <el-button type="primary" size="large" class="order-btn" :disabled="isOwnSkill" @click="handleOrder">
                 预约服务
+              </el-button>
+              <el-button v-if="!isOwnSkill" size="large" class="chat-btn" @click="handleChat">
+                联系他
               </el-button>
             </el-card>
 
@@ -127,11 +130,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getShelfDetail } from '@/api/shelf'
 import { createOrderFromShelf } from '@/api/order'
+import { createChatSession } from '@/api/message'
+import { useUserStore } from '@/stores/user'
 import { formatDateTime } from '@/utils/format'
 import TrustBadge from '@/components/common/TrustBadge.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -140,6 +145,7 @@ import type { ShelfDetailVo, TimeSlot } from '@/types/api'
 
 const props = defineProps<{ id: string }>()
 const router = useRouter()
+const userStore = useUserStore()
 
 const loading = ref(true)
 const skill = ref<ShelfDetailVo | null>(null)
@@ -152,6 +158,7 @@ const statusMap: Record<number, string> = { 0: '已下架', 1: '在售', 2: '审
 const statusClassMap: Record<number, string> = { 0: 'status-down', 1: 'status-on', 2: 'status-review' }
 const statusText = ref('')
 const statusClass = ref('')
+const isOwnSkill = computed(() => !!skill.value && userStore.user?.id === skill.value.userId)
 
 async function fetchDetail() {
   loading.value = true
@@ -168,15 +175,46 @@ async function fetchDetail() {
 
 function handleOrder() {
   if (!skill.value) return
+  if (!userStore.isLoggedIn) {
+    router.push(`/login?redirect=${encodeURIComponent(router.currentRoute.value.fullPath)}`)
+    return
+  }
+  if (isOwnSkill.value) {
+    ElMessage.warning('不能预约自己的服务')
+    return
+  }
   showOrderDialog.value = true
+}
+
+async function handleChat() {
+  if (!skill.value) return
+  if (!userStore.isLoggedIn) {
+    router.push(`/login?redirect=${encodeURIComponent(router.currentRoute.value.fullPath)}`)
+    return
+  }
+  if (isOwnSkill.value) {
+    ElMessage.warning('不能和自己发起聊天')
+    return
+  }
+  try {
+    await createChatSession(skill.value.userId)
+    router.push(`/message/chat/${skill.value.userId}`)
+  } catch {
+    // handled
+  }
 }
 
 async function confirmOrder() {
   if (!skill.value) return
+  if (isOwnSkill.value) {
+    ElMessage.warning('不能预约自己的服务')
+    showOrderDialog.value = false
+    return
+  }
   ordering.value = true
   try {
     await createOrderFromShelf({
-      skillShelfId: skill.value.id,
+      shelfId: skill.value.id,
       timeSlotId: selectedSlotId.value ?? undefined,
     })
     ElMessage.success('预约成功！请前往订单页支付')
@@ -282,12 +320,24 @@ onMounted(fetchDetail)
 // Sidebar
 .user-card {
   text-align: center;
+  overflow: hidden;
+
+  :deep(.el-card__body) {
+    padding: 0;
+  }
 
   .user-info {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    padding: 24px 20px 18px;
+    background: linear-gradient(180deg, #fff8db 0%, #ffffff 82%);
+
+    .el-avatar {
+      border: 3px solid #ffffff;
+      box-shadow: 0 10px 24px rgba(255, 195, 0, 0.22);
+    }
   }
 
   .user-detail {
@@ -304,8 +354,27 @@ onMounted(fetchDetail)
     }
   }
 
+  .el-divider {
+    margin: 0;
+  }
+
   .order-btn {
-    width: 100%;
+    width: calc(100% - 40px);
+    margin: 18px 20px 0;
+    font-weight: 700;
+  }
+
+  .chat-btn {
+    width: calc(100% - 40px);
+    margin: 10px 20px 20px;
+    border-color: $color-primary;
+    color: $color-text-primary;
+    font-weight: 600;
+
+    &:hover {
+      color: $color-primary;
+      background: #fffbe8;
+    }
   }
 }
 
