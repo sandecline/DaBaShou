@@ -1,0 +1,25 @@
+<view class="page">
+  <!-- 应用信息 -->
+  <view class="hero-section">
+    <view class="app-logo">DBS</view>
+    <text class="app-name">{{appName}}</text>
+    <text class="app-version">v{{version}}</text>
+    <text class="app-desc">{{description}}</text>
+  </view>
+
+  <!-- 技术栈 -->
+  <t-cell-group title="技术栈">
+    <t-cell
+      wx:for="{{techStack}}"
+      wx:key="label"
+      title="{{item.label}}"
+      note="{{item.value}}"
+    />
+  </t-cell-group>
+
+  <!-- 版权信息 -->
+  <view class="copyright">
+    <text>搭把手 — 校园技能共享平台</text>
+    <text>Copyright 2026</text>
+  </view>
+</view>

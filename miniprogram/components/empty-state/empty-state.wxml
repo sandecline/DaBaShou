@@ -1,0 +1,9 @@
+<view class="empty-state">
+  <view class="empty-icon">
+    <t-icon name="{{icon}}" size="120rpx" color="#ccc" />
+  </view>
+  <view class="empty-text">{{text}}</view>
+  <view wx:if="{{showAction}}" class="empty-action" bind:tap="onAction">
+    <text class="action-text">{{actionText}}</text>
+  </view>
+</view>

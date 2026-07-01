@@ -1,0 +1,81 @@
+<!-- 首页 — 技能浏览 + 需求看板 -->
+<view class="page">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <t-search
+      value="{{searchKeyword}}"
+      placeholder="搜索技能或求助..."
+      bind:change="onSearch"
+      bind:submit="onSearch"
+    />
+  </view>
+
+  <!-- 分类标签 -->
+  <scroll-view scroll-x class="category-scroll" wx:if="{{activeTab === 0}}">
+    <view class="category-list">
+      <view
+        class="category-item {{activeCategoryId === 0 ? 'active' : ''}}"
+        data-id="{{0}}"
+        bindtap="onCategoryChange"
+      >全部</view>
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-item {{activeCategoryId === item.id ? 'active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onCategoryChange"
+      >{{item.name}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- Tab：技能 / 需求 -->
+  <t-tabs value="{{activeTab}}" bind:change="onTabChange">
+    <t-tab-panel label="技能小铺" value="{{0}}" />
+    <t-tab-panel label="求助看板" value="{{1}}" />
+  </t-tabs>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <t-loading text="正在加载..." />
+  </view>
+
+  <!-- 技能列表 -->
+  <block wx:elif="{{activeTab === 0}}">
+    <view wx:if="{{skillList.length === 0}}" class="empty-wrap">
+      <t-empty description="暂无相关技能" />
+    </view>
+    <view wx:else class="list-container">
+      <skill-card
+        wx:for="{{skillList}}"
+        wx:key="id"
+        skill="{{item}}"
+        bind:tap="goSkillDetail"
+        data-id="{{item.id}}"
+      />
+    </view>
+  </block>
+
+  <!-- 需求列表 -->
+  <block wx:elif="{{activeTab === 1}}">
+    <view wx:if="{{demandList.length === 0}}" class="empty-wrap">
+      <t-empty description="暂无求助需求" />
+    </view>
+    <view wx:else class="list-container">
+      <demand-card
+        wx:for="{{demandList}}"
+        wx:key="id"
+        demand="{{item}}"
+        bind:tap="goDemandDetail"
+        data-id="{{item.id}}"
+      />
+    </view>
+  </block>
+
+  <!-- 加载更多 -->
+  <view wx:if="{{hasMore && !loading}}" class="load-more">
+    上拉加载更多
+  </view>
+  <view wx:elif="{{!hasMore && !loading}}" class="load-end">
+    — 已经到底了 —
+  </view>
+</view>

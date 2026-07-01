@@ -1,0 +1,9 @@
+<view class="user-avatar avatar-{{size}}">
+  <t-badge content="{{user.trustScore}}" shape="circle" color="#ff6b35">
+    <image
+      class="avatar-img avatar-{{size}}"
+      src="{{user.avatar}}"
+      mode="aspectFill"
+    />
+  </t-badge>
+</view>

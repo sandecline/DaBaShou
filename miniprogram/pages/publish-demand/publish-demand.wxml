@@ -1,0 +1,176 @@
+<!-- 发布需求表单 -->
+<view class="page">
+  <!-- 分类选择区 -->
+  <view class="section card">
+    <text class="section-title">求助分类</text>
+    <view class="picker-row">
+      <view class="picker-item">
+        <text class="picker-label">大类</text>
+        <picker
+          mode="selector"
+          range="{{categories}}"
+          range-key="name"
+          value="{{categoryIndex}}"
+          bindchange="onCategoryChange"
+        >
+          <view class="picker-value">
+            <text>{{categories[categoryIndex] ? categories[categoryIndex].name : '请选择'}}</text>
+            <t-icon name="chevron-right" size="32rpx" color="#999" />
+          </view>
+        </picker>
+      </view>
+      <view class="picker-item">
+        <text class="picker-label">标签</text>
+        <picker
+          mode="selector"
+          range="{{tags}}"
+          range-key="name"
+          value="{{tagIndex}}"
+          bindchange="onTagChange"
+        >
+          <view class="picker-value">
+            <text>{{tags[tagIndex] ? tags[tagIndex].name : '请选择'}}</text>
+            <t-icon name="chevron-right" size="32rpx" color="#999" />
+          </view>
+        </picker>
+      </view>
+    </view>
+  </view>
+
+  <!-- 基本信息区 -->
+  <view class="section card">
+    <text class="section-title">求助信息</text>
+
+    <!-- 标题 -->
+    <view class="form-item">
+      <view class="form-header">
+        <text class="form-label">求助标题 <text class="required">*</text></text>
+        <text class="char-count">{{titleLength}}/50</text>
+      </view>
+      <t-input
+        placeholder="例如：急需帮忙搬宿舍"
+        value="{{title}}"
+        maxlength="{{50}}"
+        clearable
+        bind:change="onTitleInput"
+      />
+    </view>
+
+    <!-- 描述 -->
+    <view class="form-item">
+      <view class="form-header">
+        <text class="form-label">详细描述 <text class="required">*</text></text>
+        <text class="char-count {{descLength > 500 ? 'over-limit' : ''}}">{{descLength}}/500</text>
+      </view>
+      <t-textarea
+        placeholder="详细描述你的需求，包括具体要求、时间地点等信息..."
+        value="{{description}}"
+        maxlength="{{500}}"
+        autosize
+        bind:change="onDescInput"
+      />
+    </view>
+
+    <!-- 悬赏积分 -->
+    <view class="form-item">
+      <text class="form-label">悬赏积分 <text class="required">*</text></text>
+      <view class="form-tip">
+        <t-icon name="info-circle" size="28rpx" color="#999" />
+        <text>发布后将冻结相应积分，悬赏越高响应越快</text>
+      </view>
+      <t-input
+        type="number"
+        placeholder="你愿意付出的积分数"
+        value="{{pointReward}}"
+        suffix="积分"
+        bind:change="onRewardInput"
+      />
+    </view>
+
+    <!-- 截止日期 -->
+    <view class="form-item">
+      <text class="form-label">截止日期 <text class="required">*</text></text>
+      <picker
+        mode="date"
+        value="{{deadline}}"
+        start="{{today}}"
+        bindchange="onDeadlineChange"
+      >
+        <view class="picker-value">
+          <text>{{deadlineDisplay}}</text>
+          <t-icon name="calendar" size="32rpx" color="#999" />
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <!-- 需求类型 -->
+  <view class="section card">
+    <text class="section-title">需求类型</text>
+    <t-radio-group value="{{demandType}}" bind:change="onDemandTypeChange">
+      <view class="radio-column">
+        <view wx:for="{{demandTypeOptions}}" wx:key="value" class="radio-option">
+          <t-radio value="{{item.value}}" label="{{item.label}}" />
+          <text class="option-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </t-radio-group>
+  </view>
+
+  <!-- 急单标记 -->
+  <view class="section card">
+    <view class="form-item-row">
+      <view class="form-label-wrap">
+        <text class="form-label">标记为急单</text>
+        <text class="form-tip-text">12小时内急单，置顶展示</text>
+      </view>
+      <t-switch value="{{isUrgent}}" bind:change="onUrgentChange" />
+    </view>
+  </view>
+
+  <!-- 服务方式 -->
+  <view class="section card">
+    <text class="section-title">服务方式</text>
+    <t-radio-group value="{{locationType}}" bind:change="onLocationChange">
+      <view class="radio-row">
+        <t-radio value="{{1}}" label="线上" />
+        <t-radio value="{{2}}" label="线下" />
+        <t-radio value="{{3}}" label="均可" />
+      </view>
+    </t-radio-group>
+  </view>
+
+  <!-- 图片上传 -->
+  <view class="section card">
+    <text class="section-title">相关图片（选填）</text>
+    <view class="image-list">
+      <block wx:for="{{images}}" wx:key="*this">
+        <view class="image-item" data-index="{{index}}" bindtap="onPreviewImage">
+          <t-image src="{{item}}" mode="aspectFill" class="upload-image" />
+          <view class="image-remove" data-index="{{index}}" catchtap="onRemoveImage">
+            <t-icon name="close" size="28rpx" color="#fff" />
+          </view>
+        </view>
+      </block>
+      <view
+        wx:if="{{images.length < maxImages}}"
+        class="image-add"
+        bindtap="onChooseImage"
+      >
+        <t-icon name="add" size="48rpx" color="#c9cdd4" />
+        <text class="add-text">{{images.length}}/{{maxImages}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-wrap">
+    <t-button
+      theme="primary"
+      size="large"
+      block
+      loading="{{submitting}}"
+      bindtap="onSubmit"
+    >{{submitting ? '发布中...' : '发布求助'}}</t-button>
+  </view>
+</view>

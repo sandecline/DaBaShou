@@ -1,0 +1,77 @@
+<view class="shelf-manage-page">
+  <!-- 加载中 -->
+  <t-loading wx:if="{{loading}}" theme="circular" size="40px" text="加载中..." />
+
+  <!-- 空状态 -->
+  <view wx:elif="{{shelfList.length === 0}}" class="empty-section">
+    <t-empty icon="folder" description="暂无技能，去发布一个吧" />
+    <t-button theme="primary" size="medium" bindtap="goPublish">发布技能</t-button>
+  </view>
+
+  <!-- 技能列表 -->
+  <view wx:else class="shelf-list">
+    <t-swipe-cell
+      wx:for="{{shelfList}}"
+      wx:key="id"
+      right="{{[{text: item.status === 1 ? '下架' : '上架', className: 'swipe-btn-' + (item.status === 1 ? 'off' : 'on'), id: 'toggle'}]}}"
+      bind:click="onToggleStatus"
+      data-id="{{item.id}}"
+      data-status="{{item.status}}"
+    >
+      <view class="shelf-card">
+        <!-- 标题 + 状态标签 -->
+        <view class="shelf-card__header">
+          <text class="shelf-card__title">{{item.title}}</text>
+          <t-tag
+            theme="{{SHELF_STATUS_THEME[item.status]}}"
+            size="small"
+            variant="light"
+          >
+            {{SHELF_STATUS_MAP[item.status]}}
+          </t-tag>
+        </view>
+
+        <!-- 信息行 -->
+        <view class="shelf-card__info">
+          <text class="shelf-card__category">{{item.categoryName}}</text>
+          <text class="shelf-card__price">{{item.pointPrice}} 积分</text>
+          <text class="shelf-card__duration">{{item.durationMinutes}} 分钟</text>
+        </view>
+
+        <!-- 统计 -->
+        <view class="shelf-card__stats">
+          <text class="shelf-card__stat">{{item.viewCount}} 浏览</text>
+          <text class="shelf-card__stat">{{item.orderCount}} 订单</text>
+        </view>
+
+        <!-- 编辑按钮 -->
+        <t-button
+          wx:if="{{item.status !== 2}}"
+          theme="light"
+          size="small"
+          class="shelf-card__edit-btn"
+          data-id="{{item.id}}"
+          bindtap="onEdit"
+        >
+          编辑
+        </t-button>
+      </view>
+    </t-swipe-cell>
+  </view>
+
+  <!-- 发布按钮 -->
+  <view class="publish-bar">
+    <t-button theme="primary" size="large" block bindtap="goPublish">发布新技能</t-button>
+  </view>
+
+  <!-- 上下架确认弹窗 -->
+  <t-dialog
+    visible="{{showToggleDialog}}"
+    title="{{toggleTargetStatus === 1 ? '确认上架' : '确认下架'}}"
+    content="{{toggleTargetStatus === 1 ? '上架后其他用户可以浏览和下单' : '下架后其他用户将无法浏览此技能'}}"
+    confirm-btn="确认"
+    cancel-btn="取消"
+    bind:confirm="onConfirmToggle"
+    bind:cancel="onCloseToggleDialog"
+  />
+</view>

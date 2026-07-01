@@ -1,0 +1,24 @@
+.user-avatar {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-img {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar-img.avatar-sm {
+  width: 60rpx;
+  height: 60rpx;
+}
+
+.avatar-img.avatar-md {
+  width: 80rpx;
+  height: 80rpx;
+}
+
+.avatar-img.avatar-lg {
+  width: 120rpx;
+  height: 120rpx;
+}

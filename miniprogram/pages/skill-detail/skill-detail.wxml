@@ -1,0 +1,125 @@
+<!-- 技能详情 -->
+<view class="page">
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <t-loading text="正在加载..." />
+  </view>
+
+  <!-- 加载错误 -->
+  <view wx:elif="{{loadError}}" class="error-wrap">
+    <text class="error-text">加载失败</text>
+    <t-button size="small" bindtap="loadDetail">重试</t-button>
+  </view>
+
+  <block wx:elif="{{skill}}">
+    <!-- 封面图片 -->
+    <view class="cover-wrap">
+      <t-image
+        wx:if="{{skill.images && skill.images.length > 0}}"
+        src="{{skill.images[0]}}"
+        mode="aspectFill"
+        class="cover-image"
+        data-index="{{0}}"
+        bindtap="onPreviewImage"
+      />
+      <view wx:else class="cover-placeholder">
+        <t-icon name="image" size="80rpx" color="#c9cdd4" />
+        <text class="placeholder-text">暂无图片</text>
+      </view>
+    </view>
+
+    <!-- 信息卡片 -->
+    <view class="info-section card">
+      <!-- 标题 + 价格 -->
+      <view class="info-header">
+        <text class="skill-title">{{skill.title}}</text>
+        <view class="price-tag">
+          <t-icon name="money-circle" size="36rpx" color="#e37318" />
+          <text class="price-value">{{skill.pointPrice}}</text>
+          <text class="price-unit">积分</text>
+        </view>
+      </view>
+
+      <!-- 发布者信息 -->
+      <view class="user-row">
+        <t-image
+          src="{{skill.avatar}}"
+          mode="aspectFill"
+          class="user-avatar"
+        />
+        <view class="user-info">
+          <text class="user-name">{{skill.nickname}}</text>
+          <t-tag
+            size="small"
+            variant="light"
+            theme="{{trustTheme}}"
+          >{{trustLabel}} · {{skill.trustScore}}</t-tag>
+        </view>
+        <t-button size="small" variant="outline" bindtap="onChat">联系TA</t-button>
+      </view>
+
+      <!-- 分隔线 -->
+      <view class="divider" />
+
+      <!-- 分类标签 -->
+      <view class="tag-row">
+        <t-tag theme="primary" variant="light">{{skill.categoryName}}</t-tag>
+        <t-tag wx:if="{{skill.tagName}}" variant="outline">{{skill.tagName}}</t-tag>
+        <t-tag
+          variant="outline"
+          theme="{{locationTheme}}"
+        >
+          <t-icon name="{{locationIcon}}" size="24rpx" />
+          {{locationLabel}}
+        </t-tag>
+      </view>
+
+      <!-- 分隔线 -->
+      <view class="divider" />
+
+      <!-- 描述 -->
+      <view class="desc-section">
+        <text class="section-title">服务描述</text>
+        <text class="desc-content">{{skill.description}}</text>
+      </view>
+
+      <!-- 详细信息 -->
+      <t-cell-group>
+        <t-cell title="预计时长" note="{{skill.durationMinutes}}分钟" arrow="{{false}}" />
+        <t-cell title="浏览次数" note="{{skill.viewCount}}次" arrow="{{false}}" />
+        <t-cell title="已成交" note="{{skill.orderCount}}单" arrow="{{false}}" />
+      </t-cell-group>
+    </view>
+  </block>
+
+  <!-- 底部下单栏 -->
+  <view class="bottom-bar" wx:if="{{!loading}}">
+    <t-button theme="primary" block bindtap="onShowOrderDialog">立即下单</t-button>
+  </view>
+
+  <!-- 下单弹窗 -->
+  <t-dialog
+    visible="{{showOrderDialog}}"
+    title="确认下单"
+    confirm-btn="{{ordering ? '提交中...' : '确认下单'}}"
+    cancel-btn="再想想"
+    bind:confirm="onConfirmOrder"
+    bind:cancel="onCloseOrderDialog"
+  >
+    <view slot="content">
+      <view class="dialog-info">
+        <text class="dialog-title">{{skill.title}}</text>
+        <text class="dialog-price">{{skill.pointPrice}} 积分</text>
+      </view>
+      <view class="dialog-remark">
+        <t-textarea
+          placeholder="备注信息（选填）"
+          value="{{orderRemark}}"
+          bind:change="onRemarkInput"
+          maxlength="{{200}}"
+          autosize
+        />
+      </view>
+    </view>
+  </t-dialog>
+</view>

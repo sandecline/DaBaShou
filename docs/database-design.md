@@ -1,6 +1,7 @@
 # 数据库设计文档
 
 > 搭把手 (DaBaShou) — 校园技能共享平台
+> 📋 设计阶段表结构概述见 [design/database-design.md](./design/database-design.md)
 
 ## 概述
 

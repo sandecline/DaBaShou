@@ -1,0 +1,91 @@
+<!-- 聊天详情页 -->
+<view class="page">
+  <!-- 聊天消息列表 -->
+  <scroll-view
+    class="chat-scroll"
+    scroll-y
+    scroll-into-view="{{scrollIntoId}}"
+    scroll-with-animation
+    bindscrolltolower="onScrollToLower"
+    enable-back-to-top="{{false}}"
+  >
+    <!-- 加载更多 -->
+    <view wx:if="{{hasMore}}" class="load-more" bindtap="loadMore">
+      <t-loading wx:if="{{loading}}" size="40rpx" />
+      <text wx:else class="load-more-text">加载更多</text>
+    </view>
+
+    <!-- 消息列表 -->
+    <view wx:if="{{messages.length === 0 && !loading}}" class="empty-wrap">
+      <text class="empty-text">开始聊天吧~</text>
+    </view>
+
+    <view
+      wx:for="{{messages}}"
+      wx:key="id"
+      id="msg-{{item.id}}"
+      class="message-item {{item.isMine ? 'message-mine' : 'message-other'}}"
+    >
+      <!-- 对方消息：头像在左 -->
+      <view wx:if="{{!item.isMine}}" class="msg-avatar">
+        <t-image
+          src="{{item.senderAvatar || targetAvatar}}"
+          mode="aspectFill"
+          class="avatar-img"
+        />
+      </view>
+
+      <!-- 消息气泡 -->
+      <view class="msg-bubble {{item.isMine ? 'bubble-mine' : 'bubble-other'}}">
+        <!-- 文字消息 -->
+        <text wx:if="{{item.msgType === 1}}" class="msg-text">{{item.content}}</text>
+
+        <!-- 图片消息 -->
+        <image
+          wx:elif="{{item.msgType === 2}}"
+          src="{{item.content}}"
+          mode="widthFix"
+          class="msg-image"
+          data-url="{{item.content}}"
+          bindtap="onPreviewMessageImage"
+        />
+      </view>
+
+      <!-- 自己消息：头像在右 -->
+      <view wx:if="{{item.isMine}}" class="msg-avatar">
+        <t-image
+          src="{{myAvatar}}"
+          mode="aspectFill"
+          class="avatar-img"
+        />
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 输入区域 -->
+  <view class="input-bar">
+    <view class="input-actions">
+      <t-icon
+        name="image"
+        size="44rpx"
+        color="#86909c"
+        bindtap="onSendImage"
+      />
+    </view>
+    <view class="input-wrap">
+      <input
+        class="msg-input"
+        value="{{inputValue}}"
+        placeholder="输入消息..."
+        confirm-type="send"
+        bindinput="onInputChange"
+        bindconfirm="onSendText"
+        adjust-position="{{true}}"
+        maxlength="{{500}}"
+      />
+    </view>
+    <view class="send-btn" bindtap="onSendText">
+      <text class="{{inputValue ? 'send-active' : ''}}">发送</text>
+    </view>
+  </view>
+</view>

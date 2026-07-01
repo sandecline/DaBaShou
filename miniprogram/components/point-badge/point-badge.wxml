@@ -1,0 +1,5 @@
+<view class="point-badge">
+  <t-icon wx:if="{{showIcon}}" name="money-circle" size="32rpx" color="#ff6b35" />
+  <text class="point-amount">{{amount}}</text>
+  <text class="point-label">积分</text>
+</view>

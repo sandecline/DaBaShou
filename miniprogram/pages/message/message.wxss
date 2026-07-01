@@ -1,0 +1,77 @@
+/* 消息列表样式 */
+
+.page {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+}
+
+.loading-wrap,
+.empty-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-lg);
+  background-color: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-color);
+}
+
+.avatar-wrap {
+  position: relative;
+  margin-right: var(--spacing-lg);
+}
+
+.avatar {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background-color: var(--bg-page);
+}
+
+.avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.time {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.last-msg {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.delete-btn {
+  background-color: var(--color-error);
+  color: #fff;
+  font-size: var(--font-size-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120rpx;
+}

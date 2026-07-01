@@ -1,0 +1,14 @@
+{
+  "usingComponents": {
+    "t-tabs": "tdesign-miniprogram/tabs/tabs",
+    "t-tab-panel": "tdesign-miniprogram/tab-panel/tab-panel",
+    "t-search": "tdesign-miniprogram/search/search",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "skill-card": "../../components/skill-card/skill-card",
+    "demand-card": "../../components/demand-card/demand-card"
+  },
+  "navigationBarTitleText": "搭把手",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#f5f5f5"
+}

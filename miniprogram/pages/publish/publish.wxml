@@ -1,0 +1,44 @@
+<!-- 发布页 — 选择发布类型 -->
+<view class="page">
+  <view class="hero">
+    <text class="hero-title">想发布什么？</text>
+    <text class="hero-desc">选择一种方式，让校园互助更简单</text>
+  </view>
+
+  <view class="card-row">
+    <!-- 发布技能 -->
+    <view class="action-card">
+      <view class="card-icon-wrap card-icon-skill">
+        <t-icon name="service" size="56rpx" color="#FF6E14" />
+      </view>
+      <text class="card-title">发布技能</text>
+      <text class="card-desc">分享你的专长\n帮同学解决问题</text>
+      <t-button
+        theme="primary"
+        size="medium"
+        block
+        bindtap="goPublishSkill"
+      >立即发布</t-button>
+    </view>
+
+    <!-- 发布求助 -->
+    <view class="action-card">
+      <view class="card-icon-wrap card-icon-demand">
+        <t-icon name="help-circle" size="56rpx" color="#e37318" />
+      </view>
+      <text class="card-title">发布求助</text>
+      <text class="card-desc">说出你的需求\n召唤校园大神帮忙</text>
+      <t-button
+        theme="default"
+        size="medium"
+        block
+        bindtap="goPublishDemand"
+      >立即发布</t-button>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{!ready}}" class="loading-wrap">
+    <text class="loading-text">登录中...</text>
+  </view>
+</view>

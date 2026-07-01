@@ -1,0 +1,14 @@
+{
+  "usingComponents": {
+    "t-image": "tdesign-miniprogram/image/image",
+    "t-tag": "tdesign-miniprogram/tag/tag",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-cell": "tdesign-miniprogram/cell/cell",
+    "t-cell-group": "tdesign-miniprogram/cell-group/cell-group",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-count-down": "tdesign-miniprogram/count-down/count-down"
+  },
+  "navigationBarTitleText": "需求详情",
+  "backgroundColor": "#f5f5f5"
+}

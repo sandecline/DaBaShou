@@ -1,0 +1,72 @@
+<view class="page">
+  <!-- 头像区域 -->
+  <view class="avatar-section">
+    <t-avatar
+      size="large"
+      image="{{avatar}}"
+      icon="user"
+      bind:tap="onChooseAvatar"
+    />
+    <view class="avatar-tip" bindtap="onChooseAvatar">点击更换头像</view>
+  </view>
+
+  <!-- 表单区域 -->
+  <view class="form-section">
+    <t-cell-group>
+      <!-- 昵称 -->
+      <t-cell title="昵称">
+        <t-input
+          slot="note"
+          value="{{nickname}}"
+          placeholder="请输入昵称"
+          maxlength="{{20}}"
+          clearable
+          bind:change="onNicknameInput"
+        />
+      </t-cell>
+
+      <!-- 校区 -->
+      <t-cell title="校区" arrow>
+        <view slot="note" class="picker-trigger" bindtap="onCampusTap">
+          <text class="{{campus ? '' : 'placeholder'}}">{{campus || '请选择校区'}}</text>
+        </view>
+      </t-cell>
+
+      <!-- 楼栋 -->
+      <t-cell title="楼栋">
+        <t-input
+          slot="note"
+          value="{{building}}"
+          placeholder="请输入楼栋"
+          maxlength="{{30}}"
+          clearable
+          bind:change="onBuildingInput"
+        />
+      </t-cell>
+
+      <!-- 个人简介 -->
+      <t-cell title="个人简介">
+        <t-textarea
+          slot="note"
+          value="{{bio}}"
+          placeholder="介绍下自己吧..."
+          maxlength="{{200}}"
+          autosize
+          bind:change="onBioInput"
+        />
+      </t-cell>
+    </t-cell-group>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="submit-section">
+    <t-button
+      theme="primary"
+      size="large"
+      block
+      loading="{{submitting}}"
+      disabled="{{submitting}}"
+      bind:tap="onSubmit"
+    >保存</t-button>
+  </view>
+</view>

@@ -1,0 +1,104 @@
+.demand-card {
+  padding: 24rpx;
+  margin: 16rpx 24rpx;
+  background-color: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.demand-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 16rpx;
+}
+
+.demand-type {
+  flex-shrink: 0;
+}
+
+.demand-desc {
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card-footer {
+  margin-top: 20rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.reward-section {
+  display: flex;
+  align-items: baseline;
+}
+
+.reward-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.reward-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--color-price);
+  margin: 0 4rpx;
+}
+
+.reward-unit {
+  font-size: 22rpx;
+  color: var(--color-price);
+}
+
+.deadline-section {
+  display: flex;
+  align-items: baseline;
+}
+
+.deadline-label {
+  font-size: 22rpx;
+  color: #999;
+  margin-right: 4rpx;
+}
+
+.deadline-value {
+  font-size: 24rpx;
+  color: #333;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  margin-right: 6rpx;
+}
+
+.user-name {
+  font-size: 24rpx;
+  color: #999;
+}

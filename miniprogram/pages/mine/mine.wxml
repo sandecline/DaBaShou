@@ -1,0 +1,51 @@
+<!-- 个人中心 — 我的 Tab 页面 -->
+<view class="page-mine">
+  <!-- ========== 用户信息卡片 ========== -->
+  <view class="mine-header" wx:if="{{isLoggedIn}}">
+    <view class="profile-card">
+      <t-avatar
+        class="profile-avatar"
+        image="{{userInfo.avatar}}"
+        size="large"
+      />
+      <view class="profile-info">
+        <view class="profile-name-row">
+          <text class="profile-nickname">{{userInfo.nickname}}</text>
+          <t-tag
+            theme="{{trustLevelColor}}"
+            variant="light"
+            size="small"
+            class="profile-tag"
+          >{{userInfo.trustLevel}}</t-tag>
+        </view>
+        <text class="profile-campus">{{userInfo.campus}}{{userInfo.building ? ' · ' + userInfo.building : ''}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ========== 未登录提示 ========== -->
+  <view class="mine-header" wx:else>
+    <view class="login-card">
+      <t-icon name="user-circle" size="96rpx" color="#ffffff" />
+      <text class="login-tip">登录后查看更多内容</text>
+      <button class="login-btn" bindtap="onLogin">微信一键登录</button>
+    </view>
+  </view>
+
+  <!-- ========== 功能菜单 ========== -->
+  <t-cell-group>
+    <t-cell
+      wx:for="{{menuList}}"
+      wx:key="icon"
+      title="{{item.title}}"
+      leftIcon="{{item.icon}}"
+      arrow
+      hover
+      bind:click="onMenuTap"
+      data-url="{{item.url}}"
+    />
+  </t-cell-group>
+
+  <!-- ========== 底部安全区 ========== -->
+  <view class="safe-bottom"></view>
+</view>

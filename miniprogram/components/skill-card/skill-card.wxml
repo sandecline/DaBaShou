@@ -1,0 +1,28 @@
+<view class="skill-card" bind:tap="onTap">
+  <view class="card-left">
+    <t-image
+      class="skill-image"
+      src="{{skill.coverImage || ''}}"
+      mode="aspectFill"
+      width="180rpx"
+      height="180rpx"
+      shape="round"
+    />
+  </view>
+  <view class="card-right">
+    <view class="skill-title ellipsis-2">{{skill.title}}</view>
+    <view class="skill-tag">
+      <t-tag size="small" theme="primary" variant="light">{{skill.categoryName || skill.tagName}}</t-tag>
+    </view>
+    <view class="skill-price">
+      <text class="price-value">{{skill.pointPrice}}</text>
+      <text class="price-unit">积分</text>
+    </view>
+    <view class="skill-footer">
+      <view class="user-info">
+        <image class="user-avatar" src="{{skill.avatar || skill.userAvatar}}" mode="aspectFill" />
+        <text class="user-name ellipsis">{{skill.nickname || skill.userName}}</text>
+      </view>
+    </view>
+  </view>
+</view>

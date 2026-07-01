@@ -1,0 +1,11 @@
+{
+  "usingComponents": {
+    "t-badge": "tdesign-miniprogram/badge/badge",
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-loading": "tdesign-miniprogram/loading/loading",
+    "t-swipe-cell": "tdesign-miniprogram/swipe-cell/swipe-cell"
+  },
+  "navigationBarTitleText": "消息",
+  "enablePullDownRefresh": true
+}

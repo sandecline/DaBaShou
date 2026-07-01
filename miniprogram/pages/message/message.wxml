@@ -1,0 +1,35 @@
+<!-- 消息列表 -->
+<view class="page">
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <t-loading text="加载中..." />
+  </view>
+
+  <block wx:elif="{{sessions.length === 0}}">
+    <view class="empty-wrap">
+      <t-empty description="暂无消息" />
+    </view>
+  </block>
+
+  <view wx:else class="session-list">
+    <t-swipe-cell wx:for="{{sessions}}" wx:key="id" right="{{[{text: '删除', className: 'delete-btn'}]}}" bind:click="onDelete" data-id="{{item.id}}">
+      <view class="session-item" bindtap="goChat" data-id="{{item.id}}">
+        <view class="avatar-wrap">
+          <image wx:if="{{item.otherAvatar}}" class="avatar" src="{{item.otherAvatar}}" mode="aspectFill" />
+          <view wx:else class="avatar avatar-placeholder">
+            <t-icon name="user" size="56rpx" color="#999" />
+          </view>
+          <t-badge wx:if="{{item.unreadCount > 0}}" count="{{item.unreadCount}}" maxcount="{{99}}" size="small" />
+        </view>
+        <view class="content">
+          <view class="top-row">
+            <text class="name">{{item.otherNickname}}</text>
+            <text class="time">{{item.lastTime || item.lastMessageTime}}</text>
+          </view>
+          <view class="bottom-row">
+            <text class="last-msg ellipsis">{{item.lastMessage}}</text>
+          </view>
+        </view>
+      </view>
+    </t-swipe-cell>
+  </view>
+</view>

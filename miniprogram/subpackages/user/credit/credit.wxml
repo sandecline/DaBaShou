@@ -1,0 +1,72 @@
+<view class="page">
+  <!-- 信任分展示区 -->
+  <view class="score-section">
+    <view class="score-label">信任分</view>
+    <view class="score-value">{{trustScore}}</view>
+    <t-tag
+      wx:if="{{trustLevel}}"
+      size="medium"
+      shape="round"
+      theme="primary"
+      variant="light"
+    >{{trustLevel}}</t-tag>
+  </view>
+
+  <!-- 评价 Tab 切换 -->
+  <t-tabs value="{{activeTab}}" bind:change="onTabChange">
+    <t-tab-panel
+      wx:for="{{reviewTabs}}"
+      wx:key="value"
+      label="{{item.label}}"
+      value="{{item.value}}"
+    />
+  </t-tabs>
+
+  <!-- 加载状态 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <t-loading theme="circular" size="40rpx" text="加载中..." />
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrap" wx:elif="{{empty}}">
+    <t-empty description="暂无评价记录" />
+  </view>
+
+  <!-- 评价列表 -->
+  <view class="review-list" wx:else>
+    <view
+      class="review-card"
+      wx:for="{{reviewList}}"
+      wx:key="id"
+    >
+      <view class="review-header">
+        <t-avatar
+          wx:if="{{!item.isAnonymous}}"
+          size="medium"
+          image="{{item.reviewerInfo.avatar}}"
+        />
+        <t-avatar
+          wx:else
+          size="medium"
+          icon="user"
+        />
+        <view class="review-meta">
+          <text class="review-nickname">{{item.isAnonymous ? '匿名用户' : item.reviewerInfo.nickname}}</text>
+          <t-rate value="{{item.rating}}" readonly size="small" color="#ff8c00" />
+        </view>
+        <text class="review-time">{{item.createTime}}</text>
+      </view>
+      <view class="review-content" wx:if="{{item.content}}">
+        {{item.content}}
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{loadingMore}}">
+      <t-loading theme="circular" size="30rpx" text="加载更多..." />
+    </view>
+    <view class="no-more" wx:elif="{{!hasMore && reviewList.length > 0}}">
+      — 没有更多了 —
+    </view>
+  </view>
+</view>

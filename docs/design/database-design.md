@@ -1,5 +1,7 @@
 # 搭把手数据库设计
 
+> 📋 完整表结构（含字段类型、索引、迁移版本）见 [database-design.md](../database-design.md)
+
 ## 核心业务表
 
 ### 1. 用户表 (dbs_user)

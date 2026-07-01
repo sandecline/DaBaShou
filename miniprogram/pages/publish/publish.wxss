@@ -1,0 +1,100 @@
+/* 发布页样式 */
+
+.page {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  padding: var(--spacing-lg);
+  box-sizing: border-box;
+}
+
+/* ===== 顶部引导 ===== */
+.hero {
+  text-align: center;
+  padding: var(--spacing-xl) 0 var(--spacing-lg);
+}
+
+.hero-title {
+  display: block;
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.hero-desc {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ===== 行动卡片双栏 ===== */
+.card-row {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.action-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-xl) var(--spacing-md) var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.action-card:active {
+  box-shadow: var(--shadow-md);
+  transform: scale(0.98);
+}
+
+/* ===== 图标 ===== */
+.card-icon-wrap {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.card-icon-skill {
+  background-color: #FFF1E6;
+}
+
+.card-icon-demand {
+  background-color: #FFF1E6;
+}
+
+/* ===== 文案 ===== */
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.card-desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  white-space: pre-line;
+  margin-bottom: var(--spacing-lg);
+  flex: 1;
+}
+
+/* ===== 加载中 ===== */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-xl) 0;
+}
+
+.loading-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-placeholder);
+}

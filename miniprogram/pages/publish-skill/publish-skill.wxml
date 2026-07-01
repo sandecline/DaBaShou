@@ -1,0 +1,144 @@
+<!-- 发布技能表单 -->
+<view class="page">
+  <!-- 分类选择区 -->
+  <view class="section card">
+    <text class="section-title">服务分类</text>
+    <view class="picker-row">
+      <view class="picker-item">
+        <text class="picker-label">大类</text>
+        <picker
+          mode="selector"
+          range="{{categories}}"
+          range-key="name"
+          value="{{categoryIndex}}"
+          bindchange="onCategoryChange"
+        >
+          <view class="picker-value">
+            <text>{{categories[categoryIndex] ? categories[categoryIndex].name : '请选择'}}</text>
+            <t-icon name="chevron-right" size="32rpx" color="#999" />
+          </view>
+        </picker>
+      </view>
+      <view class="picker-item">
+        <text class="picker-label">标签</text>
+        <picker
+          mode="selector"
+          range="{{tags}}"
+          range-key="name"
+          value="{{tagIndex}}"
+          bindchange="onTagChange"
+        >
+          <view class="picker-value">
+            <text>{{tags[tagIndex] ? tags[tagIndex].name : '请选择'}}</text>
+            <t-icon name="chevron-right" size="32rpx" color="#999" />
+          </view>
+        </picker>
+      </view>
+    </view>
+  </view>
+
+  <!-- 基本信息区 -->
+  <view class="section card">
+    <text class="section-title">基本信息</text>
+
+    <!-- 标题 -->
+    <view class="form-item">
+      <view class="form-header">
+        <text class="form-label">服务标题 <text class="required">*</text></text>
+        <text class="char-count">{{titleLength}}/50</text>
+      </view>
+      <t-input
+        placeholder="例如：辅导高等数学期末考试"
+        value="{{title}}"
+        maxlength="{{50}}"
+        clearable
+        bind:change="onTitleInput"
+      />
+    </view>
+
+    <!-- 描述 -->
+    <view class="form-item">
+      <view class="form-header">
+        <text class="form-label">服务描述 <text class="required">*</text></text>
+        <text class="char-count {{descLength > 500 ? 'over-limit' : ''}}">{{descLength}}/500</text>
+      </view>
+      <t-textarea
+        placeholder="详细描述你能提供的服务内容、范围和经验..."
+        value="{{description}}"
+        maxlength="{{500}}"
+        autosize
+        bind:change="onDescInput"
+      />
+    </view>
+
+    <!-- 积分价格 -->
+    <view class="form-item">
+      <text class="form-label">积分价格 <text class="required">*</text></text>
+      <t-input
+        type="number"
+        placeholder="每单收取的积分数"
+        value="{{pointPrice}}"
+        suffix="积分"
+        bind:change="onPriceInput"
+      />
+    </view>
+
+    <!-- 预计时长 -->
+    <view class="form-item">
+      <text class="form-label">预计时长 <text class="required">*</text></text>
+      <t-input
+        type="number"
+        placeholder="完成一次服务需要的时间"
+        value="{{durationMinutes}}"
+        suffix="分钟"
+        bind:change="onDurationInput"
+      />
+    </view>
+  </view>
+
+  <!-- 服务方式 -->
+  <view class="section card">
+    <text class="section-title">服务方式</text>
+    <t-radio-group value="{{locationType}}" bind:change="onLocationChange">
+      <view class="radio-row">
+        <t-radio value="{{1}}" label="线上" />
+        <t-radio value="{{2}}" label="线下" />
+        <t-radio value="{{3}}" label="均可" />
+      </view>
+    </t-radio-group>
+  </view>
+
+  <!-- 图片上传 -->
+  <view class="section card">
+    <text class="section-title">服务图片（选填）</text>
+    <view class="image-list">
+      <block wx:for="{{images}}" wx:key="*this">
+        <view class="image-item" data-index="{{index}}" bindtap="onPreviewImage">
+          <t-image src="{{item}}" mode="aspectFill" class="upload-image" />
+          <view class="image-remove" data-index="{{index}}" catchtap="onRemoveImage">
+            <t-icon name="close" size="28rpx" color="#fff" />
+          </view>
+        </view>
+      </block>
+      <view
+        wx:if="{{images.length < maxImages}}"
+        class="image-add"
+        bindtap="onChooseImage"
+      >
+        <t-icon name="add" size="48rpx" color="#c9cdd4" />
+        <text class="add-text">{{images.length}}/{{maxImages}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-wrap">
+    <t-button
+      theme="primary"
+      size="large"
+      block
+      loading="{{submitting}}"
+      bindtap="onSubmit"
+    >{{submitting ? '发布中...' : '立即发布'}}</t-button>
+  </view>
+</view>

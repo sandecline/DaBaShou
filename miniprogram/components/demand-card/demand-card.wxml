@@ -1,0 +1,26 @@
+<view class="demand-card" bind:tap="onTap">
+  <view class="card-header">
+    <view class="demand-title ellipsis">{{demand.title}}</view>
+    <view class="demand-type">
+      <t-tag size="small" theme="{{demand.isUrgent ? 'danger' : 'warning'}}" variant="light">
+        {{demand.isUrgent ? '急单' : demand.demandTypeDesc || demand.skillTagName || '悬赏'}}
+      </t-tag>
+    </view>
+  </view>
+  <view class="demand-desc ellipsis-2">{{demand.description}}</view>
+  <view class="card-footer">
+    <view class="reward-section">
+      <text class="reward-label">悬赏</text>
+      <text class="reward-value">{{demand.pointReward}}</text>
+      <text class="reward-unit">积分</text>
+    </view>
+    <view class="deadline-section">
+      <text class="deadline-label">截止</text>
+      <text class="deadline-value">{{demand.deadline}}</text>
+    </view>
+    <view class="user-row">
+      <image class="user-avatar" src="{{demand.avatar || demand.userAvatar}}" mode="aspectFill" />
+      <text class="user-name ellipsis">{{demand.nickname || demand.userName}}</text>
+    </view>
+  </view>
+</view>

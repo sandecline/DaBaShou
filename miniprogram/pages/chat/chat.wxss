@@ -1,0 +1,152 @@
+/* 聊天详情页样式 */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--bg-page);
+  overflow: hidden;
+}
+
+/* ===== 消息滚动区 ===== */
+.chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: var(--spacing-sm);
+}
+
+.load-more-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* 空状态 */
+.empty-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+.empty-text {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+
+/* ===== 消息项 ===== */
+.message-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+}
+
+.message-mine {
+  flex-direction: row-reverse;
+}
+
+.message-other {
+  flex-direction: row;
+}
+
+/* 头像 */
+.msg-avatar {
+  flex-shrink: 0;
+  width: 72rpx;
+  height: 72rpx;
+}
+
+.avatar-img {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: var(--border-radius-round);
+  background-color: var(--bg-hover);
+}
+
+/* ===== 气泡 ===== */
+.msg-bubble {
+  max-width: 480rpx;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  word-break: break-all;
+}
+
+.bubble-mine {
+  background-color: var(--color-primary);
+  margin-right: var(--spacing-sm);
+}
+
+.bubble-mine .msg-text {
+  color: #ffffff;
+}
+
+.bubble-other {
+  background-color: var(--bg-card);
+  margin-left: var(--spacing-sm);
+}
+
+.bubble-other .msg-text {
+  color: var(--text-primary);
+}
+
+.msg-text {
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+}
+
+/* 图片消息 */
+.msg-image {
+  max-width: 320rpx;
+  border-radius: var(--border-radius-sm);
+}
+
+/* ===== 输入区域 ===== */
+.input-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  padding-bottom: calc(var(--spacing-sm) + var(--safe-area-bottom));
+  background-color: var(--bg-card);
+  border-top: 1rpx solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.input-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  flex: 1;
+}
+
+.msg-input {
+  width: 100%;
+  height: 68rpx;
+  padding: 0 var(--spacing-sm);
+  background-color: var(--bg-page);
+  border-radius: var(--border-radius-round);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+}
+
+.send-btn {
+  flex-shrink: 0;
+  padding: 8rpx 20rpx;
+}
+
+.send-btn text {
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+
+.send-btn text.send-active {
+  color: var(--color-primary);
+  font-weight: 500;
+}

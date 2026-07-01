@@ -1,0 +1,49 @@
+/**
+ * 日期工具 — WXS 模块
+ * 供 WXML 中直接调用，无需通过 Page.data 中转
+ *
+ * 用法：<wxs module="timeUtil" src="../../utils/date.wxs" />
+ *       {{timeUtil.formatTime(item.lastMessageTime)}}
+ */
+
+/**
+ * 补零
+ */
+function pad(n) {
+  n = n || 0;
+  return (n < 10 ? '0' : '') + n;
+}
+
+/**
+ * 相对时间格式化
+ * @param {string} dateStr - 日期字符串（ISO 格式或 "YYYY-MM-DD HH:mm:ss"）
+ * @returns {string} 如 "刚刚"、"3分钟前"、"昨天"、"06-15 14:30"
+ */
+function formatTime(dateStr) {
+  if (!dateStr) return '';
+
+  // 标准化日期字符串：替换 - 为 / 以兼容 iOS
+  var cleanStr = dateStr.replace(/-/g, '/').replace(/T/g, ' ').split('.')[0];
+
+  var d = getDate(cleanStr);
+  var now = getDate();
+  var diff = now.getTime() - d.getTime();
+
+  var minute = 60 * 1000;
+  var hour = 60 * minute;
+  var day = 24 * hour;
+
+  if (isNaN(diff) || diff < 0) return '';
+
+  if (diff < minute) return '刚刚';
+  if (diff < hour) return Math.floor(diff / minute) + '分钟前';
+  if (diff < day) return Math.floor(diff / hour) + '小时前';
+  if (diff < 2 * day) return '昨天';
+  if (diff < 7 * day) return Math.floor(diff / day) + '天前';
+
+  return (d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+module.exports = {
+  formatTime: formatTime,
+};

@@ -1,0 +1,42 @@
+.page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* ===== 头像区域 ===== */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 0 32rpx;
+  background: #fff;
+  margin-bottom: 16rpx;
+}
+
+.avatar-tip {
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  color: #0052d9;
+}
+
+/* ===== 表单区域 ===== */
+.form-section {
+  margin-bottom: 16rpx;
+}
+
+.picker-trigger {
+  padding: 16rpx 0;
+}
+
+.picker-trigger text {
+  font-size: 28rpx;
+}
+
+.picker-trigger .placeholder {
+  color: #ccc;
+}
+
+/* ===== 提交按钮 ===== */
+.submit-section {
+  padding: 32rpx 24rpx;
+}

@@ -1,0 +1,13 @@
+{
+  "usingComponents": {
+    "t-input": "tdesign-miniprogram/input/input",
+    "t-textarea": "tdesign-miniprogram/textarea/textarea",
+    "t-button": "tdesign-miniprogram/button/button",
+    "t-radio": "tdesign-miniprogram/radio/radio",
+    "t-radio-group": "tdesign-miniprogram/radio-group/radio-group",
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "t-image": "tdesign-miniprogram/image/image"
+  },
+  "navigationBarTitleText": "发布技能",
+  "backgroundColor": "#f5f5f5"
+}

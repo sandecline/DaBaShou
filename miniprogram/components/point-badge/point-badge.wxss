@@ -1,0 +1,17 @@
+.point-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.point-amount {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #ff6b35;
+  margin-left: 4rpx;
+}
+
+.point-label {
+  font-size: 22rpx;
+  color: #ff6b35;
+}

@@ -1,0 +1,23 @@
+<view class="page">
+  <!-- 加载状态 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <t-loading theme="circular" size="40rpx" text="加载中..." />
+  </view>
+
+  <!-- 统计卡片网格 -->
+  <view class="stat-grid" wx:else>
+    <view
+      class="stat-card"
+      wx:for="{{statCards}}"
+      wx:key="label"
+    >
+      <view class="card-header">
+        <text class="card-label">{{item.label}}</text>
+      </view>
+      <view class="card-body">
+        <text class="card-value">{{item.value}}</text>
+        <text class="card-unit">{{item.unit}}</text>
+      </view>
+    </view>
+  </view>
+</view>

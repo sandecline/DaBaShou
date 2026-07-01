@@ -1,0 +1,32 @@
+.loading-skeleton {
+  padding: 24rpx;
+}
+
+.skeleton-card {
+  margin-bottom: 24rpx;
+  padding: 24rpx;
+  background-color: #fff;
+  border-radius: 12rpx;
+}
+
+.skeleton-row {
+  width: 100%;
+}
+
+.skeleton-image-row {
+  margin-bottom: 16rpx;
+}
+
+.skeleton-detail {
+  background-color: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.skeleton-image-large {
+  margin-bottom: 24rpx;
+}
+
+.skeleton-text-block {
+  padding: 0 24rpx 24rpx;
+}

@@ -1,0 +1,40 @@
+<view class="page">
+  <t-cell-group>
+    <t-cell
+      title="清除缓存"
+      left-icon="delete"
+      arrow
+      hover
+      bind:tap="onClearCache"
+    />
+    <t-cell
+      title="关于搭把手"
+      left-icon="info-circle"
+      arrow
+      hover
+      bind:tap="onAbout"
+    />
+  </t-cell-group>
+
+  <t-cell-group>
+    <t-cell
+      title="退出登录"
+      left-icon="logout"
+      arrow
+      hover
+      bind:tap="onLogout"
+    />
+  </t-cell-group>
+
+  <!-- 退出登录确认弹窗 -->
+  <t-dialog
+    visible="{{showLogoutDialog}}"
+    title="退出登录"
+    content="退出后需要重新登录，确定退出？"
+    confirm-btn="确定退出"
+    cancel-btn="取消"
+    bind:confirm="onConfirmLogout"
+    bind:cancel="onCancelLogout"
+    bind:close="onCancelLogout"
+  />
+</view>

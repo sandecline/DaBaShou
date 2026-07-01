@@ -1,0 +1,173 @@
+/* 技能详情页样式 */
+
+.page {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  padding-bottom: calc(100rpx + var(--safe-area-bottom));
+}
+
+/* 加载中 */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+/* ===== 封面图片 ===== */
+.cover-wrap {
+  width: 100%;
+  height: 400rpx;
+  background-color: var(--bg-hover);
+}
+
+.cover-image {
+  width: 100%;
+  height: 100%;
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+}
+
+.placeholder-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ===== 信息卡片 ===== */
+.info-section {
+  margin-top: var(--spacing-sm);
+}
+
+.info-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.skill-title {
+  flex: 1;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-right: var(--spacing-md);
+}
+
+.price-tag {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.price-value {
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  color: #e37318;
+  margin: 0 4rpx;
+}
+
+.price-unit {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ===== 发布者信息 ===== */
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+}
+
+.user-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: var(--border-radius-round);
+  flex-shrink: 0;
+}
+
+.user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.user-name {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ===== 标签行 ===== */
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) 0;
+}
+
+/* ===== 描述 ===== */
+.desc-section {
+  padding: var(--spacing-sm) 0;
+}
+
+.section-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: var(--spacing-sm);
+}
+
+.desc-content {
+  font-size: var(--font-size-md);
+  color: var(--text-regular);
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* ===== 底部下单栏 ===== */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: var(--spacing-sm) var(--spacing-md);
+  padding-bottom: calc(var(--spacing-sm) + var(--safe-area-bottom));
+  background-color: var(--bg-card);
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+/* ===== 下单弹窗 ===== */
+.dialog-info {
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.dialog-title {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.dialog-price {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #e37318;
+}
+
+.dialog-remark {
+  margin-top: var(--spacing-sm);
+}

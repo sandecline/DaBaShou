@@ -1,0 +1,53 @@
+<view class="order-list-page">
+  <!-- Tab 筛选栏 -->
+  <t-tabs value="{{activeTab}}" bind:change="onTabChange">
+    <t-tab-panel label="全部" value="0" />
+    <t-tab-panel label="进行中" value="1" />
+    <t-tab-panel label="已完成" value="2" />
+  </t-tabs>
+
+  <!-- 加载中 -->
+  <t-loading wx:if="{{loading}}" theme="circular" size="40px" text="加载中..." />
+
+  <!-- 空状态 -->
+  <t-empty wx:elif="{{orderList.length === 0}}" icon="order" description="暂无订单" />
+
+  <!-- 订单列表 -->
+  <view wx:else class="order-list">
+    <view
+      wx:for="{{orderList}}"
+      wx:key="id"
+      class="order-card"
+      data-id="{{item.id}}"
+      bindtap="onOrderTap"
+    >
+      <!-- 订单号 + 状态标签 -->
+      <view class="order-card__header">
+        <text class="order-card__no">{{item.orderNo}}</text>
+        <t-tag
+          theme="{{item._statusTheme || 'default'}}"
+          size="small"
+          variant="light"
+        >
+          {{ORDER_STATUS_MAP[item.status]}}
+        </t-tag>
+      </view>
+
+      <!-- 服务标题 + 积分 -->
+      <view class="order-card__body">
+        <text class="order-card__title">{{item.title}}</text>
+        <text class="order-card__point">{{item.pointAmount}} 积分</text>
+      </view>
+
+      <!-- 对方信息 + 时间 -->
+      <view class="order-card__footer">
+        <view class="order-card__user">
+          <image class="order-card__avatar" src="{{item.myRole === 'buyer' ? item.sellerAvatar : item.buyerAvatar}}" />
+          <text class="order-card__name">{{item.myRole === 'buyer' ? item.sellerNickname : item.buyerNickname}}</text>
+          <text class="order-card__role">{{item.myRole === 'buyer' ? '卖家' : '买家'}}</text>
+        </view>
+        <text class="order-card__time">{{item.createTime}}</text>
+      </view>
+    </view>
+  </view>
+</view>
