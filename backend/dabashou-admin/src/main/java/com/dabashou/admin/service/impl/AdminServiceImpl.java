@@ -9,12 +9,14 @@ import com.dabashou.order.dto.ArbitrateDto;
 import com.dabashou.order.service.OrderService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.sql.ResultSet;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -23,7 +25,10 @@ public class AdminServiceImpl implements AdminService {
 
     private static final Set<String> CONFIG_WHITELIST = Set.of(
             "site.name", "site.notice", "order.auto_cancel_minutes",
-            "order.confirm_timeout_hours", "point.sign_in_reward", "credit.violation_penalty"
+            "order.confirm_timeout_hours", "order.verify_code_minutes",
+            "order.buyer_cancel_penalty", "order.seller_cancel_penalty",
+            "point.sign_in_reward", "point.register_bonus",
+            "credit.violation_penalty", "credit.newcomer_max", "credit.reliable_max"
     );
     private static final Set<String> SENSITIVE_CONFIG_KEYS = Set.of("jwt.secret", "sms.secret", "payment.secret");
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -42,11 +47,17 @@ public class AdminServiceImpl implements AdminService {
     public PageResult<Map<String, Object>> listUsers(String keyword, Integer status, int pageNum, int pageSize) {
         List<Object> args = new ArrayList<>();
         String where = userWhere(keyword, status, args);
+        String campusAuthSelect = campusAuthStatusSelect();
         long total = count("SELECT COUNT(*) FROM dbs_user u " + where, args);
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 SELECT u.id, u.username, u.nickname, u.avatar, u.phone, u.point_balance AS pointBalance,
                        u.trust_score AS trustScore, u.campus, u.status, u.create_time AS createTime,
-                       NULL AS lastLoginTime
+                       NULL AS lastLoginTime,
+                       (SELECT GROUP_CONCAT(r.role_code)
+                          FROM sys_user_role ur
+                          JOIN sys_role r ON r.id = ur.role_id
+                         WHERE ur.user_id = u.id) AS roles,
+                       """ + campusAuthSelect + """
                   FROM dbs_user u
                 """ + where + " ORDER BY u.create_time DESC LIMIT ? OFFSET ?", withPageArgs(args, pageNum, pageSize));
         rows.forEach(this::normalizeUserRow);
@@ -55,10 +66,16 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public Map<String, Object> getUserDetail(Long id) {
+        String campusAuthSelect = campusAuthStatusSelect();
         Map<String, Object> row = queryOne("""
                 SELECT u.id, u.username, u.nickname, u.avatar, u.phone, u.email, u.point_balance AS pointBalance,
                        u.trust_score AS trustScore, u.campus, u.building, u.bio, u.status,
-                       u.create_time AS createTime, NULL AS lastLoginTime
+                       u.create_time AS createTime, NULL AS lastLoginTime,
+                       (SELECT GROUP_CONCAT(r.role_code)
+                          FROM sys_user_role ur
+                          JOIN sys_role r ON r.id = ur.role_id
+                         WHERE ur.user_id = u.id) AS roles,
+                       """ + campusAuthSelect + """
                   FROM dbs_user u WHERE u.id = ?
                 """, id);
         normalizeUserRow(row);
@@ -221,6 +238,9 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public PageResult<Map<String, Object>> listCampusAuths(Integer status, int pageNum, int pageSize) {
+        if (!hasTable("dbs_user_campus_auth")) {
+            return PageResult.of(0, List.of(), pageNum, pageSize);
+        }
         List<Object> args = new ArrayList<>();
         String where = "";
         if (status != null) {
@@ -242,6 +262,9 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void reviewCampusAuth(Long adminId, Long id, AdminDto.CampusAuthReviewRequest request) {
+        if (!hasTable("dbs_user_campus_auth")) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "校园认证功能未初始化");
+        }
         int status = Boolean.TRUE.equals(request.getApproved()) ? 1 : 2;
         Map<String, Object> auth = queryOne("SELECT user_id, campus FROM dbs_user_campus_auth WHERE id = ?", id);
         int updated = jdbcTemplate.update("""
@@ -330,6 +353,18 @@ public class AdminServiceImpl implements AdminService {
 
     private void normalizeUserRow(Map<String, Object> row) {
         row.put("phone", maskPhone(asString(row.get("phone"))));
+    }
+
+    private String campusAuthStatusSelect() {
+        if (!hasTable("dbs_user_campus_auth")) {
+            return "NULL AS campusAuthStatus";
+        }
+        return """
+                (SELECT a.status
+                   FROM dbs_user_campus_auth a
+                  WHERE a.user_id = u.id
+                  ORDER BY a.create_time DESC LIMIT 1) AS campusAuthStatus
+                """;
     }
 
     private void normalizeViolationRow(Map<String, Object> row) {
@@ -463,6 +498,24 @@ public class AdminServiceImpl implements AdminService {
 
     private String placeholders(int count) {
         return String.join(", ", Collections.nCopies(count, "?"));
+    }
+
+    private boolean hasTable(String tableName) {
+        try {
+            return Boolean.TRUE.equals(jdbcTemplate.execute((ConnectionCallback<Boolean>) connection -> {
+                String upperName = tableName.toUpperCase(Locale.ROOT);
+                try (ResultSet rs = connection.getMetaData().getTables(null, null, upperName, new String[]{"TABLE"})) {
+                    if (rs.next()) {
+                        return true;
+                    }
+                }
+                try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName, new String[]{"TABLE"})) {
+                    return rs.next();
+                }
+            }));
+        } catch (DataAccessException e) {
+            return false;
+        }
     }
 
     private String asString(Object value) {

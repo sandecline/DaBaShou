@@ -1,118 +1,140 @@
 <template>
-  <div class="admin-page">
-    <div class="admin-layout">
-      <Sidebar :menu-items="adminMenu" />
-      <div class="admin-content">
-        <div class="page-container">
-          <h2>订单管理</h2>
+  <AdminLayout
+    title="订单仲裁"
+    eyebrow="ORDER CONTROL"
+    subtitle="查看订单状态和交易内容，集中处理争议订单。"
+  >
+    <template #actions>
+      <el-input
+        v-model="keyword"
+        placeholder="搜索订单号、标题、用户"
+        prefix-icon="Search"
+        clearable
+        style="width: 280px"
+        @keyup.enter="search"
+        @clear="search"
+      >
+        <template #append>
+          <el-button @click="search">搜索</el-button>
+        </template>
+      </el-input>
+      <el-select v-model="statusFilter" placeholder="订单状态" clearable style="width: 150px" @change="search">
+        <el-option v-for="(label, val) in OrderStatusMap" :key="val" :label="label" :value="Number(val)" />
+      </el-select>
+    </template>
 
-          <div class="toolbar">
-            <el-input
-              v-model="keyword"
-              placeholder="搜索订单号..."
-              prefix-icon="Search"
-              clearable
-              style="width: 240px"
-              @keyup.enter="search"
-              @clear="search"
-            />
-            <el-select v-model="statusFilter" placeholder="订单状态" clearable style="width: 140px" @change="search">
-              <el-option v-for="(label, val) in OrderStatusMap" :key="val" :label="label" :value="Number(val)" />
-            </el-select>
-          </div>
+    <el-table :data="list" stripe v-loading="loading" border>
+      <el-table-column prop="orderNo" label="订单号" width="190" />
+      <el-table-column label="交易内容" min-width="210" show-overflow-tooltip>
+        <template #default="{ row }">{{ orderTitle(row as OrderAdminVo) }}</template>
+      </el-table-column>
+      <el-table-column prop="buyerNickname" label="买家" width="120" />
+      <el-table-column prop="sellerNickname" label="卖家" width="120" />
+      <el-table-column label="积分" width="90">
+        <template #default="{ row }">{{ row.pointAmount }} 积分</template>
+      </el-table-column>
+      <el-table-column label="状态" width="120">
+        <template #default="{ row }">
+          <el-tag :color="getOrderStatusColor(row.status)" size="small" effect="dark" style="border:none;color:#fff">
+            {{ row.statusDesc || getOrderStatusText(row.status) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="createTime" label="创建时间" width="170">
+        <template #default="{ row }">{{ formatDateTime(row.createTime) }}</template>
+      </el-table-column>
+      <el-table-column label="操作" width="180" fixed="right">
+        <template #default="{ row }">
+          <el-button size="small" @click="showDetail(row as OrderAdminVo)">详情</el-button>
+          <el-button
+            v-if="row.status === 7"
+            size="small"
+            type="warning"
+            @click="openArbitrate(row as OrderAdminVo)"
+          >
+            仲裁
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
 
-          <el-table :data="list" stripe v-loading="loading" border>
-            <el-table-column prop="orderNo" label="订单号" width="180" />
-            <el-table-column prop="title" label="服务标题" min-width="160" show-overflow-tooltip />
-            <el-table-column prop="buyerNickname" label="买家" width="100" />
-            <el-table-column prop="sellerNickname" label="卖家" width="100" />
-            <el-table-column label="金额" width="90">
-              <template #default="{ row }">{{ row.pointAmount }} 积分</template>
-            </el-table-column>
-            <el-table-column label="状态" width="100">
-              <template #default="{ row }">
-                <el-tag :color="getOrderStatusColor(row.status)" size="small" effect="dark" style="border:none;color:#fff">
-                  {{ getOrderStatusText(row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="createTime" label="创建时间" width="170">
-              <template #default="{ row }">{{ formatDateTime(row.createTime) }}</template>
-            </el-table-column>
-            <el-table-column label="操作" width="160" fixed="right">
-              <template #default="{ row }">
-                <el-button size="small" @click="showDetail(row as OrderItemVo)">详情</el-button>
-                <el-button
-                  v-if="row.status === 7"
-                  size="small"
-                  type="warning"
-                  @click="handleDispute(row as OrderItemVo)"
-                >
-                  处理争议
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <div class="pagination-wrap">
-            <el-pagination
-              v-model:current-page="page"
-              :page-size="size"
-              :total="total"
-              layout="prev, pager, next, total"
-              background
-              @current-change="changePage"
-            />
-          </div>
-
-          <!-- 争议处理对话框 -->
-          <el-dialog v-model="disputeDialog" title="处理争议订单" width="400px">
-            <p>订单号：{{ disputeOrder?.orderNo }}</p>
-            <el-radio-group v-model="disputeAction">
-              <el-radio value="complete">判定完成（积分给卖家）</el-radio>
-              <el-radio value="refund">判定退款（积分退买家）</el-radio>
-            </el-radio-group>
-            <template #footer>
-              <el-button @click="disputeDialog = false">取消</el-button>
-              <el-button type="primary" :loading="disputing" @click="confirmDispute">确认处理</el-button>
-            </template>
-          </el-dialog>
-        </div>
-      </div>
+    <div class="pagination-wrap">
+      <el-pagination
+        v-model:current-page="page"
+        :page-size="size"
+        :total="total"
+        layout="prev, pager, next, total"
+        background
+        @current-change="changePage"
+      />
     </div>
-  </div>
+
+    <el-drawer v-model="detailVisible" title="订单详情" size="480px">
+      <div v-if="detail" class="detail-list">
+        <p><span>订单号</span>{{ detail.orderNo }}</p>
+        <p><span>交易内容</span>{{ orderTitle(detail) }}</p>
+        <p><span>买家</span>{{ detail.buyerNickname }}</p>
+        <p><span>卖家</span>{{ detail.sellerNickname }}</p>
+        <p><span>积分</span>{{ detail.pointAmount }}</p>
+        <p><span>状态</span>{{ detail.statusDesc || getOrderStatusText(detail.status) }}</p>
+        <p><span>备注</span>{{ detail.remark || '-' }}</p>
+        <p><span>取消原因</span>{{ detail.cancelReason || '-' }}</p>
+        <p><span>创建时间</span>{{ formatDateTime(detail.createTime) }}</p>
+      </div>
+    </el-drawer>
+
+    <el-dialog v-model="arbitrateDialog" title="争议订单仲裁" width="460px">
+      <el-form label-position="top">
+        <el-form-item label="订单">
+          <el-input :model-value="arbitrateOrder ? `${arbitrateOrder.orderNo} / ${orderTitle(arbitrateOrder)}` : ''" disabled />
+        </el-form-item>
+        <el-form-item label="仲裁结果">
+          <el-radio-group v-model="arbitrateForm.result">
+            <el-radio value="complete">判定完成，积分给卖家</el-radio>
+            <el-radio value="refund">判定退款，积分退买家</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="仲裁理由">
+          <el-input v-model="arbitrateForm.reason" type="textarea" :rows="3" placeholder="说明证据、沟通结果和处理依据" />
+        </el-form-item>
+        <el-form-item v-if="arbitrateForm.result === 'refund'" label="退款积分（可选）">
+          <el-input-number v-model="arbitrateForm.refundAmount" :min="0" :max="arbitrateOrder?.pointAmount || 0" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="arbitrateDialog = false">取消</el-button>
+        <el-button type="primary" :loading="arbitrating" @click="submitArbitrate">保存仲裁</el-button>
+      </template>
+    </el-dialog>
+  </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { getAdminOrderList, adminArbitrateOrder } from '@/api/admin'
+import { reactive, ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { adminArbitrateOrder, getAdminOrderDetail, getAdminOrderList } from '@/api/admin'
 import { getOrderStatusText, getOrderStatusColor, formatDateTime } from '@/utils/format'
 import { OrderStatusMap } from '@/types/api'
-import Sidebar from '@/components/layout/Sidebar.vue'
-import type { OrderItemVo } from '@/types/api'
-
-const adminMenu = [
-  { path: '/admin/users', title: '用户管理', icon: 'User' },
-  { path: '/admin/orders', title: '订单管理', icon: 'Document' },
-  { path: '/admin/credit', title: '信用管理', icon: 'Warning' },
-  { path: '/admin/system', title: '系统配置', icon: 'Setting' },
-  { path: '/admin/stat', title: '数据统计', icon: 'DataAnalysis' },
-]
+import AdminLayout from '@/components/layout/AdminLayout.vue'
+import type { OrderAdminVo } from '@/types/api'
 
 const loading = ref(false)
-const list = ref<OrderItemVo[]>([])
+const arbitrating = ref(false)
+const list = ref<OrderAdminVo[]>([])
 const total = ref(0)
 const page = ref(1)
 const size = ref(15)
 const keyword = ref('')
 const statusFilter = ref<number | undefined>(undefined)
-
-// Dispute
-const disputeDialog = ref(false)
-const disputeOrder = ref<OrderItemVo | null>(null)
-const disputeAction = ref<'complete' | 'refund'>('complete')
-const disputing = ref(false)
+const detailVisible = ref(false)
+const detail = ref<OrderAdminVo | null>(null)
+const arbitrateDialog = ref(false)
+const arbitrateOrder = ref<OrderAdminVo | null>(null)
+const arbitrateForm = reactive({
+  result: 'complete' as 'complete' | 'refund',
+  reason: '',
+  refundAmount: undefined as number | undefined,
+})
 
 async function fetchData() {
   loading.value = true
@@ -132,34 +154,57 @@ async function fetchData() {
   }
 }
 
-function search() { page.value = 1; fetchData() }
-function changePage(p: number) { page.value = p; fetchData() }
-
-function showDetail(order: OrderItemVo) {
-  ElMessageBox.alert(
-    `订单号：${order.orderNo}\n标题：${order.title}\n金额：${order.pointAmount}积分\n状态：${getOrderStatusText(order.status)}`,
-    '订单详情',
-  )
+function orderTitle(order: OrderAdminVo) {
+  return order.title || order.shelfTitle || order.demandTitle || '未命名交易'
 }
 
-function handleDispute(order: OrderItemVo) {
-  disputeOrder.value = order
-  disputeAction.value = 'complete'
-  disputeDialog.value = true
+function search() {
+  page.value = 1
+  fetchData()
 }
 
-async function confirmDispute() {
-  if (!disputeOrder.value) return
-  disputing.value = true
+function changePage(p: number) {
+  page.value = p
+  fetchData()
+}
+
+async function showDetail(order: OrderAdminVo) {
   try {
-    await adminArbitrateOrder(disputeOrder.value.id, { result: disputeAction.value, reason: '管理员处理争议' })
-    ElMessage.success('争议已处理')
-    disputeDialog.value = false
+    detail.value = await getAdminOrderDetail(order.id)
+    detailVisible.value = true
+  } catch {
+    // handled
+  }
+}
+
+function openArbitrate(order: OrderAdminVo) {
+  arbitrateOrder.value = order
+  arbitrateForm.result = 'complete'
+  arbitrateForm.reason = ''
+  arbitrateForm.refundAmount = undefined
+  arbitrateDialog.value = true
+}
+
+async function submitArbitrate() {
+  if (!arbitrateOrder.value) return
+  if (!arbitrateForm.reason.trim()) {
+    ElMessage.warning('请填写仲裁理由')
+    return
+  }
+  arbitrating.value = true
+  try {
+    await adminArbitrateOrder(arbitrateOrder.value.id, {
+      result: arbitrateForm.result,
+      reason: arbitrateForm.reason.trim(),
+      refundAmount: arbitrateForm.result === 'refund' ? arbitrateForm.refundAmount : undefined,
+    })
+    ElMessage.success('仲裁结果已保存')
+    arbitrateDialog.value = false
     fetchData()
   } catch {
     // handled
   } finally {
-    disputing.value = false
+    arbitrating.value = false
   }
 }
 
@@ -167,31 +212,27 @@ onMounted(fetchData)
 </script>
 
 <style scoped lang="scss">
-.admin-layout {
-  display: flex;
-  min-height: calc(100vh - #{$header-offset});
-}
-
-.admin-content {
-  flex: 1;
-  overflow-x: auto;
-}
-
-h2 {
-  margin: 0 0 $spacing-md;
-  font-size: $font-size-xl;
-  font-weight: 700;
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: $spacing-md;
-}
-
 .pagination-wrap {
   display: flex;
   justify-content: center;
-  margin-top: $spacing-md;
+  margin-top: 16px;
+}
+
+.detail-list {
+  display: grid;
+  gap: 12px;
+
+  p {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 10px;
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edf2ef;
+  }
+
+  span {
+    color: #667a74;
+  }
 }
 </style>

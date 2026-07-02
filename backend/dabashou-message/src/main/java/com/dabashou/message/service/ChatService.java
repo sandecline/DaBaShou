@@ -31,6 +31,11 @@ public interface ChatService {
     PageResult<ChatMessageVo> getMessagesByTargetUserId(Long userId, Long targetUserId, int pageNum, int pageSize);
 
     /**
+     * 按对方用户ID标记会话为已读
+     */
+    void markSessionReadByTargetUserId(Long userId, Long targetUserId);
+
+    /**
      * 发送消息（REST接口）
      */
     void sendMessageToUser(Long senderId, Long receiverId, String content, Integer msgType);

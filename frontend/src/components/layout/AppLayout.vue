@@ -43,6 +43,11 @@
         <span class="nav-label">消息</span>
       </router-link>
 
+      <router-link v-if="isAdmin" to="/admin" class="bottom-nav-item" active-class="bottom-nav-active">
+        <el-icon><Setting /></el-icon>
+        <span class="nav-label">后台</span>
+      </router-link>
+
       <router-link to="/user/shop" class="bottom-nav-item" active-class="bottom-nav-active">
         <el-icon><User /></el-icon>
         <span class="nav-label">我的</span>
@@ -52,14 +57,17 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useMessageStore } from '@/stores/message'
+import { isAdminSession } from '@/utils/auth'
 import AppHeader from './Header.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 const messageStore = useMessageStore()
+const isAdmin = computed(() => isAdminSession(userStore.token))
 
 function handlePublish() {
   if (!userStore.isLoggedIn) {

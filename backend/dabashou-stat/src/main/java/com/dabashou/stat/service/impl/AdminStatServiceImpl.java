@@ -23,12 +23,24 @@ public class AdminStatServiceImpl implements AdminStatService {
     @Override
     public AdminOverviewVo getOverview() {
         AdminOverviewVo vo = new AdminOverviewVo();
+        int totalOrders = qi("SELECT COUNT(*) FROM dbs_order");
+        int completedOrders = qi("SELECT COUNT(*) FROM dbs_order WHERE status=5");
         vo.setTotalUsers(qi("SELECT COUNT(*) FROM dbs_user"));
-        vo.setTotalOrders(qi("SELECT COUNT(*) FROM dbs_order"));
+        vo.setTotalOrders(totalOrders);
+        vo.setCompletedOrders(completedOrders);
         vo.setTotalShelves(qi("SELECT COUNT(*) FROM dbs_skill_shelf WHERE status=1"));
+        vo.setTotalSkills(qi("SELECT COUNT(*) FROM dbs_skill_shelf"));
         vo.setTotalDemands(qi("SELECT COUNT(*) FROM dbs_demand WHERE status=1"));
         vo.setTodayNewUsers(qi("SELECT COUNT(*) FROM dbs_user WHERE DATE(create_time)=CURDATE()"));
         vo.setTodayNewOrders(qi("SELECT COUNT(*) FROM dbs_order WHERE DATE(create_time)=CURDATE()"));
+        vo.setOrderCompletionRate(totalOrders > 0
+                ? BigDecimal.valueOf(completedOrders * 1.0 / totalOrders).setScale(4, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO);
+        vo.setTotalPointsInCirculation(qi("SELECT IFNULL(SUM(point_balance),0) FROM dbs_user"));
+        vo.setPendingAppeals(qi("SELECT COUNT(*) FROM credit_appeal WHERE status=0"));
+        vo.setDisputingOrders(qi("SELECT COUNT(*) FROM dbs_order WHERE status=7"));
+        vo.setPendingCampusAuths(qi("SELECT COUNT(*) FROM dbs_user_campus_auth WHERE status=0"));
+        vo.setPendingViolations(qi("SELECT COUNT(*) FROM credit_violation WHERE status=0"));
         return vo;
     }
 

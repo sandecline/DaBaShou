@@ -115,14 +115,24 @@ async function loadData() {
     }
 
     await nextTick()
-    if (dailyData.length > 0) initLineChart(dailyData)
-    if (heatData.length > 0) initBarChart(heatData)
+    initLineChart(fillTrendData(dailyData, 7))
+    initBarChart(heatData)
     if (userStatResult) initPieChart(userStatResult)
   } catch {
     // handled
   } finally {
     loading.value = false
   }
+}
+
+function fillTrendData(data: TrendItem[], days: number) {
+  if (data.length > 0) return data
+  const today = new Date()
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date(today)
+    date.setDate(today.getDate() - days + index + 1)
+    return { date: date.toISOString().slice(0, 10), value: 0 }
+  })
 }
 
 function initLineChart(data: TrendItem[]) {
@@ -153,16 +163,19 @@ function initLineChart(data: TrendItem[]) {
 
 function initBarChart(data: SkillHeatItem[]) {
   if (!barChartRef.value) return
+  const chartData = data.length > 0
+    ? data.slice(0, 10)
+    : [{ skillTagId: 0, skillTagName: '暂无数据', shelfCount: 0, demandCount: 0, orderCount: 0, heatScore: 0 }]
   const chart = echarts.init(barChartRef.value)
   chart.setOption({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: { type: 'category', data: data.slice(0, 10).map((d) => d.tagName ?? d.skillTagName) },
+    xAxis: { type: 'category', data: chartData.map((d) => d.tagName ?? d.skillTagName) },
     yAxis: { type: 'value' },
     series: [
       {
         name: '热度',
         type: 'bar',
-        data: data.slice(0, 10).map((d) => d.heatScore),
+        data: chartData.map((d) => d.heatScore),
         itemStyle: { color: '#FFC300', borderRadius: [4, 4, 0, 0] },
       },
     ],

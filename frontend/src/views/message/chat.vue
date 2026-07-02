@@ -63,7 +63,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getChatMessages, sendChatMessage } from '@/api/message'
+import { getChatMessages, markChatSessionRead, sendChatMessage } from '@/api/message'
+import { useMessageStore } from '@/stores/message'
 import { useUserStore } from '@/stores/user'
 import { fromNow } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -78,6 +79,7 @@ const props = defineProps<{
 }>()
 
 const userStore = useUserStore()
+const messageStore = useMessageStore()
 const myAvatar = computed(() => userStore.user?.avatar || '')
 const myName = computed(() => userStore.user?.nickname || '我')
 
@@ -104,6 +106,8 @@ async function loadMessages() {
       isMine: msg.senderId === userStore.user?.id,
     })).reverse()
     scrollToBottom()
+    await markChatSessionRead(targetUserId.value).catch(() => undefined)
+    await messageStore.fetchUnreadCount()
   } catch {
     // request.ts already shows a unified error message.
   } finally {

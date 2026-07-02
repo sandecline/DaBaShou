@@ -39,6 +39,9 @@
   "lastLoginTime": "2026-07-01 10:00:00"
 }
 ```
+- **补充字段**:
+  - `roles`: 用户角色编码，多个角色用逗号分隔
+  - `campusAuthStatus`: 最近一次校园认证状态，0-待审核，1-已通过，2-已拒绝，null-未提交
 - **错误码**: 404-用户不存在
 
 ### 1.3 启用/禁用用户
@@ -176,7 +179,17 @@
 ```json
 {
   "site.name": "搭把手",
-  "point.sign_in_reward": 5
+  "site.notice": "本周重点处理争议订单",
+  "point.register_bonus": 100,
+  "point.sign_in_reward": 5,
+  "credit.newcomer_max": 2.9,
+  "credit.reliable_max": 3.9,
+  "credit.violation_penalty": 0.5,
+  "order.auto_cancel_minutes": 15,
+  "order.verify_code_minutes": 30,
+  "order.confirm_timeout_hours": 168,
+  "order.buyer_cancel_penalty": 10,
+  "order.seller_cancel_penalty": 20
 }
 ```
 - **响应**: `data = null`
@@ -184,5 +197,31 @@
 
 ---
 
-**文档版本**: v2.0.0
-**最后更新**: 2026-07-01
+## 七、统计概览
+
+### 7.1 平台概览
+- **URL**: `GET /api/admin/v1/stats/overview`
+- **响应**:
+```json
+{
+  "totalUsers": 100,
+  "totalOrders": 50,
+  "completedOrders": 30,
+  "totalShelves": 20,
+  "totalSkills": 25,
+  "totalDemands": 8,
+  "todayNewUsers": 3,
+  "todayNewOrders": 2,
+  "orderCompletionRate": 0.6,
+  "totalPointsInCirculation": 20000,
+  "pendingAppeals": 1,
+  "disputingOrders": 2,
+  "pendingCampusAuths": 4,
+  "pendingViolations": 1
+}
+```
+
+---
+
+**文档版本**: v2.1.0
+**最后更新**: 2026-07-02

@@ -82,6 +82,7 @@ import { reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import { isAdminSession } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -108,7 +109,7 @@ async function handleLogin() {
   try {
     await userStore.login(form.username, form.password)
     ElMessage.success('登录成功，欢迎回来')
-    const redirect = (route.query.redirect as string) || '/'
+    const redirect = (route.query.redirect as string) || (isAdminSession(userStore.token) ? '/admin' : '/')
     router.push(redirect)
   } catch {
     // Request interceptor displays the error message.

@@ -47,7 +47,7 @@ class AdminIntegrationTest {
     @Order(2)
     @DisplayName("管理员和普通用户登录")
     void loginUsers() throws Exception {
-        adminToken = login("admin", "admin123");
+        adminToken = login("admin", "123456");
         userToken = login("lisi", "123456");
         zhangsanToken = login("zhangsan", "123456");
         assertNotNull(adminToken);

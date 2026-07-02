@@ -25,7 +25,7 @@
             placeholder="搜索技能、求助或同学"
             @keyup.enter="handleSearch"
           />
-          <button v-if="keyword" class="search-btn" type="button" @click.stop="handleSearch">
+          <button class="search-btn" type="button" @click.stop="handleSearch">
             搜索
           </button>
         </div>
@@ -37,6 +37,11 @@
         </template>
 
         <template v-else>
+          <router-link v-if="isAdmin" to="/admin" class="admin-shortcut">
+            <el-icon><Setting /></el-icon>
+            <span>管理后台</span>
+          </router-link>
+
           <el-dropdown trigger="click" class="desktop-only">
             <button class="publish-link" type="button" aria-label="发布">
               <el-icon><Plus /></el-icon>
@@ -74,6 +79,9 @@
                 <el-dropdown-item @click="$router.push('/stat')">
                   <el-icon><DataAnalysis /></el-icon> 数据统计
                 </el-dropdown-item>
+                <el-dropdown-item v-if="isAdmin" divided @click="$router.push('/admin')">
+                  <el-icon><Setting /></el-icon> 管理后台
+                </el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">
                   <span class="logout-text">退出登录</span>
                 </el-dropdown-item>
@@ -106,15 +114,20 @@
           <el-icon><DataAnalysis /></el-icon>
           <span>数据统计</span>
         </router-link>
+        <router-link v-if="isAdmin" to="/admin" class="cat-item" :class="{ active: $route.path.startsWith('/admin') }">
+          <el-icon><Setting /></el-icon>
+          <span>管理后台</span>
+        </router-link>
       </div>
     </nav>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { isAdminSession } from '@/utils/auth'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -123,12 +136,11 @@ const keyword = ref('')
 const currentCampus = ref('仙林校区')
 const searchInputRef = ref<HTMLInputElement | null>(null)
 const isMobile = ref(false)
+const isAdmin = computed(() => isAdminSession(userStore.token))
 
 function handleSearch() {
   const q = keyword.value.trim()
-  if (q) {
-    router.push({ path: '/skill', query: { keyword: q } })
-  }
+  router.push({ path: '/skill', query: q ? { keyword: q } : {} })
 }
 
 function focusSearch() {
@@ -303,6 +315,24 @@ onBeforeUnmount(() => {
   border-radius: 10px;
 }
 
+.admin-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+
+  &:hover {
+    background: #115e59;
+    color: #ffffff;
+  }
+}
+
 .header-avatar {
   cursor: pointer;
   border: 2px solid #ffffff;
@@ -387,6 +417,16 @@ onBeforeUnmount(() => {
   .desktop-only,
   .header-categories {
     display: none;
+  }
+
+  .admin-shortcut {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+
+    span {
+      display: none;
+    }
   }
 }
 </style>

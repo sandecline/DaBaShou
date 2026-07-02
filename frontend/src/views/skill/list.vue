@@ -20,7 +20,11 @@
             class="search-input"
             @keyup.enter="search"
             @clear="search"
-          />
+          >
+            <template #append>
+              <el-button @click="search">搜索</el-button>
+            </template>
+          </el-input>
         </div>
       </div>
 
@@ -77,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { searchShelves } from '@/api/shelf'
 import { getCategoryTree } from '@/api/skill'
@@ -142,6 +146,14 @@ onMounted(async () => {
   }
   fetchData()
 })
+
+watch(
+  () => route.query.keyword,
+  (value) => {
+    keyword.value = (value as string) || ''
+    search()
+  },
+)
 </script>
 
 <style scoped lang="scss">

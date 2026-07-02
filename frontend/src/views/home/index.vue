@@ -32,6 +32,14 @@
       </div>
     </section>
 
+    <section v-if="isAdmin" class="admin-entry">
+      <div>
+        <strong>管理员控制台</strong>
+        <span>处理认证审核、订单仲裁、信用申诉和平台统计</span>
+      </div>
+      <el-button type="primary" @click="$router.push('/admin')">进入管理后台</el-button>
+    </section>
+
     <section class="quick-section">
       <button
         v-for="cat in categories"
@@ -100,12 +108,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { searchShelves } from '@/api/shelf'
 import { searchDemands } from '@/api/demand'
 import { getPersonalOverview } from '@/api/stat'
 import { getCategoryTree } from '@/api/skill'
-import { getUserInfo, isLoggedIn } from '@/utils/auth'
+import { getUserInfo, isAdminSession, isLoggedIn } from '@/utils/auth'
+import { useUserStore } from '@/stores/user'
 import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -117,6 +126,8 @@ const latestDemands = ref<DemandItemVo[]>([])
 const skillLoading = ref(true)
 const demandLoading = ref(true)
 const noticeText = ref('')
+const userStore = useUserStore()
+const isAdmin = computed(() => isAdminSession(userStore.token))
 
 const fallbackCategories = [
   { key: 'study', name: '学业辅导', icon: 'Reading', route: '/skill?keyword=辅导', bgClass: 'bg-blue' },
@@ -215,6 +226,35 @@ onMounted(async () => {
 <style scoped lang="scss">
 .home-page {
   padding-top: $spacing-lg;
+}
+
+.admin-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(100% - 32px, $max-width);
+  margin: 18px auto 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  border-radius: $radius-lg;
+  background: #ecfdf5;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  strong {
+    color: #134e4a;
+    font-size: 16px;
+  }
+
+  span {
+    color: #475569;
+    font-size: 13px;
+  }
 }
 
 .hero {

@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -232,7 +233,25 @@ public class ChatServiceImpl implements ChatService {
             return PageResult.of(0, new ArrayList<>(), pageNum, pageSize);
         }
 
-        return getMessages(userId, session.getId(), pageNum, pageSize);
+        PageResult<ChatMessageVo> result = getMessages(userId, session.getId(), pageNum, pageSize);
+        markSessionRead(session.getId(), userId);
+        return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void markSessionReadByTargetUserId(Long userId, Long targetUserId) {
+        Long smallerId = userId < targetUserId ? userId : targetUserId;
+        Long largerId = userId > targetUserId ? userId : targetUserId;
+
+        LambdaQueryWrapper<ChatSession> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ChatSession::getUser1Id, smallerId)
+                .eq(ChatSession::getUser2Id, largerId);
+        ChatSession session = chatSessionMapper.selectOne(wrapper);
+        if (session == null) {
+            return;
+        }
+        markSessionRead(session.getId(), userId);
     }
 
     @Override
@@ -277,5 +296,14 @@ public class ChatServiceImpl implements ChatService {
     private String asString(Object value) {
         if (value == null) return null;
         return value.toString();
+    }
+
+    private void markSessionRead(Long sessionId, Long userId) {
+        jdbcTemplate.update(
+                "UPDATE dbs_chat_message SET is_read = 1 WHERE session_id = ? AND sender_id <> ? AND is_read = 0",
+                sessionId, userId);
+        jdbcTemplate.update(
+                "UPDATE dbs_chat_session SET unread_count = 0, update_time = ? WHERE id = ?",
+                LocalDateTime.now(), sessionId);
     }
 }

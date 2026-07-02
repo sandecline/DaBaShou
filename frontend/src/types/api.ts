@@ -237,11 +237,15 @@ export interface OrderItemVo {
   buyerNickname?: string
   sellerId?: number
   sellerNickname?: string
-  title: string
+  title?: string
+  shelfTitle?: string
+  tagName?: string
   skillTagName?: string
   pointAmount: number
   status: OrderStatus | number
-  statusDesc: string
+  statusDesc?: string
+  statusName?: string
+  remark?: string
   counterpartNickname?: string
   counterpartAvatar?: string
   buyerName?: string
@@ -390,6 +394,8 @@ export interface ViolationVo {
 export interface AppealVo {
   id: number
   violationId: number
+  appellantId?: number
+  appellantNickname?: string
   reason: string
   evidence: string[]
   status: number
@@ -486,12 +492,17 @@ export interface UserAdminVo {
   nickname: string
   avatar: string
   phone: string
+  email?: string
   pointBalance: number
   trustScore: number
   campus: string
+  building?: string
+  bio?: string
   status: number
+  roles?: string
+  campusAuthStatus?: number | null
   createTime: string
-  lastLoginTime: string
+  lastLoginTime?: string | null
 }
 
 export interface OrderAdminVo {
@@ -501,10 +512,15 @@ export interface OrderAdminVo {
   buyerNickname: string
   sellerId: number
   sellerNickname: string
-  title: string
+  title?: string
+  shelfTitle?: string
+  demandTitle?: string
   pointAmount: number
   status: number
-  statusDesc: string
+  statusDesc?: string
+  statusName?: string
+  remark?: string
+  cancelReason?: string
   createTime: string
 }
 
@@ -519,6 +535,10 @@ export interface AdminOverviewVo {
   todayNewOrders: number
   orderCompletionRate?: number
   totalPointsInCirculation?: number
+  pendingAppeals?: number
+  disputingOrders?: number
+  pendingCampusAuths?: number
+  pendingViolations?: number
 }
 
 export interface DailyTrendItem {
@@ -538,6 +558,7 @@ export interface UserActiveItem {
   date: string
   activeUsers: number
   newUsers: number
+  value?: number
 }
 
 export interface TrustDistributionItem {
