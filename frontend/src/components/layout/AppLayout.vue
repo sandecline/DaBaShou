@@ -57,17 +57,42 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useMessageStore } from '@/stores/message'
 import { isAdminSession } from '@/utils/auth'
+import { startWebSocket, stopWebSocket } from '@/composables/useWebSocket'
 import AppHeader from './Header.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 const messageStore = useMessageStore()
 const isAdmin = computed(() => isAdminSession(userStore.token))
+
+onMounted(() => {
+  if (userStore.isLoggedIn) {
+    startWebSocket()
+    messageStore.fetchUnreadCount()
+  }
+})
+
+watch(
+  () => userStore.isLoggedIn,
+  (loggedIn) => {
+    if (loggedIn) {
+      startWebSocket()
+      messageStore.fetchUnreadCount()
+    } else {
+      stopWebSocket()
+      messageStore.setUnreadCount(0)
+    }
+  },
+)
+
+onUnmounted(() => {
+  stopWebSocket()
+})
 
 function handlePublish() {
   if (!userStore.isLoggedIn) {

@@ -69,7 +69,7 @@ export function connect(): void {
   }
 
   const task = wx.connectSocket({
-    url: WS_URL,
+    url: `${WS_URL}?token=${encodeURIComponent(token)}`,
     header: {
       Authorization: `Bearer ${token}`,
     },

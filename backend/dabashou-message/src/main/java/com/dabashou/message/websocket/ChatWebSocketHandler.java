@@ -201,6 +201,21 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         return user1Id.equals(userId) ? user2Id : user1Id;
     }
 
+    /**
+     * 推送消息给指定在线用户
+     */
+    public void pushToUser(Long userId, String type, Map<String, Object> data) throws IOException {
+        WebSocketSession session = sessions.get(userId);
+        if (session == null || !session.isOpen()) {
+            return;
+        }
+        Map<String, Object> wrapper = Map.of("type", type, "data", data);
+        String json = objectMapper.writeValueAsString(wrapper);
+        synchronized (session) {
+            session.sendMessage(new TextMessage(json));
+        }
+    }
+
     private Long toLong(Object value) {
         if (value == null) return null;
         if (value instanceof Long l) return l;

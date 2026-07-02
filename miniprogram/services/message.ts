@@ -27,7 +27,7 @@ export const messageService = {
     return api.post<{ id: number }>('/v1/chat/sessions', { userId });
   },
 
-  /** 获取聊天消息 */
+  /** 获取聊天消息（通过对方用户ID） */
   getMessages(targetUserId: number, params: { pageNum: number; pageSize: number }) {
     return api.get<PageResult<ChatMessage>>(
       '/v1/chat/messages',
@@ -35,12 +35,23 @@ export const messageService = {
     );
   },
 
-  /** 发送聊天消息 */
-  sendMessage(params: ChatSendParams) {
-    return api.post<{ id: number }>('/v1/chat/send', params as unknown as Record<string, unknown>);
+  /** 获取聊天消息（通过会话ID，用于 targetUserId 未知时的回退） */
+  getMessagesBySession(sessionId: number, params: { pageNum: number; pageSize: number }) {
+    return api.get<PageResult<ChatMessage>>(
+      `/v1/chat/sessions/${sessionId}/messages`,
+      params as unknown as Record<string, unknown>
+    );
   },
 
-  /** 标记会话已读（通过 WebSocket 发送 read 事件，不走 HTTP） */
+  /** 标记会话已读（通过对方用户ID） */
+  markSessionRead(targetUserId: number) {
+    return api.put<void>(`/v1/chat/messages/read?targetUserId=${targetUserId}`);
+  },
+
+  /** 发送聊天消息（后端返回 Void，不返回消息 ID） */
+  sendMessage(params: ChatSendParams) {
+    return api.post<void>('/v1/chat/send', params as unknown as Record<string, unknown>);
+  },
 
   // ===== 系统通知 =====
 

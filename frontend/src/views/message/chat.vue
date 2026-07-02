@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getChatMessages, markChatSessionRead, sendChatMessage } from '@/api/message'
 import { useMessageStore } from '@/stores/message'
@@ -69,6 +69,7 @@ import { useUserStore } from '@/stores/user'
 import { fromNow } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { onMessage } from '@/composables/useWebSocket'
 import type { ChatMessageVo } from '@/types/api'
 
 const props = defineProps<{
@@ -115,6 +116,38 @@ async function loadMessages() {
   }
 }
 
+let unregisterWs: (() => void) | null = null
+
+function handleWsMessage(data: any) {
+  if (!data) return
+
+  // 聊天消息：来自当前对话的对方
+  if (data.id && data.senderId && data.senderId !== userStore.user?.id) {
+    if (data.senderId === targetUserId.value) {
+      messages.value.push({
+        id: data.id,
+        senderId: data.senderId,
+        senderNickname: data.senderNickname || peerName.value,
+        senderAvatar: data.senderAvatar || peerAvatar.value,
+        content: data.content,
+        msgType: data.msgType ?? 1,
+        isRead: data.isRead ?? 0,
+        createTime: data.createTime || new Date().toISOString(),
+        isMine: false,
+      })
+      scrollToBottom()
+      markChatSessionRead(targetUserId.value).catch(() => undefined)
+    }
+  }
+
+  // 已读回执
+  if (data.type === 'read' && data.senderId === targetUserId.value) {
+    for (const msg of messages.value) {
+      if (msg.isMine) msg.isRead = 1
+    }
+  }
+}
+
 async function handleSend() {
   const text = inputText.value.trim()
   if (!text || !Number.isFinite(targetUserId.value)) return
@@ -151,7 +184,13 @@ function scrollToBottom() {
 }
 
 watch(targetUserId, loadMessages)
-onMounted(loadMessages)
+onMounted(() => {
+  loadMessages()
+  unregisterWs = onMessage(handleWsMessage)
+})
+onUnmounted(() => {
+  unregisterWs?.()
+})
 </script>
 
 <style scoped lang="scss">

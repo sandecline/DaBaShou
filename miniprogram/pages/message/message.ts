@@ -54,7 +54,12 @@ Page({
 
   goChat(e: WechatMiniprogram.TouchEvent) {
     const { id } = e.currentTarget.dataset;
-    wx.navigateTo({ url: `/pages/chat/chat?sessionId=${id}` });
+    const session = this.data.sessions.find((s) => s.id === id);
+    let url = `/pages/chat/chat?sessionId=${id}`;
+    if (session) {
+      url += `&targetUserId=${session.otherUserId}&targetNickname=${encodeURIComponent(session.otherNickname || '')}`;
+    }
+    wx.navigateTo({ url });
   },
 
   onDelete(e: WechatMiniprogram.TouchEvent) {
