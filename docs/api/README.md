@@ -15,9 +15,9 @@
 | 积分 | [point.md](./point.md) | `/api/v1/points` | 8 | 余额、流水、签到、担保池 |
 | 消息 | [message.md](./message.md) | `/api/v1/messages`, `/api/v1/chat` | 10 | 通知、WebSocket聊天、会话 |
 | 信用评价 | [credit.md](./credit.md) | `/api/v1/credits`, `/api/v1/reviews`, `/api/v1/violations`, `/api/v1/appeals` | 9 | 评价、举报、申诉 |
-| 数据统计 | [stat.md](./stat.md) | `/api/v1/stats`, `/api/v1/admin/stats` | 9 | 个人/平台概览、趋势、热度 |
-| 系统管理 | [system.md](./system.md) | `/api/v1/files`, `/api/v1/admin` | 12 | 文件、角色、权限、日志、配置 |
-| 管理后台 | [admin.md](./admin.md) | `/api/v1/admin` | 15 | 用户、订单、信用、认证审核 |
+| 数据统计 | [stat.md](./stat.md) | `/api/v1/stats`, `/api/admin/v1/stats` | 9 | 个人/平台概览、趋势、热度 |
+| 系统管理 | [system.md](./system.md) | `/api/v1/files`, `/api/admin/v1` | 12 | 文件、角色、权限、日志、配置 |
+| 管理后台 | [admin.md](./admin.md) | `/api/admin/v1` | 17 | 用户、订单、信用、认证审核、配置 |
 
 ## 前后端接口文件分工
 
@@ -44,5 +44,5 @@
 
 ---
 
-**文档版本**: v1.1.0
-**最后更新**: 2026-06-30
+**文档版本**: v2.0.0
+**最后更新**: 2026-07-01

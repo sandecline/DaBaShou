@@ -108,11 +108,11 @@ async function fetchData() {
   loading.value = true
   try {
     const result = await searchShelves({
-      page: page.value,
-      size: size.value,
+      pageNum: page.value,
+      pageSize: size.value,
       keyword: keyword.value || undefined,
       categoryId: selectedCategory.value || undefined,
-      sort: sortBy.value,
+      sortBy: sortBy.value,
     })
     list.value = result.list.filter(isNotMine)
     total.value = result.total

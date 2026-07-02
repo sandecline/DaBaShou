@@ -32,7 +32,7 @@ export function getDemandDetail(id: number): Promise<DemandDetailVo> {
 export function searchDemands(params: {
   keyword?: string; categoryId?: number; skillTagId?: number;
   demandType?: number; status?: number; sortBy?: string;
-  pageNum?: number; pageSize?: number; page?: number; size?: number; sort?: string; urgent?: boolean | number
+  pageNum?: number; pageSize?: number; urgent?: boolean | number
 }): Promise<PageResult<DemandItemVo>> {
   return request.get('/v1/demands', normalizePageParams(params))
 }

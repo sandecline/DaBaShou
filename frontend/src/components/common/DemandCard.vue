@@ -1,46 +1,40 @@
 <template>
-  <div class="demand-card card-hover" @click="goDetail">
-    <!-- 状态标签 -->
-    <div class="card-badges">
-      <span v-if="demand.isUrgent" class="badge badge-urgent">
-        <span class="badge-dot"></span>急单
-      </span>
-      <span class="badge badge-reward">
-        {{ demand.pointReward }} 积分
-      </span>
+  <article class="demand-card card-hover" :class="{ urgent: demand.isUrgent }" @click="goDetail">
+    <div class="card-top">
+      <div class="badges">
+        <span v-if="demand.isUrgent" class="badge urgent-badge">急单</span>
+        <span class="badge reward-badge">{{ demand.pointReward }} 积分</span>
+      </div>
+      <span v-if="demand.distance != null" class="distance">{{ formatDistance(demand.distance) }}</span>
     </div>
 
-    <!-- 标题 -->
     <h3 class="card-title text-ellipsis-2">{{ demand.title }}</h3>
+    <p class="card-desc text-ellipsis-2">{{ demand.description || '这位同学需要帮助，点击查看详情。' }}</p>
 
-    <!-- 描述 -->
-    <p class="card-desc text-ellipsis-2">{{ demand.description || '急需帮助，点击查看详情' }}</p>
+    <div class="meta-row">
+      <span>{{ demand.tagName || demand.skillTagName || '求助' }}</span>
+      <span v-if="demand.campus">{{ demand.campus }}</span>
+      <span>{{ locationText }}</span>
+    </div>
 
-    <!-- 标签 + 用户 -->
-    <div class="card-footer">
-      <div class="tags-row">
-        <span class="footer-tag">{{ demand.tagName || '求助' }}</span>
-        <span v-if="demand.campus" class="footer-tag campus-tag">{{ demand.campus }}</span>
-      </div>
-
+    <div class="footer-row">
       <div class="user-row">
-        <el-avatar :size="18" :src="demand.userAvatar" class="user-avatar">
-          {{ (demand.userName || '?').charAt(0) }}
+        <el-avatar :size="24" :src="demand.userAvatar || demand.avatar">
+          {{ displayName.charAt(0) }}
         </el-avatar>
-        <span class="user-name text-ellipsis">{{ demand.userName || '匿名' }}</span>
+        <span class="user-name text-ellipsis">{{ displayName }}</span>
+      </div>
+
+      <div v-if="demand.deadline" class="deadline">
+        <el-icon><Clock /></el-icon>
+        <span>{{ formatDateTime(demand.deadline, 'MM-DD HH:mm') }} 截止</span>
       </div>
     </div>
-
-    <!-- 截止时间 -->
-    <div class="card-bottom" v-if="demand.deadline">
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" class="clock-icon"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-      <span class="deadline-text">{{ formatDateTime(demand.deadline, 'MM-DD HH:mm') }} 截止</span>
-      <span v-if="demand.distance != null" class="distance-text">{{ formatDistance(demand.distance) }}</span>
-    </div>
-  </div>
+  </article>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Demand } from '@/types'
 import { formatDateTime, formatDistance } from '@/utils/format'
@@ -51,6 +45,14 @@ const props = defineProps<{
 
 const router = useRouter()
 
+const displayName = computed(() => props.demand.userName || props.demand.nickname || '匿名同学')
+
+const locationText = computed(() => {
+  if (props.demand.locationType === 2) return '线下'
+  if (props.demand.locationType === 1) return '线上'
+  return '不限'
+})
+
 function goDetail() {
   router.push(`/demand/${props.demand.id}`)
 }
@@ -58,143 +60,120 @@ function goDetail() {
 
 <style scoped lang="scss">
 .demand-card {
-  background: #FFFFFF;
-  border-radius: $radius-md;
-  padding: 12px;
-  cursor: pointer;
-  box-shadow: $shadow-sm;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  position: relative;
-  border-left: 3px solid transparent;
+  gap: 12px;
+  min-height: 220px;
+  padding: 16px;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: #ffffff;
+  cursor: pointer;
 
-  &:has(.badge-urgent) {
-    border-left-color: $color-danger;
-    background: linear-gradient(135deg, #FFFBFB 0%, #FFFFFF 100%);
+  &.urgent {
+    border-color: rgba(239, 68, 68, 0.28);
+    background:
+      linear-gradient(135deg, rgba(254, 226, 226, 0.7), rgba(255, 255, 255, 0) 55%),
+      #ffffff;
   }
 }
 
-// ========== 顶部标签 ==========
-.card-badges {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 600;
-
-  &-urgent {
-    background: #FFEBEE;
-    color: #FF5252;
-
-    .badge-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #FF5252;
-      animation: pulse 1.5s infinite;
-    }
-  }
-
-  &-reward {
-    background: #FFF3E0;
-    color: #FF6B00;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-// ========== 标题 ==========
-.card-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: $color-text-primary;
-  line-height: 1.4;
-  margin: 0;
-}
-
-// ========== 描述 ==========
-.card-desc {
-  font-size: 12px;
-  color: $color-text-secondary;
-  line-height: 1.5;
-  margin: 0;
-}
-
-// ========== 底部信息 ==========
-.card-footer {
+.card-top,
+.footer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
-.tags-row {
+.badges,
+.meta-row {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 
-  .footer-tag {
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    background: $color-bg;
+.badge,
+.meta-row span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: $radius-round;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.urgent-badge {
+  background: $color-danger-light;
+  color: #b91c1c;
+}
+
+.reward-badge {
+  background: $color-accent-light;
+  color: #c2410c;
+}
+
+.distance {
+  flex-shrink: 0;
+  color: $color-text-placeholder;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.card-title {
+  margin: 0;
+  color: $color-text-primary;
+  font-size: 16px;
+  font-weight: 780;
+  line-height: 1.4;
+}
+
+.card-desc {
+  min-height: 42px;
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.meta-row {
+  margin-top: auto;
+
+  span {
+    background: $color-surface-muted;
     color: $color-text-secondary;
-
-    &.campus-tag {
-      background: #E8F5E9;
-      color: #388E3C;
-    }
   }
+}
+
+.footer-row {
+  padding-top: 12px;
+  border-top: 1px solid $color-border-light;
+}
+
+.user-row,
+.deadline {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 
 .user-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-
-  .user-avatar {
-    flex-shrink: 0;
-  }
-
-  .user-name {
-    font-size: 10px;
-    color: $color-text-secondary;
-    max-width: 50px;
-  }
+  gap: 7px;
 }
 
-// ========== 截止时间 ==========
-.card-bottom {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  padding-top: 6px;
-  border-top: 1px solid $color-border-light;
+.user-name {
+  color: $color-text-secondary;
+  font-size: 13px;
+  font-weight: 650;
+}
 
-  .clock-icon {
-    color: $color-warning;
-  }
-
-  .deadline-text {
-    font-size: 11px;
-    color: $color-warning;
-    font-weight: 500;
-  }
-
-  .distance-text {
-    font-size: 11px;
-    color: $color-text-placeholder;
-    margin-left: auto;
-  }
+.deadline {
+  gap: 5px;
+  flex-shrink: 0;
+  color: $color-warning;
+  font-size: 12px;
+  font-weight: 750;
 }
 </style>

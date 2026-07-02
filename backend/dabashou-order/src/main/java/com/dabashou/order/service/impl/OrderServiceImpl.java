@@ -110,8 +110,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (userId.equals(buyerId)) {
             throw new BusinessException(ErrorCode.CONFLICT, "不能接自己的需求");
         }
+        Long shelfId = normalizeOptionalId(dto.getShelfId());
         claimDemand(dto.getDemandId());
-        Map<String, Object> shelf = queryShelfInfo(dto.getShelfId());
+        Map<String, Object> shelf = queryShelfInfo(shelfId);
         Long tagId;
         String title;
         if (shelf != null) {
@@ -134,7 +135,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setBuyerId(buyerId);
         order.setSellerId(userId);
         order.setDemandId(dto.getDemandId());
-        order.setSkillShelfId(dto.getShelfId());
+        order.setSkillShelfId(shelfId);
         order.setSkillTagId(tagId);
         order.setTitle(title);
         order.setPointAmount(pointAmount);
@@ -496,6 +497,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    private Long normalizeOptionalId(Long id) {
+        return id == null || id <= 0 ? null : id;
     }
 
     private void claimDemand(Long demandId) {

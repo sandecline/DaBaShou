@@ -92,12 +92,12 @@ async function fetchData() {
   loading.value = true
   try {
     const result = await searchDemands({
-      page: page.value,
-      size: size.value,
+      pageNum: page.value,
+      pageSize: size.value,
       keyword: keyword.value || undefined,
       status: statusFilter.value || undefined,
       urgent: onlyUrgent.value ? 1 : undefined,
-      sort: sortBy.value,
+      sortBy: sortBy.value,
     })
     list.value = result.list
       .filter(isNotMine)

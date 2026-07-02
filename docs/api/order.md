@@ -53,13 +53,13 @@
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | demandId | Long | 是 | 需求ID |
-| sellerId | Long | 是 | 卖家用户ID |
+| shelfId | Long | 否 | 可选货架ID；不传时按需求本身生成订单 |
 | remark | String | 否 | 备注 |
 
 ```json
 {
   "demandId": 1,
-  "sellerId": 2,
+  "shelfId": 1,
   "remark": "string"
 }
 ```
@@ -239,7 +239,7 @@ public class CreateOrderFromShelfDto {
 ```java
 public class CreateOrderFromDemandDto {
     @NotNull private Long demandId;
-    @NotNull private Long sellerId;
+    private Long shelfId;
     private String remark;
 }
 ```
@@ -311,3 +311,4 @@ public class OrderItemVo {
 - `shelfId` 可选；未提供可用货架时，订单标题、标签和积分按需求本身生成，接单方取当前登录用户。
 - `POST /api/v1/orders/from-shelf` 成功创建订单后，服务端会在同一事务内将对应 `dbs_skill_shelf.status` 从 `1` 更新为 `0`。
 - 同一服务被再次用于创建订单时返回 `409`，避免原服务详情链接反复接取。
+

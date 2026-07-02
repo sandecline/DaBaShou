@@ -14,7 +14,6 @@ export function createOrderFromShelf(data: { skillShelfId?: number; shelfId?: nu
 export function createOrderFromDemand(data: { demandId: number; sellerId?: number; shelfId?: number; remark?: string }): Promise<number> {
   return request.post('/v1/orders/from-demand', {
     ...data,
-    shelfId: data.shelfId ?? 0,
     idempotentToken: crypto.randomUUID(),
   })
 }

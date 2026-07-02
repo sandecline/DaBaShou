@@ -104,8 +104,8 @@ async function fetchData() {
   loading.value = true
   try {
     const result = await getAdminUserList({
-      page: page.value,
-      size: size.value,
+      pageNum: page.value,
+      pageSize: size.value,
       keyword: keyword.value || undefined,
       status: statusFilter.value,
     })

@@ -42,15 +42,15 @@
               <h3>个人数据概览</h3>
               <div class="user-stats">
                 <div class="user-stat-item">
-                  <span class="stat-num">{{ userStat.publishedSkills }}</span>
+                  <span class="stat-num">{{ userStat.publishedSkills ?? 0 }}</span>
                   <span class="stat-text">已发布技能</span>
                 </div>
                 <div class="user-stat-item">
-                  <span class="stat-num">{{ userStat.publishedDemands }}</span>
-                  <span class="stat-text">已发布需求</span>
+                  <span class="stat-num">{{ userStat.publishedDemands ?? 0 }}</span>
+                  <span class="stat-text">已发布交易</span>
                 </div>
                 <div class="user-stat-item">
-                  <span class="stat-num">{{ userStat.completedOrders }}</span>
+                  <span class="stat-num">{{ userStat.completedOrders ?? 0 }}</span>
                   <span class="stat-text">完成订单</span>
                 </div>
                 <div class="user-stat-item">
@@ -71,7 +71,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { getPersonalOverview, getOrderTrend, getSkillHeat } from '@/api/stat'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import * as echarts from 'echarts'
-import type { PersonalOverviewVo, TrendItem, SkillHeatItemItem } from '@/types/api'
+import type { PersonalOverviewVo, TrendItem, SkillHeatItem } from '@/types/api'
 
 const loading = ref(true)
 const lineChartRef = ref()
@@ -90,7 +90,7 @@ const userStat = ref<PersonalOverviewVo>({
 
 const statCards = ref([
   { label: '已发布技能', value: '0' },
-  { label: '已发布需求', value: '0' },
+  { label: '已发布交易', value: '0' },
   { label: '完成订单', value: '0' },
   { label: '平均评分', value: '0' },
 ])
@@ -107,9 +107,9 @@ async function loadData() {
     if (userStatResult) {
       userStat.value = userStatResult
       statCards.value = [
-        { label: '已发布技能', value: String(userStatResult.publishedSkills) },
-        { label: '已发布需求', value: String(userStatResult.publishedDemands) },
-        { label: '完成订单', value: String(userStatResult.completedOrders) },
+        { label: '已发布技能', value: String(userStatResult.publishedSkills ?? 0) },
+        { label: '已发布交易', value: String(userStatResult.publishedDemands ?? 0) },
+        { label: '完成订单', value: String(userStatResult.completedOrders ?? 0) },
         { label: '平均评分', value: (userStatResult.averageRating ?? 0).toFixed(1) },
       ]
     }
@@ -136,14 +136,14 @@ function initLineChart(data: TrendItem[]) {
       {
         name: '新增订单',
         type: 'line',
-        data: data.map((d) => d.newOrders),
+        data: data.map((d) => d.newOrders ?? d.value ?? 0),
         smooth: true,
         itemStyle: { color: '#FFC300' },
       },
       {
         name: '完成订单',
         type: 'line',
-        data: data.map((d) => d.completedOrders),
+        data: data.map((d) => d.completedOrders ?? 0),
         smooth: true,
         itemStyle: { color: '#10b981' },
       },
@@ -151,12 +151,12 @@ function initLineChart(data: TrendItem[]) {
   })
 }
 
-function initBarChart(data: SkillHeatItemItem[]) {
+function initBarChart(data: SkillHeatItem[]) {
   if (!barChartRef.value) return
   const chart = echarts.init(barChartRef.value)
   chart.setOption({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: { type: 'category', data: data.slice(0, 10).map((d) => d.tagName) },
+    xAxis: { type: 'category', data: data.slice(0, 10).map((d) => d.tagName ?? d.skillTagName) },
     yAxis: { type: 'value' },
     series: [
       {
@@ -179,8 +179,8 @@ function initPieChart(stat: PersonalOverviewVo) {
         type: 'pie',
         radius: ['40%', '70%'],
         data: [
-          { value: stat.completedOrders, name: '已完成', itemStyle: { color: '#10b981' } },
-          { value: stat.takenOrders - stat.completedOrders, name: '进行中', itemStyle: { color: '#FFC300' } },
+          { value: stat.completedOrders ?? 0, name: '已完成', itemStyle: { color: '#10b981' } },
+          { value: Math.max((stat.takenOrders ?? 0) - (stat.completedOrders ?? 0), 0), name: '进行中', itemStyle: { color: '#FFC300' } },
         ],
       },
     ],

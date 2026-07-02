@@ -65,7 +65,7 @@ function selectConv(targetUserId: number) {
 
 onMounted(async () => {
   try {
-    const result = await getChatSessions({ page: 1, size: 50 })
+    const result = await getChatSessions({ pageNum: 1, pageSize: 50 })
     conversations.value = result.list
     if (result.list.length > 0) {
       activeConv.value = result.list[0].otherUserId

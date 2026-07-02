@@ -71,7 +71,7 @@ class SecurityIntegrationTest {
     @DisplayName("管理员接口需 ADMIN 角色")
     void adminEndpointsShouldRequireRole() throws Exception {
         // 无Token访问 admin 接口
-        mockMvc.perform(get("/api/v1/admin/stats/overview"))
+        mockMvc.perform(get("/api/admin/v1/stats/overview"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401));
     }
