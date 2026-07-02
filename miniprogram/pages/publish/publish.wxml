@@ -29,7 +29,7 @@
       <text class="card-title">发布求助</text>
       <text class="card-desc">说出你的需求\n召唤校园大神帮忙</text>
       <t-button
-        theme="default"
+        theme="primary"
         size="medium"
         block
         bindtap="goPublishDemand"
