@@ -22,8 +22,8 @@ function pad(n) {
 function formatTime(dateStr) {
   if (!dateStr) return '';
 
-  // 标准化日期字符串：替换 - 为 / 以兼容 iOS
-  var cleanStr = dateStr.replace(/-/g, '/').replace(/T/g, ' ').split('.')[0];
+  // 标准化日期字符串：split+join 替代正则（WXS 不支持 regex）
+  var cleanStr = dateStr.split('-').join('/').split('T').join(' ').split('.')[0];
 
   var d = getDate(cleanStr);
   var now = getDate();
@@ -44,6 +44,23 @@ function formatTime(dateStr) {
   return (d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 }
 
+/**
+ * 截止时间格式化
+ * @param {string} dateStr - 日期字符串
+ * @returns {string} 如 "7月16日截止" 或 "已过期"
+ */
+function formatDeadline(dateStr) {
+  if (!dateStr) return '';
+  var cleanStr = dateStr.split('-').join('/').split('T').join(' ').split('.')[0];
+  var d = getDate(cleanStr);
+  var now = getDate();
+  if (isNaN(d.getTime())) return '';
+  var diff = d.getTime() - now.getTime();
+  if (diff <= 0) return '已过期';
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日截止';
+}
+
 module.exports = {
   formatTime: formatTime,
+  formatDeadline: formatDeadline,
 };

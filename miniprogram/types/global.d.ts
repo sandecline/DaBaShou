@@ -16,6 +16,8 @@ export interface IAppOption {
     isLoggedIn: boolean;
     /** 未读消息总数 */
     unreadCount: number;
+    /** Mock 模式标识 */
+    mockMode: boolean;
   };
   /** 恢复登录态 */
   restoreSession(): void;

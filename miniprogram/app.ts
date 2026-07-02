@@ -12,6 +12,7 @@ App<IAppOption>({
     token: '',
     isLoggedIn: false,
     unreadCount: 0,
+    mockMode: true,
   },
 
   // ========== 生命周期 ==========

@@ -28,6 +28,8 @@ const STATUS_THEME_MAP: Record<number, string> = {
 
 Page({
   data: {
+    /** 当前角色（买家/卖家） */
+    activeRole: 'buyer' as 'buyer' | 'seller',
     /** 当前 Tab 索引 */
     activeTab: 0,
     /** 订单列表 */
@@ -66,6 +68,14 @@ Page({
     this.loadOrderList(true);
   },
 
+  // 角色切换
+  onRoleChange(e: WechatMiniprogram.CustomEvent) {
+    const role = e.currentTarget.dataset.role as 'buyer' | 'seller';
+    if (role === this.data.activeRole) return;
+    this.setData({ activeRole: role, pageNum: 1, hasMore: true, orderList: [] });
+    this.loadOrderList();
+  },
+
   // Tab 切换
   onTabChange(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value ?? e.detail.index ?? 0;
@@ -79,6 +89,15 @@ Page({
     wx.navigateTo({ url: `/subpackages/user/order-detail/order-detail?id=${id}` });
   },
 
+  // 私聊
+  onChat(e: WechatMiniprogram.CustomEvent) {
+    const { userid, nickname } = e.currentTarget.dataset as { userid: number; nickname: string };
+    if (!userid) return;
+    wx.navigateTo({
+      url: `/pages/chat/chat?targetUserId=${userid}&targetNickname=${encodeURIComponent(nickname || '')}`,
+    });
+  },
+
   // ===== 数据加载 =====
 
   async loadOrderList(append = false) {
@@ -86,13 +105,13 @@ Page({
       const { activeTab, pageNum, pageSize } = this.data;
       const status = TAB_FILTER[activeTab];
       const res = await orderService.getList({
-        role: 'buyer',
+        role: this.data.activeRole,
         status,
         pageNum,
         pageSize,
       });
       const newList = (append ? [...this.data.orderList, ...res.data.list] : res.data.list)
-        .map((order) => ({ ...order, _statusTheme: STATUS_THEME_MAP[order.status] || 'default' }));
+        .map((order) => ({ ...order, _statusTheme: STATUS_THEME_MAP[order.status] || 'default', myRole: this.data.activeRole }));
       this.setData({
         orderList: newList,
         hasMore: newList.length < res.data.total,

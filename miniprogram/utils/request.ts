@@ -172,6 +172,18 @@ function nowStr() {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
+/** n天前的时间字符串 */
+function daysAgo(n: number) {
+  const d = new Date(Date.now() - n * 86400000);
+  const p = (n2: number) => String(n2).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+/** n天后的 ISO 格式截止时间 */
+function isoDaysLater(n: number) {
+  const d = new Date(Date.now() + n * 86400000);
+  const p = (n2: number) => String(n2).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T23:59:59`;
+}
 
 // ── 内存 Store ──
 
@@ -183,7 +195,7 @@ const mockShelfStore: Record<string, unknown>[] = [
     skillTagId: 4, categoryName: '编程开发', tagName: 'Python',
     nickname: '李学霸', avatar: '', userName: '李学霸', userAvatar: '', trustScore: 4.5,
     timeSlots: [],
-    createTime: '2026-07-01 10:00:00',
+    createTime: daysAgo(2),
   },
   {
     id: 2, title: '高数考前辅导', description: '期末高数复习，帮你理清重难点',
@@ -192,18 +204,50 @@ const mockShelfStore: Record<string, unknown>[] = [
     skillTagId: 1, categoryName: '学业辅导', tagName: '数学',
     nickname: '张三', avatar: '', userName: '张三', userAvatar: '', trustScore: 3.5,
     timeSlots: [],
-    createTime: '2026-06-28 14:20:00',
+    createTime: daysAgo(5),
   },
 ];
 
 const mockDemandStore: Record<string, unknown>[] = [
   {
     id: 1, title: '急需帮忙搬宿舍', description: '下周六搬出七号楼，大约2小时',
-    pointReward: 30, deadline: '2026-07-08T23:59:59', demandType: 1, demandTypeDesc: '求助悬赏',
+    pointReward: 30, deadline: isoDaysLater(14), demandType: 1, demandTypeDesc: '求助悬赏',
     locationType: 2, isUrgent: false,
     status: 1, statusDesc: '待接单', skillTagId: 7, skillTagName: '搬运', tagName: '搬运',
     userId: 1003, nickname: '萌新小白', avatar: '', trustScore: 1.5,
-    createTime: '2026-07-01 08:00:00', images: [],
+    createTime: daysAgo(2), images: [],
+  },
+  {
+    id: 2, title: '期末论文排版求助', description: 'Word 排版一直对不齐，求大佬帮看看',
+    pointReward: 20, deadline: isoDaysLater(5), demandType: 1, demandTypeDesc: '求助悬赏',
+    locationType: 1, isUrgent: true,
+    status: 1, statusDesc: '待接单', skillTagId: 1, skillTagName: '学业辅导', tagName: '其他',
+    userId: 1004, nickname: '学渣小王', avatar: '', trustScore: 2.0,
+    createTime: daysAgo(1), images: [],
+  },
+  {
+    id: 3, title: '帮忙修电风扇', description: '宿舍电风扇不转了，有人会修吗',
+    pointReward: 15, deadline: isoDaysLater(10), demandType: 1, demandTypeDesc: '求助悬赏',
+    locationType: 2, isUrgent: false,
+    status: 1, statusDesc: '待接单', skillTagId: 8, skillTagName: '维修', tagName: '维修',
+    userId: 1001, nickname: '张三', avatar: '', trustScore: 3.5,
+    createTime: daysAgo(0), images: [],
+  },
+  {
+    id: 4, title: 'Python 爬虫需要指导', description: 'BeautifulSoup 解析总是报错，求指导',
+    pointReward: 40, deadline: isoDaysLater(7), demandType: 1, demandTypeDesc: '求助悬赏',
+    locationType: 1, isUrgent: false,
+    status: 2, statusDesc: '已接单', skillTagId: 4, skillTagName: 'Python', tagName: 'Python',
+    userId: 1002, nickname: '李学霸', avatar: '', trustScore: 4.5,
+    createTime: daysAgo(3), images: [],
+  },
+  {
+    id: 5, title: '代取快递', description: '西门菜鸟驿站，有偿代取',
+    pointReward: 5, deadline: isoDaysLater(3), demandType: 2, demandTypeDesc: '跑腿代取',
+    locationType: 2, isUrgent: true,
+    status: 1, statusDesc: '待接单', skillTagId: 9, skillTagName: '跑腿', tagName: '跑腿',
+    userId: 1003, nickname: '萌新小白', avatar: '', trustScore: 1.5,
+    createTime: daysAgo(0), images: [],
   },
 ];
 
@@ -215,7 +259,7 @@ const mockOrderStore: Record<string, unknown>[] = [
     sellerId: 1001, sellerNickname: '张三', sellerAvatar: '',
     counterpartNickname: '张三', counterpartAvatar: '',
     skillTagName: 'Python', durationMinutes: 60, skillShelfId: 1, remark: '',
-    createTime: '2026-07-01 10:00:00',
+    createTime: daysAgo(2),
   },
 ];
 
@@ -233,6 +277,22 @@ function getMockData<T>(options: RequestOptions): T {
   // ── 技能分类 ──
   if (url.includes('/skills/categories')) {
     return MOCK_CATEGORIES as unknown as T;
+  }
+
+  // ── 更新货架 PUT /v1/shelves/:id ──
+  if (method === 'PUT' && url.match(/\/shelves\/\d+$/)) {
+    const id = Number(url.match(/\/shelves\/(\d+)$/)?.[1]);
+    const params = (data || {}) as Record<string, unknown>;
+    const shelf = mockShelfStore.find((s) => s.id === id);
+    if (!shelf) throw { code: 404, msg: '货架不存在' };
+    if (params.skillTagId !== undefined) {
+      const { tag, categoryName } = findTag(Number(params.skillTagId));
+      (params as Record<string, unknown>).tagName = tag.name;
+      (params as Record<string, unknown>).categoryName = categoryName;
+    }
+    Object.assign(shelf, params);
+    console.log('[Mock] 货架已更新:', id);
+    return shelf as unknown as T;
   }
 
   // ── 发布货架 POST /v1/shelves ──
@@ -347,6 +407,50 @@ function getMockData<T>(options: RequestOptions): T {
     return (mockDemandStore.find((d) => d.id === id) || mockDemandStore[0]) as unknown as T;
   }
 
+  // ── 我的需求 GET /v1/demands/mine ──
+  if (isGet && url.includes('/demands/mine')) {
+    const params = (data || {}) as Record<string, unknown>;
+    const list = mockDemandStore.filter((d) => d.userId === MOCK_ME.id);
+    const pageNum = Number(params.pageNum) || 1;
+    const pageSize = Number(params.pageSize) || 10;
+    const start = (pageNum - 1) * pageSize;
+    return { list: list.slice(start, start + pageSize), total: list.length, pageNum, pageSize } as unknown as T;
+  }
+
+  // ── 接单（揭榜）POST /v1/demands/:id/bid ──
+  if (isPost && url.match(/\/demands\/\d+\/bid$/)) {
+    const id = Number(url.match(/\/demands\/(\d+)\/bid$/)?.[1]);
+    const demand = mockDemandStore.find((d) => d.id === id);
+    if (!demand || demand.status !== 1) throw { code: 400, msg: '该需求不可接单' };
+    demand.status = 2; demand.statusDesc = '已接单';
+    // 同时创建关联订单
+    const orderId = nextId();
+    const orderNo = 'DB' + Date.now();
+    const buyerCode = 'B' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    const sellerCode = 'S' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    mockOrderStore.unshift({
+      id: orderId, orderNo, title: demand.title,
+      pointAmount: demand.pointReward, status: 3, statusDesc: '服务中',
+      buyerId: demand.userId, buyerNickname: demand.nickname, buyerAvatar: '',
+      sellerId: MOCK_ME.id, sellerNickname: MOCK_ME.nickname, sellerAvatar: '',
+      counterpartNickname: demand.nickname, counterpartAvatar: '',
+      skillTagName: demand.skillTagName || demand.tagName, demandId: id,
+      buyerCode, sellerCode, remark: '来自求助看板',
+      createTime: nowStr(),
+    });
+    console.log('[Mock] 已接单 + 订单已创建:', orderNo, 'id=', orderId);
+    return {} as unknown as T;
+  }
+
+  // ── 取消需求 POST /v1/demands/:id/cancel ──
+  if (isPost && url.match(/\/demands\/\d+\/cancel$/)) {
+    const id = Number(url.match(/\/demands\/(\d+)\/cancel$/)?.[1]);
+    const demand = mockDemandStore.find((d) => d.id === id);
+    if (demand) { demand.status = 0; demand.statusDesc = '已取消'; }
+    console.log('[Mock] 需求已取消:', id);
+    return {} as unknown as T;
+  }
+
   // ── 从货架创建订单 POST /v1/order/from-shelf ──
   if (isPost && url.includes('/order/from-shelf')) {
     const params = (data || {}) as Record<string, unknown>;
@@ -361,7 +465,7 @@ function getMockData<T>(options: RequestOptions): T {
     const sellerCode = 'S' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
     mockOrderStore.unshift({
       id: orderId, orderNo, title: shelf.title,
-      pointAmount: shelf.pointPrice, status: 1, statusDesc: '待支付',
+      pointAmount: shelf.pointPrice, status: 3, statusDesc: '服务中',
       buyerId: MOCK_ME.id, buyerNickname: MOCK_ME.nickname, buyerAvatar: '',
       sellerId: shelf.userId, sellerNickname: shelf.nickname, sellerAvatar: '',
       counterpartNickname: shelf.nickname, counterpartAvatar: '',

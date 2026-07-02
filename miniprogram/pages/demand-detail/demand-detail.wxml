@@ -115,11 +115,23 @@
   <!-- 底部接单栏 -->
   <view class="bottom-bar" wx:if="{{!loading}}">
     <t-button
+      wx:if="{{demand.status === 1 && !expired}}"
       theme="primary"
       block
-      disabled="{{expired}}"
       loading="{{accepting}}"
       bindtap="onAccept"
-    >{{expired ? '已过期' : '接单帮助'}}</t-button>
+    >接单帮助</t-button>
+    <t-button
+      wx:elif="{{demand.status > 1}}"
+      theme="default"
+      block
+      disabled
+    >已接单</t-button>
+    <t-button
+      wx:else
+      theme="default"
+      block
+      disabled
+    >已过期</t-button>
   </view>
 </view>

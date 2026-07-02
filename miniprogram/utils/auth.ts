@@ -11,6 +11,27 @@ import type { UserProfile } from '../types/user';
  * 调用 wx.login 获取临时 code，发给后端换 JWT Token
  */
 export async function silentLogin(): Promise<UserProfile> {
+  // Mock 模式：跳过微信登录，直接生成 token
+  if (getApp()?.globalData?.mockMode ?? false) {
+    const mockUser: UserProfile = {
+      id: 1001, nickname: '张三', avatar: '',
+      trustLevel: '靠谱', trustScore: 3.5,
+      campus: '清水河校区', building: '七号楼',
+      username: '', phone: '', email: '',
+      bio: '', campusAuthStatus: 0,
+      pointBalance: 500, createTime: '',
+    } as UserProfile;
+    wx.setStorageSync('access_token', 'mock_token_xxx');
+    wx.setStorageSync('refresh_token', 'mock_refresh_token_xxx');
+    wx.setStorageSync('user_info', mockUser);
+    const app = getApp();
+    app.globalData.token = 'mock_token_xxx';
+    app.globalData.userInfo = mockUser;
+    app.globalData.isLoggedIn = true;
+    console.log('[Auth] Mock 登录成功:', mockUser.nickname);
+    return mockUser;
+  }
+
   try {
     // 1. 调用微信登录，获取临时 code
     const loginRes = await wxLogin();

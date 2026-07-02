@@ -39,9 +39,9 @@ Page({
           url: '/subpackages/user/shelf-manage/shelf-manage',
         },
         {
-          title: '积分中心',
-          icon: 'wallet',
-          url: '/subpackages/user/point-detail/point-detail',
+          title: '我的求助',
+          icon: 'help-circle',
+          url: '/subpackages/user/demand-manage/demand-manage',
         },
         {
           title: '信用评价',
@@ -59,9 +59,9 @@ Page({
           url: '/subpackages/user/profile-edit/profile-edit',
         },
         {
-          title: '关于搭把手',
-          icon: 'info-circle',
-          url: '/subpackages/user/about/about',
+          title: '积分中心',
+          icon: 'wallet',
+          url: '/subpackages/user/point-detail/point-detail',
         },
         {
           title: '设置',
