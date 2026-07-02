@@ -35,7 +35,7 @@ function request<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> 
   }
 
   return new Promise((resolve, reject) => {
-    const token = wx.getStorageSync('access_token');
+    const token = wx.getStorageSync('dabashou_token');
     if (options.showLoading) {
       wx.showLoading({ title: options.loadingText || '加载中...', mask: true });
     }
@@ -112,7 +112,7 @@ async function refreshTokenAndRetry<T>(options: RequestOptions): Promise<ApiResp
 
 function rawRequest<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> {
   return new Promise((resolve, reject) => {
-    const token = wx.getStorageSync('access_token');
+    const token = wx.getStorageSync('dabashou_token');
     wx.request({
       url: `${BASE_URL}${options.url}`,
       method: options.method || 'POST',
@@ -257,8 +257,8 @@ const mockDemandStore: Record<string, unknown>[] = [
 
 const mockOrderStore: Record<string, unknown>[] = [
   {
-    id: 1, orderNo: 'DB202607010001', title: 'Python 编程辅导',
-    pointAmount: 50, status: 3, statusDesc: '服务中',
+    id: 1, orderNo: 'DB202607010001', shelfTitle: 'Python 编程辅导',
+    pointAmount: 50, status: 3, statusName: '服务中',
     buyerId: 1003, buyerNickname: '李四', buyerAvatar: '',
     sellerId: 1001, sellerNickname: '张三', sellerAvatar: '',
     counterpartNickname: '张三', counterpartAvatar: '',
@@ -652,8 +652,12 @@ function getMockData<T>(options: RequestOptions): T {
   // ── 登录 ──
   if (url.includes('/auth')) {
     return {
-      access_token: 'mock_token_xxx', refresh_token: 'mock_refresh_token_xxx',
-      user: { id: MOCK_ME.id, nickname: MOCK_ME.nickname, avatar: '' },
+      accessToken: 'mock_jwt_header.payload_stub.signature',
+      refreshToken: 'mock_refresh_jwt_header.payload_stub.signature',
+      expiresIn: 86400,
+      userId: MOCK_ME.id,
+      nickname: MOCK_ME.nickname,
+      avatar: '',
     } as unknown as T;
   }
 
@@ -690,4 +694,4 @@ export const api = {
   delete<T = unknown>(url: string, data?: Record<string, unknown>) { return request<T>({ url, method: 'DELETE', data }); },
 };
 
-export { request, BASE_URL };
+export { request, rawRequest, BASE_URL };

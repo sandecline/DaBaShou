@@ -82,6 +82,7 @@ Page({
       const deadlineCountdown = expired ? 0 : Math.max(0, deadline - now);
 
       // 预计算 WXML 派生值，避免嵌套三元
+      const statusTheme = demand.status === 1 ? 'warning' : demand.status === 2 ? 'primary' : demand.status === 3 ? 'success' : 'default';
       const statusLabel = STATUS_LABEL_MAP[demand.status] || '未知';
       const trust = getTrustLevel(demand.trustScore || 0);
       const trustTheme = trust.level === '金牌' ? 'success' : trust.level === '靠谱' ? 'primary' : 'default';
@@ -150,7 +151,7 @@ Page({
     const { demand } = this.data;
     if (!demand) return;
     wx.navigateTo({
-      url: `/pages/chat/chat?targetUserId=${demand.userId}&targetNickname=${encodeURIComponent(demand.nickname)}`,
+      url: `/pages/chat/chat?targetUserId=${demand.userId}&targetNickname=${encodeURIComponent(demand.nickname || '')}`,
     });
   },
 });

@@ -187,6 +187,7 @@ Page({
         msgType: 1,
         content: inputValue.trim(),
         isMine: true,
+        isRead: 0,
         senderAvatar: this.data.myAvatar,
         createTime: new Date().toISOString(),
       };
@@ -245,6 +246,7 @@ Page({
         msgType: 2,
         content: imageUrl,
         isMine: true,
+        isRead: 0,
         senderAvatar: this.data.myAvatar,
         createTime: new Date().toISOString(),
       };

@@ -34,15 +34,13 @@ Page({
   async loadSessions() {
     try {
       const res = await messageService.getSessions();
-      // 后端可能返回数组,也可能返回 { list, total } 等分页结构;统一兜底为数组
-      const sessions = Array.isArray(res.data)
-        ? res.data
-        : Array.isArray((res.data as { list?: ChatSession[] })?.list)
-          ? (res.data as { list: ChatSession[] }).list
-          : [];
-      this.setData({ sessions, loading: false });
+      // 后端返回 PageResult<ChatSession>（分页结构），取 list 数组
+      const list: ChatSession[] = Array.isArray(res.data)
+        ? res.data as ChatSession[]
+        : (res.data as { list?: ChatSession[] })?.list || [];
+      this.setData({ sessions: list, loading: false });
       // 更新全局未读数
-      const total = sessions.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
+      const total = list.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
       getApp().globalData.unreadCount = total;
     } catch (err) {
       console.error('加载会话列表失败:', err);
@@ -63,11 +61,9 @@ Page({
       success: (res) => {
         if (res.confirm) {
           // 后端无删除会话接口，仅从本地列表移除
-          const sessions = this.data.sessions.filter((s: { id: number }) => s.id !== sessionId);
+          const sessions = this.data.sessions.filter((s) => s.id !== sessionId);
           this.setData({ sessions });
           wx.showToast({ title: '已删除', icon: 'success' });
-        }
-      },
         }
       },
     });

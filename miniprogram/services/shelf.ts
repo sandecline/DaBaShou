@@ -5,7 +5,7 @@
  */
 
 import { api } from '../utils/request';
-import type { ApiResponse, PageResult } from '../types/api-response';
+import type { PageResult } from '../types/api-response';
 import type { SkillShelf, ShelfDetail, ShelfSearchParams, SkillShelfForm, TimeSlot } from '../types/shelf';
 
 export const shelfService = {

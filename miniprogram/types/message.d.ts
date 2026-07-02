@@ -44,6 +44,8 @@ export interface ChatMessage {
   createTime: string;
   /** 前端标记：是否为当前用户发送 */
   isMine?: boolean;
+  /** 前端本地字段：所属会话ID（后端 VO 不包含此字段） */
+  sessionId?: number;
 }
 
 /** 系统通知（与前端 Notification/NotificationVo 一致） */

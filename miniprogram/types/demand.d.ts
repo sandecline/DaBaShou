@@ -20,6 +20,8 @@ export interface Demand {
   deadline: string | null;
   /** 需求类型 */
   demandType: DemandType;
+  /** 需求状态 */
+  status: DemandStatus;
   /** 服务方式 */
   locationType: import('./skill').LocationType;
   /** 是否急单（12h 内截止） */
@@ -28,6 +30,10 @@ export interface Demand {
   statusDesc?: string;
   /** 需求类型描述 */
   demandTypeDesc?: string;
+  /** 用户昵称 */
+  nickname?: string;
+  /** 用户信任分 */
+  trustScore?: number;
   /** 关联信息 */
   userInfo?: import('./user').UserBrief;
   /** 用户名称（前端兼容字段） */
