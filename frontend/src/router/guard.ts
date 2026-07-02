@@ -1,5 +1,5 @@
 import type { Router } from 'vue-router'
-import { isLoggedIn } from '@/utils/auth'
+import { hasRole, isLoggedIn } from '@/utils/auth'
 import { ElMessage } from 'element-plus'
 
 const whiteList = ['/login', '/register', '/']
@@ -19,6 +19,12 @@ export function setupRouterGuard(router: Router) {
     if (requiresAuth && !isLoggedIn()) {
       ElMessage.warning('请先登录')
       next({ name: 'Login', query: { redirect: to.fullPath } })
+      return
+    }
+
+    if (to.meta.role === 'admin' && !hasRole('ADMIN')) {
+      ElMessage.warning('无权访问管理后台')
+      next({ name: 'Home' })
       return
     }
 

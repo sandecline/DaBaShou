@@ -66,8 +66,8 @@ async function fetchData() {
   try {
     const fetchFn = activeTab.value === 'my' ? getMyOrders : getMyTakenOrders
     const result = await fetchFn({
-      page: page.value,
-      size: size.value,
+      pageNum: page.value,
+      pageSize: size.value,
       status: statusFilter.value >= 0 ? statusFilter.value : undefined,
     })
     list.value = result.list

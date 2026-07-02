@@ -67,10 +67,9 @@ public class PointServiceImpl implements PointService {
         freeze.setFreezeTime(LocalDateTime.now());
         pointFreezeMapper.insert(freeze);
 
-        // 3. 查询账户获取 balance_after
+        // 3. 查询账户获取 balance_after（只记录可用余额）
         PointAccount account = queryAccount(userId);
-        int balanceAfter = (account.getAvailable() != null ? account.getAvailable() : 0)
-                + (account.getFrozen() != null ? account.getFrozen() : 0);
+        int balanceAfter = account.getAvailable() != null ? account.getAvailable() : 0;
 
         // 4. 插入流水
         PointTransaction trans = new PointTransaction();
@@ -112,10 +111,9 @@ public class PointServiceImpl implements PointService {
         String updateAccountSql = "UPDATE dbs_point_account SET available = available + ?, frozen = frozen - ?, update_time = NOW() WHERE user_id = ?";
         jdbcTemplate.update(updateAccountSql, freeze.getAmount(), freeze.getAmount(), freeze.getUserId());
 
-        // 4. 查询账户获取 balance_after
+        // 4. 查询账户获取 balance_after（只记录可用余额）
         PointAccount account = queryAccount(freeze.getUserId());
-        int balanceAfter = (account.getAvailable() != null ? account.getAvailable() : 0)
-                + (account.getFrozen() != null ? account.getFrozen() : 0);
+        int balanceAfter = account.getAvailable() != null ? account.getAvailable() : 0;
 
         // 5. 插入流水
         PointTransaction trans = new PointTransaction();
@@ -185,10 +183,9 @@ public class PointServiceImpl implements PointService {
             pointAccountMapper.insert(sellerAccount);
         }
 
-        // 重新查询卖家账户获取 balance_after
+        // 重新查询卖家账户获取 balance_after（只记录可用余额）
         sellerAccount = queryAccount(sellerId);
-        int balanceAfter = (sellerAccount.getAvailable() != null ? sellerAccount.getAvailable() : 0)
-                + (sellerAccount.getFrozen() != null ? sellerAccount.getFrozen() : 0);
+        int balanceAfter = sellerAccount.getAvailable() != null ? sellerAccount.getAvailable() : 0;
 
         // 6. 插入卖家收入流水
         PointTransaction trans = new PointTransaction();
@@ -201,7 +198,21 @@ public class PointServiceImpl implements PointService {
         trans.setCreateTime(LocalDateTime.now());
         pointTransactionMapper.insert(trans);
 
-        // 7. 更新担保池：已结算
+        // 7. 查询买家账户获取 balance_after，插入买家支出流水
+        PointAccount buyerAccount = queryAccount(buyerId);
+        int buyerBalanceAfter = buyerAccount.getAvailable() != null ? buyerAccount.getAvailable() : 0;
+
+        PointTransaction buyerTrans = new PointTransaction();
+        buyerTrans.setUserId(buyerId);
+        buyerTrans.setOrderId(orderId);
+        buyerTrans.setType(PointTransType.EXPENSE.getCode());
+        buyerTrans.setAmount(pointAmount);
+        buyerTrans.setBalanceAfter(buyerBalanceAfter);
+        buyerTrans.setDescription("订单完成，积分支出");
+        buyerTrans.setCreateTime(LocalDateTime.now());
+        pointTransactionMapper.insert(buyerTrans);
+
+        // 8. 更新担保池：已结算
         String updatePoolSql = "UPDATE dbs_guarantee_pool SET status = 2, settle_time = NOW() WHERE order_id = ?";
         jdbcTemplate.update(updatePoolSql, orderId);
 
@@ -211,8 +222,41 @@ public class PointServiceImpl implements PointService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void refund(Long orderId) {
-        // 退款与解冻逻辑完全一致
-        unfreeze(orderId);
+        // 1. 更新冻结状态为已退款
+        String updateFreezeSql = "UPDATE dbs_point_freeze SET status = 4, release_time = NOW() WHERE order_id = ? AND status = 1";
+        jdbcTemplate.update(updateFreezeSql, orderId);
+
+        // 2. 查询冻结记录
+        PointFreeze freeze = pointFreezeMapper.selectOne(
+                new LambdaQueryWrapper<PointFreeze>().eq(PointFreeze::getOrderId, orderId));
+        if (freeze == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "冻结记录不存在");
+        }
+
+        // 3. 更新账户：解冻
+        String updateAccountSql = "UPDATE dbs_point_account SET available = available + ?, frozen = frozen - ?, update_time = NOW() WHERE user_id = ?";
+        jdbcTemplate.update(updateAccountSql, freeze.getAmount(), freeze.getAmount(), freeze.getUserId());
+
+        // 4. 查询账户获取 balance_after（只记录可用余额）
+        PointAccount account = queryAccount(freeze.getUserId());
+        int balanceAfter = account.getAvailable() != null ? account.getAvailable() : 0;
+
+        // 5. 插入退款流水
+        PointTransaction trans = new PointTransaction();
+        trans.setUserId(freeze.getUserId());
+        trans.setOrderId(orderId);
+        trans.setType(PointTransType.REFUND.getCode());
+        trans.setAmount(freeze.getAmount());
+        trans.setBalanceAfter(balanceAfter);
+        trans.setDescription("订单退款，积分返还");
+        trans.setCreateTime(LocalDateTime.now());
+        pointTransactionMapper.insert(trans);
+
+        // 6. 更新担保池：已退还
+        String updatePoolSql = "UPDATE dbs_guarantee_pool SET status = 3 WHERE order_id = ?";
+        jdbcTemplate.update(updatePoolSql, orderId);
+
+        log.info("退款成功: orderId={}, userId={}, amount={}", orderId, freeze.getUserId(), freeze.getAmount());
     }
 
     @Override

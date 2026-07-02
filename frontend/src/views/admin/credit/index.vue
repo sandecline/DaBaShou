@@ -95,7 +95,7 @@ const aLoading = ref(false)
 async function loadViolations() {
   vLoading.value = true
   try {
-    const result = await getAdminViolations({ page: 1, size: 50 })
+    const result = await getAdminViolations({ pageNum: 1, pageSize: 50 })
     violations.value = result.list
   } catch { /* handled */ } finally { vLoading.value = false }
 }
@@ -103,7 +103,7 @@ async function loadViolations() {
 async function loadAppeals() {
   aLoading.value = true
   try {
-    const result = await getAdminAppeals({ page: 1, size: 50 })
+    const result = await getAdminAppeals({ pageNum: 1, pageSize: 50 })
     appeals.value = result.list
   } catch { /* handled */ } finally { aLoading.value = false }
 }

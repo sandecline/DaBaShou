@@ -39,6 +39,11 @@ public interface UserService {
     UserProfileVo getProfile(Long userId);
 
     /**
+     * 获取公开脱敏用户资料
+     */
+    PublicUserVo getPublicUser(Long userId);
+
+    /**
      * 更新个人信息
      */
     void updateProfile(Long userId, UpdateProfileDto dto);

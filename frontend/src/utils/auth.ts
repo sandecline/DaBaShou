@@ -18,6 +18,10 @@ function parseJwtPayload(token: string): Record<string, any> | null {
   }
 }
 
+export function getTokenPayload(token: string | null = getToken()): Record<string, any> | null {
+  return token ? parseJwtPayload(token) : null
+}
+
 export function isTokenExpired(token: string | null): boolean {
   if (!token) return true
   const payload = parseJwtPayload(token)
@@ -45,6 +49,12 @@ export function removeToken(): void {
 
 export function isLoggedIn(): boolean {
   return !!getToken()
+}
+
+export function hasRole(role: string): boolean {
+  const payload = getTokenPayload()
+  const roles = Array.isArray(payload?.roles) ? payload.roles : []
+  return roles.map(String).map(item => item.toUpperCase()).includes(role.toUpperCase())
 }
 
 export function getUserInfo(): Record<string, any> | null {

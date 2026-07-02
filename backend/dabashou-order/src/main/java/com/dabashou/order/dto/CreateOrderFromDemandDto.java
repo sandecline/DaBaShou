@@ -10,7 +10,6 @@ public class CreateOrderFromDemandDto {
 
     @NotNull(message = "需求ID不能为空")
     private Long demandId;
-    @NotNull(message = "货架ID不能为空")
     private Long shelfId;
     private String remark;
     @NotBlank(message = "幂等Token不能为空")

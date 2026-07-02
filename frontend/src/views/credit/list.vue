@@ -71,8 +71,8 @@ async function fetchData() {
   loading.value = true
   try {
     const result = await getMySentReviews({
-      page: page.value,
-      size: size.value,
+      pageNum: page.value,
+      pageSize: size.value,
       type: activeTab.value,
     })
     reviews.value = result.list

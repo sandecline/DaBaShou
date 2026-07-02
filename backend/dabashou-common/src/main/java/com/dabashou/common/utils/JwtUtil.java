@@ -25,33 +25,43 @@ public final class JwtUtil {
      * @param secret       密钥(≥32字节)
      * @param expirationMs 过期时间(毫秒)
      */
-    public static String generateToken(Long userId, List<String> roles, String secret, long expirationMs) {
+    public static String generateToken(Long userId, List<String> roles, Integer tokenVersion, String secret, long expirationMs) {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("userId", userId)
                 .claim("roles", roles)
+                .claim("tokenVersion", tokenVersion == null ? 0 : tokenVersion)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expirationMs))
                 .signWith(key)
                 .compact();
     }
 
+    public static String generateToken(Long userId, List<String> roles, String secret, long expirationMs) {
+        return generateToken(userId, roles, 0, secret, expirationMs);
+    }
+
     /**
      * 生成刷新token(不含roles，过期时间更长)
      */
-    public static String generateRefreshToken(Long userId, String secret, long refreshExpirationMs) {
+    public static String generateRefreshToken(Long userId, Integer tokenVersion, String secret, long refreshExpirationMs) {
         SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         Date now = new Date();
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("userId", userId)
                 .claim("refresh", true)
+                .claim("tokenVersion", tokenVersion == null ? 0 : tokenVersion)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + refreshExpirationMs))
                 .signWith(key)
                 .compact();
+    }
+
+    public static String generateRefreshToken(Long userId, String secret, long refreshExpirationMs) {
+        return generateRefreshToken(userId, 0, secret, refreshExpirationMs);
     }
 
     /**
@@ -83,6 +93,11 @@ public final class JwtUtil {
             return list.stream().map(String::valueOf).toList();
         }
         return List.of();
+    }
+
+    public static Integer getTokenVersion(Claims claims) {
+        Integer version = claims.get("tokenVersion", Integer.class);
+        return version == null ? 0 : version;
     }
 
     /**

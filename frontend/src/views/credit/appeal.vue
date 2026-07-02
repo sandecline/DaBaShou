@@ -136,7 +136,7 @@ async function handleSubmit() {
 
 async function loadViolations() {
   try {
-    const result = await getMyViolations({ page: 1, size: 50 })
+    const result = await getMyViolations({ pageNum: 1, pageSize: 50 })
     violations.value = result.list.filter((v) => v.status === 0)
   } catch {
     // handled
@@ -146,7 +146,7 @@ async function loadViolations() {
 async function loadAppeals() {
   appealLoading.value = true
   try {
-    const result = await getMyAppeals({ page: 1, size: 50 })
+    const result = await getMyAppeals({ pageNum: 1, pageSize: 50 })
     appeals.value = result.list
   } catch {
     // handled

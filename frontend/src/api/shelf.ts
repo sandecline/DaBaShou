@@ -35,7 +35,7 @@ export function getShelfDetail(id: number): Promise<ShelfDetailVo> {
 export function searchShelves(params: {
   keyword?: string; categoryId?: number; skillTagId?: number;
   locationType?: number; sortBy?: string; longitude?: number;
-  latitude?: number; pageNum?: number; pageSize?: number; page?: number; size?: number; sort?: string
+  latitude?: number; pageNum?: number; pageSize?: number
 }): Promise<PageResult<ShelfItemVo>> {
   return request.get('/v1/shelves', normalizePageParams(params))
 }
@@ -47,7 +47,7 @@ export function getMyShelves(params?: PageParams): Promise<PageResult<ShelfItemV
 }
 
 export function getUserShelves(userId: number, params?: PageParams): Promise<PageResult<ShelfItemVo>> {
-  return request.get('/v1/users/' + userId + '/shelves', normalizePageParams(params))
+  return request.get('/v1/shelves/users/' + userId + '/shelves', normalizePageParams(params))
 }
 
 export function setTimeSlots(shelfId: number, slots: { date?: string; dayOfWeek: number; startTime: string; endTime: string }[]): Promise<null> {

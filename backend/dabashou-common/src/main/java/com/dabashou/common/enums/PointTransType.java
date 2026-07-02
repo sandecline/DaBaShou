@@ -10,7 +10,8 @@ public enum PointTransType {
     FREEZE(3, "冻结"),
     UNFREEZE(4, "解冻"),
     SYSTEM_REWARD(5, "系统奖励"),
-    SYSTEM_DEDUCT(6, "系统扣除");
+    SYSTEM_DEDUCT(6, "系统扣除"),
+    REFUND(7, "退款");
 
     private final int code;
     private final String desc;

@@ -98,7 +98,7 @@ async function loadMessages() {
 
   loading.value = true
   try {
-    const result = await getChatMessages(targetUserId.value, { page: 1, size: 50 })
+    const result = await getChatMessages(targetUserId.value, { pageNum: 1, pageSize: 50 })
     messages.value = result.list.map((msg) => ({
       ...msg,
       isMine: msg.senderId === userStore.user?.id,

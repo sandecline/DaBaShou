@@ -1,7 +1,6 @@
 package com.dabashou.user.controller;
 
 import com.dabashou.common.core.AjaxResult;
-import com.dabashou.common.exception.BusinessException;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.user.dto.CampusAuthDto;
 import com.dabashou.user.dto.ChangePasswordDto;
@@ -33,12 +32,8 @@ public class UserController {
     @GetMapping("/profile")
     public AjaxResult<UserProfileVo> getProfile() {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            UserProfileVo vo = userService.getProfile(userId);
-            return AjaxResult.ok(vo);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        UserProfileVo vo = userService.getProfile(userId);
+        return AjaxResult.ok(vo);
     }
 
     /**
@@ -47,12 +42,8 @@ public class UserController {
     @PutMapping("/profile")
     public AjaxResult<Void> updateProfile(@Valid @RequestBody UpdateProfileDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            userService.updateProfile(userId, dto);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        userService.updateProfile(userId, dto);
+        return AjaxResult.ok();
     }
 
     /**
@@ -61,12 +52,8 @@ public class UserController {
     @PutMapping("/password")
     public AjaxResult<Void> changePassword(@Valid @RequestBody ChangePasswordDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            userService.changePassword(userId, dto);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        userService.changePassword(userId, dto);
+        return AjaxResult.ok();
     }
 
     /**
@@ -75,12 +62,8 @@ public class UserController {
     @PutMapping("/location")
     public AjaxResult<Void> updateLocation(@Valid @RequestBody UpdateLocationDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            userService.updateLocation(userId, dto);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        userService.updateLocation(userId, dto);
+        return AjaxResult.ok();
     }
 
     /**
@@ -89,12 +72,8 @@ public class UserController {
     @PostMapping("/campus-auth")
     public AjaxResult<Void> submitCampusAuth(@Valid @RequestBody CampusAuthDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            userService.submitCampusAuth(userId, dto);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        userService.submitCampusAuth(userId, dto);
+        return AjaxResult.ok();
     }
 
     /**
@@ -103,12 +82,8 @@ public class UserController {
     @GetMapping("/campus-auth")
     public AjaxResult<CampusAuthVo> getCampusAuth() {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            CampusAuthVo vo = userService.getCampusAuth(userId);
-            return AjaxResult.ok(vo);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        CampusAuthVo vo = userService.getCampusAuth(userId);
+        return AjaxResult.ok(vo);
     }
 
     /**
@@ -117,11 +92,7 @@ public class UserController {
     @GetMapping("/trust-score")
     public AjaxResult<TrustScoreVo> getTrustScore() {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            TrustScoreVo vo = userService.getTrustScore(userId);
-            return AjaxResult.ok(vo);
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        TrustScoreVo vo = userService.getTrustScore(userId);
+        return AjaxResult.ok(vo);
     }
 }

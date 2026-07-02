@@ -2,7 +2,6 @@ package com.dabashou.shelf.controller;
 
 import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
-import com.dabashou.common.exception.BusinessException;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.shelf.dto.SkillShelfDto;
 import com.dabashou.shelf.dto.TimeSlotDto;
@@ -48,12 +47,8 @@ public class ShelfController {
     public AjaxResult<Void> update(@PathVariable Long id,
                                     @Valid @RequestBody UpdateShelfDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            shelfService.update(userId, id, dto);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        shelfService.update(userId, id, dto);
+        return AjaxResult.ok();
     }
 
     /**
@@ -62,12 +57,8 @@ public class ShelfController {
     @PutMapping("/{id}/on")
     public AjaxResult<Void> on(@PathVariable Long id) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            shelfService.on(userId, id);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        shelfService.on(userId, id);
+        return AjaxResult.ok();
     }
 
     /**
@@ -76,12 +67,8 @@ public class ShelfController {
     @PutMapping("/{id}/off")
     public AjaxResult<Void> off(@PathVariable Long id) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            shelfService.off(userId, id);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        shelfService.off(userId, id);
+        return AjaxResult.ok();
     }
 
     /**
@@ -90,12 +77,8 @@ public class ShelfController {
     @DeleteMapping("/{id}")
     public AjaxResult<Void> delete(@PathVariable Long id) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            shelfService.delete(userId, id);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        shelfService.delete(userId, id);
+        return AjaxResult.ok();
     }
 
     /**
@@ -157,12 +140,8 @@ public class ShelfController {
     public AjaxResult<Void> addTimeSlots(@PathVariable Long id,
                                           @Valid @RequestBody List<TimeSlotDto> slots) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            shelfService.addTimeSlots(userId, id, slots);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        shelfService.addTimeSlots(userId, id, slots);
+        return AjaxResult.ok();
     }
 
     /**
@@ -181,11 +160,7 @@ public class ShelfController {
     public AjaxResult<Void> deleteTimeSlot(@PathVariable Long shelfId,
                                             @PathVariable Long slotId) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        try {
-            shelfService.deleteTimeSlot(userId, shelfId, slotId);
-            return AjaxResult.ok();
-        } catch (BusinessException e) {
-            return AjaxResult.fail(e.getCode(), e.getMessage());
-        }
+        shelfService.deleteTimeSlot(userId, shelfId, slotId);
+        return AjaxResult.ok();
     }
 }

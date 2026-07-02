@@ -9,14 +9,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * JWT认证过滤器
@@ -36,6 +40,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Value("${dabashou.jwt.prefix:Bearer }")
     private String prefix;
 
+    private final JdbcTemplate jdbcTemplate;
+
+    public JwtAuthFilter(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
@@ -46,8 +56,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 Claims claims = JwtUtil.parseToken(token, jwtSecret);
                 Long userId = JwtUtil.getUserId(claims);
                 List<String> roles = JwtUtil.getRoles(claims);
+                Integer tokenVersion = JwtUtil.getTokenVersion(claims);
 
-                if (userId != null) {
+                if (userId != null && isTokenActive(userId, tokenVersion)) {
                     List<SimpleGrantedAuthority> authorities = roles.stream()
                             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                             .toList();
@@ -64,5 +75,33 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isTokenActive(Long userId, Integer tokenVersion) {
+        try {
+            Map<String, Object> user = jdbcTemplate.queryForMap("SELECT status FROM dbs_user WHERE id = ?", userId);
+            Object statusValue = user.get("status");
+            int status = statusValue instanceof Number n ? n.intValue() : Integer.parseInt(String.valueOf(statusValue));
+            int currentVersion = loadTokenVersion(userId);
+            return status == 1 && currentVersion == (tokenVersion == null ? 0 : tokenVersion);
+        } catch (EmptyResultDataAccessException e) {
+            return false;
+        } catch (Exception e) {
+            log.warn("JWT用户状态校验异常: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private int loadTokenVersion(Long userId) {
+        try {
+            Integer version = jdbcTemplate.queryForObject(
+                    "SELECT COALESCE(token_version, 0) FROM dbs_user WHERE id = ?",
+                    Integer.class,
+                    userId);
+            return version == null ? 0 : version;
+        } catch (DataAccessException e) {
+            log.warn("token_version字段不可用，按兼容模式校验Token: {}", e.getMessage());
+            return 0;
+        }
     }
 }

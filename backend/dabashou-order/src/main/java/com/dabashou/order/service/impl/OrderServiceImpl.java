@@ -110,8 +110,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         if (userId.equals(buyerId)) {
             throw new BusinessException(ErrorCode.CONFLICT, "不能接自己的需求");
         }
+        Long shelfId = normalizeOptionalId(dto.getShelfId());
         claimDemand(dto.getDemandId());
-        Map<String, Object> shelf = queryShelfInfo(dto.getShelfId());
+        Map<String, Object> shelf = queryShelfInfo(shelfId);
         Long tagId;
         String title;
         if (shelf != null) {
@@ -134,7 +135,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setBuyerId(buyerId);
         order.setSellerId(userId);
         order.setDemandId(dto.getDemandId());
-        order.setSkillShelfId(dto.getShelfId());
+        order.setSkillShelfId(shelfId);
         order.setSkillTagId(tagId);
         order.setTitle(title);
         order.setPointAmount(pointAmount);
@@ -191,6 +192,23 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                 || Objects.equals(order.getStatus(), OrderStatus.IN_SERVICE.getCode())) {
             pointService.unfreeze(orderId);
         }
+
+        // 恢复货架状态为上架
+        if (order.getSkillShelfId() != null) {
+            jdbcTemplate.update(
+                    "UPDATE dbs_skill_shelf SET status = 1, update_time = NOW() WHERE id = ?",
+                    order.getSkillShelfId());
+            log.info("订单取消，恢复货架状态: shelfId={}", order.getSkillShelfId());
+        }
+
+        // 恢复需求状态为开放
+        if (order.getDemandId() != null) {
+            jdbcTemplate.update(
+                    "UPDATE dbs_demand SET status = 1, update_time = NOW() WHERE id = ?",
+                    order.getDemandId());
+            log.info("订单取消，恢复需求状态: demandId={}", order.getDemandId());
+        }
+
         order.setStatus(OrderStatus.CANCELLED.getCode());
         order.setCancelReason(dto.getReason());
         order.setCancelTime(LocalDateTime.now());
@@ -479,6 +497,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    private Long normalizeOptionalId(Long id) {
+        return id == null || id <= 0 ? null : id;
     }
 
     private void claimDemand(Long demandId) {

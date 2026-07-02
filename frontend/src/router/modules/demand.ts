@@ -8,6 +8,12 @@ const demandRoutes: RouteRecordRaw[] = [
     meta: { title: '求助看板', icon: 'Collection' },
   },
   {
+    path: '/demand/mine',
+    name: 'MyDemands',
+    component: () => import('@/views/demand/mine.vue'),
+    meta: { title: '我的求助', requiresAuth: true },
+  },
+  {
     path: '/demand/publish',
     name: 'DemandPublish',
     component: () => import('@/views/demand/publish.vue'),

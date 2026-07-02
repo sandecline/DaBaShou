@@ -1,5 +1,3 @@
-// ========== 全局样式 — 闲鱼风格 ==========
-
 *,
 *::before,
 *::after {
@@ -16,35 +14,41 @@ html {
 }
 
 body {
-  font-family: $font-family;
-  color: $color-text-primary;
-  background-color: $color-bg;
-  line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+  color: $color-text-primary;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(35, 100, 232, 0.08), transparent 28rem),
+    linear-gradient(180deg, #fbfcff 0%, $color-bg 360px);
+  font-family: $font-family;
+  line-height: 1.55;
 }
 
 a {
-  color: $color-accent;
+  color: $color-primary;
   text-decoration: none;
+  transition: color 0.16s ease;
+
   &:hover {
     color: $color-primary-dark;
-  }
-  &:active {
-    opacity: 0.8;
   }
 }
 
 img {
+  display: block;
   max-width: 100%;
   height: auto;
-  display: block;
 }
 
-// 滚动条美化
+button,
+input,
+textarea {
+  font: inherit;
+}
+
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -52,53 +56,48 @@ img {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #DDDDDD;
-  border-radius: 2px;
-  &:hover {
-    background: #CCCCCC;
-  }
+  background: #cbd5e1;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
 }
 
-// 通用页面容器
 .page-container {
-  max-width: $max-width;
+  width: min(100% - 32px, $max-width);
   margin: 0 auto;
-  padding: $spacing-md;
+  padding: $spacing-lg 0;
 }
 
-// 卡片网格（瀑布流风格）
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: $spacing-sm;
+  gap: $spacing-md;
 }
 
-// 卡片悬停效果 — 闲鱼风格微动
 .card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: $shadow-lg;
-  }
-  &:active {
-    transform: scale(0.98);
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
   }
 }
 
-// 渐变背景
 .gradient-primary {
-  background: linear-gradient(135deg, #FFC300 0%, #FF8F00 100%);
+  background: linear-gradient(135deg, #2364e8 0%, #1e40af 100%);
 }
 
 .gradient-success {
-  background: linear-gradient(135deg, #26C6B8 0%, #009688 100%);
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
 }
 
 .gradient-accent {
-  background: linear-gradient(135deg, #FF6B00 0%, #FF8F00 100%);
+  background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
 }
 
-// 文本省略
 .text-ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -107,12 +106,11 @@ img {
 
 .text-ellipsis-2 {
   display: -webkit-box;
+  overflow: hidden;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-// 弹性布局工具
 .flex-center {
   display: flex;
   align-items: center;
@@ -125,78 +123,68 @@ img {
   justify-content: space-between;
 }
 
-// 闲鱼风格标签
 .xy-tag {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 4px;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: $radius-round;
   font-size: $font-size-xs;
-  font-weight: 500;
-  line-height: 1.5;
+  font-weight: 600;
 
   &--hot {
-    background: #FFF3E0;
-    color: #FF6B00;
+    background: $color-accent-light;
+    color: #c2410c;
   }
 
   &--new {
-    background: #FFF8E1;
-    color: #FF8F00;
+    background: $color-primary-light;
+    color: $color-primary-dark;
   }
 
   &--urgent {
-    background: #FFEBEE;
-    color: $color-danger;
+    background: $color-danger-light;
+    color: #b91c1c;
   }
 
   &--trust {
-    background: #E0F7FA;
-    color: #00897B;
+    background: $color-success-light;
+    color: #047857;
   }
 }
 
-// 页面标题
 .page-title {
-  font-size: $font-size-xl;
-  font-weight: 700;
-  color: $color-text-primary;
   margin-bottom: $spacing-md;
+  color: $color-text-primary;
+  font-size: $font-size-2xl;
+  font-weight: 760;
 }
 
-// 板块标题
 .section-title {
-  font-size: $font-size-lg;
-  font-weight: 700;
-  color: $color-text-primary;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  color: $color-text-primary;
+  font-size: $font-size-xl;
+  font-weight: 760;
 
   &::before {
     content: '';
-    width: 3px;
-    height: 16px;
+    width: 4px;
+    height: 18px;
+    border-radius: $radius-round;
     background: $color-primary;
-    border-radius: 2px;
   }
 }
 
-// 响应式
 @media (max-width: 768px) {
-  .card-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
   .page-container {
-    padding: 12px;
+    width: min(100% - 24px, $max-width);
+    padding: $spacing-md 0;
   }
-}
 
-@media (max-width: 480px) {
   .card-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }

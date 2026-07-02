@@ -3,7 +3,7 @@
 ## 模块信息
 - **模块**: dabashou-admin
 - **前缀**: `/api/admin/v1`
-- **认证**: 所有接口需要管理员角色
+- **认证**: 所有接口需要管理员角色，后端统一校验 `ROLE_ADMIN`
 
 ---
 
@@ -30,7 +30,7 @@
   "username": "zhangsan",
   "nickname": "张三",
   "avatar": "url",
-  "phone": "13800138000",
+  "phone": "138****8000",
   "pointBalance": 100,
   "trustScore": 4.5,
   "campus": "主校区",
@@ -93,7 +93,11 @@
 
 ## 三、信用管理接口
 
-### 3.1 违规处理
+### 3.1 违规列表
+- **URL**: `GET /api/admin/v1/violations`
+- **响应**: `data = PageResult<ViolationVo>`
+
+### 3.2 违规处理
 - **URL**: `POST /api/admin/v1/violations/{id}`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -103,7 +107,11 @@
 - **响应**: `data = null`
 - **错误码**: 404-不存在
 
-### 3.2 申诉审核
+### 3.3 申诉列表
+- **URL**: `GET /api/admin/v1/appeals`
+- **响应**: `data = PageResult<AppealVo>`
+
+### 3.4 申诉审核
 - **URL**: `POST /api/admin/v1/appeals/{id}`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -116,9 +124,22 @@
 
 ---
 
-## 四、校园认证审核
+## 四、评价管理
 
-### 4.1 认证列表
+### 4.1 评价列表
+- **URL**: `GET /api/admin/v1/reviews`
+- **响应**: `data = PageResult<ReviewVo>`
+
+### 4.2 隐藏评价
+- **URL**: `DELETE /api/admin/v1/reviews/{id}`
+- **说明**: 软删除/隐藏评价，后端更新 `dbs_review.hidden=1`，不物理删除。
+- **响应**: `data = null`
+
+---
+
+## 五、校园认证审核
+
+### 5.1 认证列表
 - **URL**: `GET /api/admin/v1/campus-auths`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -129,7 +150,7 @@
 
 - **响应**: `data = PageResult<CampusAuthVo>`
 
-### 4.2 审核认证
+### 5.2 审核认证
 - **URL**: `POST /api/admin/v1/campus-auths/{id}`
 
 | 参数 | 类型 | 必填 | 说明 |
@@ -142,5 +163,26 @@
 
 ---
 
-**文档版本**: v1.3.0
-**最后更新**: 2026-06-28
+## 六、系统配置
+
+### 6.1 读取配置
+- **URL**: `GET /api/admin/v1/config`
+- **响应**: `data = Record<string, string>`
+- **说明**: 仅返回白名单配置；敏感配置不明文返回。
+
+### 6.2 更新配置
+- **URL**: `PUT /api/admin/v1/config`
+- **请求**:
+```json
+{
+  "site.name": "搭把手",
+  "point.sign_in_reward": 5
+}
+```
+- **响应**: `data = null`
+- **错误码**: 400-非法配置项
+
+---
+
+**文档版本**: v2.0.0
+**最后更新**: 2026-07-01

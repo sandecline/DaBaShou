@@ -14,6 +14,7 @@ import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -95,6 +96,7 @@ public class UserServiceImpl implements UserService {
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户名或密码错误");
         }
+        ensureUserEnabled(user);
 
         return buildLoginVo(user);
     }
@@ -115,9 +117,16 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.selectOne(wrapper);
 
         if (user == null) {
-            // 模拟自动注册
+            // 模拟自动注册，确保用户名唯一
+            String baseUsername = "u_" + dto.getPhone();
+            String username = baseUsername;
+            int suffix = 1;
+            while (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, username)) > 0) {
+                username = baseUsername + "_" + suffix++;
+            }
+
             user = new User();
-            user.setUsername("u_" + dto.getPhone());
+            user.setUsername(username);
             user.setNickname("用户" + dto.getPhone().substring(Math.max(0, dto.getPhone().length() - 4)));
             user.setPhone(dto.getPhone());
             user.setPasswordHash(passwordEncoder.encode("default"));
@@ -146,6 +155,10 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, "用户不存在");
         }
+        if (!java.util.Objects.equals(JwtUtil.getTokenVersion(claims), loadTokenVersion(user.getId()))) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "刷新令牌已失效");
+        }
+        ensureUserEnabled(user);
 
         return buildLoginVo(user);
     }
@@ -157,6 +170,15 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");
         }
         return toUserProfileVo(user);
+    }
+
+    @Override
+    public PublicUserVo getPublicUser(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null || Integer.valueOf(0).equals(user.getStatus())) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "用户不存在");
+        }
+        return toPublicUserVo(user);
     }
 
     @Override
@@ -294,9 +316,11 @@ public class UserServiceImpl implements UserService {
     // ---- 内部辅助方法 ----
 
     private LoginVo buildLoginVo(User user) {
-        List<String> roles = Collections.singletonList("USER");
-        String accessToken = JwtUtil.generateToken(user.getId(), roles, jwtSecret, jwtExpiration);
-        String refreshToken = JwtUtil.generateRefreshToken(user.getId(), jwtSecret, jwtRefreshExpiration);
+        ensureUserEnabled(user);
+        List<String> roles = loadRoles(user.getId());
+        int tokenVersion = loadTokenVersion(user.getId());
+        String accessToken = JwtUtil.generateToken(user.getId(), roles, tokenVersion, jwtSecret, jwtExpiration);
+        String refreshToken = JwtUtil.generateRefreshToken(user.getId(), tokenVersion, jwtSecret, jwtRefreshExpiration);
 
         LoginVo vo = new LoginVo();
         vo.setAccessToken(accessToken);
@@ -306,6 +330,47 @@ public class UserServiceImpl implements UserService {
         vo.setNickname(user.getNickname());
         vo.setAvatar(user.getAvatar());
         return vo;
+    }
+
+    private void ensureUserEnabled(User user) {
+        if (user.getStatus() == null || user.getStatus() != 1) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "账号已禁用");
+        }
+    }
+
+    private List<String> loadRoles(Long userId) {
+        try {
+            List<String> roles = jdbcTemplate.queryForList("""
+                    SELECT r.role_code
+                      FROM sys_user_role ur
+                      JOIN sys_role r ON r.id = ur.role_id
+                     WHERE ur.user_id = ? AND r.status = 1
+                    """, String.class, userId);
+            if (roles.isEmpty()) {
+                return Collections.singletonList("USER");
+            }
+            if (!roles.contains("USER")) {
+                roles = new java.util.ArrayList<>(roles);
+                roles.add("USER");
+            }
+            return roles;
+        } catch (DataAccessException e) {
+            log.warn("角色表不可用，按普通用户兼容登录: {}", e.getMessage());
+            return Collections.singletonList("USER");
+        }
+    }
+
+    private int loadTokenVersion(Long userId) {
+        try {
+            Integer version = jdbcTemplate.queryForObject(
+                    "SELECT COALESCE(token_version, 0) FROM dbs_user WHERE id = ?",
+                    Integer.class,
+                    userId);
+            return version == null ? 0 : version;
+        } catch (DataAccessException e) {
+            log.warn("token_version字段不可用，按兼容模式签发Token: {}", e.getMessage());
+            return 0;
+        }
     }
 
     private UserProfileVo toUserProfileVo(User user) {
@@ -324,6 +389,24 @@ public class UserServiceImpl implements UserService {
 
         vo.setLongitude(user.getLongitude());
         vo.setLatitude(user.getLatitude());
+        vo.setCampus(user.getCampus());
+        vo.setBuilding(user.getBuilding());
+        vo.setBio(user.getBio());
+        vo.setStatus(user.getStatus());
+        vo.setCreateTime(user.getCreateTime());
+        return vo;
+    }
+
+    private PublicUserVo toPublicUserVo(User user) {
+        PublicUserVo vo = new PublicUserVo();
+        vo.setId(user.getId());
+        vo.setNickname(user.getNickname());
+        vo.setAvatar(user.getAvatar());
+        vo.setTrustScore(user.getTrustScore());
+
+        double score = user.getTrustScore() != null ? user.getTrustScore().doubleValue() : 0;
+        vo.setTrustLevel(TrustLevel.ofScore(score).getLabel());
+
         vo.setCampus(user.getCampus());
         vo.setBuilding(user.getBuilding());
         vo.setBio(user.getBio());

@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getProfile, updateProfile } from '@/api/auth'
+import { getProfile, updateProfile } from '@/api/user'
 import { getToken } from '@/utils/auth'
 import { useUserStore } from '@/stores/user'
 

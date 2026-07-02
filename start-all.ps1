@@ -1,12 +1,14 @@
 # ============================================================================
 # DaBaShou Service Manager
-# Usage: .\start-all.ps1 [start|stop|restart|status]
+# Usage: .\start-all.ps1 [start|stop|restart|status] [-DbUsername root] [-DbPassword ""]
 #
 # How to use after opening PowerShell:
 #   1. Go to the project directory:
 #        cd C:\Users\Li\Desktop\Dabashou
 #   2. Start all services:
 #        .\start-all.ps1 start
+#      If your local MySQL root account has a password:
+#        .\start-all.ps1 restart -DbPassword "your-password"
 #      or simply:
 #        .\start-all.ps1
 #   3. Check service status:
@@ -28,6 +30,8 @@
 # ============================================================================
 param(
     [string]$Action = "start",
+    [string]$DbUsername = "root",
+    [string]$DbPassword = "",
     [switch]$NoPause
 )
 
@@ -84,8 +88,16 @@ function Start-Backend {
         Write-Host "(JAR not found)" -NoNewline -ForegroundColor Red
         return $false
     }
+    $backendArgs = @(
+        "-jar",
+        "$($jar.FullName)",
+        "--spring.profiles.active=dev",
+        "--server.port=9090",
+        "--spring.datasource.username=$DbUsername",
+        "--spring.datasource.password=$DbPassword"
+    )
     $proc = Start-Process -FilePath "java" `
-        -ArgumentList "-jar", "$($jar.FullName)", "--spring.profiles.active=dev", "--server.port=9090" `
+        -ArgumentList $backendArgs `
         -NoNewWindow -PassThru `
         -RedirectStandardOutput "$LogDir\backend.log" `
         -RedirectStandardError "$LogDir\backend-error.log"
@@ -173,6 +185,7 @@ function Show-Usage {
     Write-Host "  Usage:" -ForegroundColor Cyan
     Write-Host "    cd C:\Users\Li\Desktop\Dabashou" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 start    # start MySQL check, Redis, backend, frontend" -ForegroundColor DarkGray
+    Write-Host "    .\start-all.ps1 restart -DbPassword ""your-password""  # use this only if MySQL root has a password" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 status   # show current status" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 restart  # stop then start again" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 stop     # stop services started by this script" -ForegroundColor DarkGray
