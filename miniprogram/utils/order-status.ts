@@ -8,7 +8,7 @@ import type { OrderStatus } from '../types/order';
 export const ORDER_STATUS_MAP: Record<OrderStatus, string> = {
   0: '已取消',
   1: '待支付',
-  2: '已支付',
+  2: '已支付（担保中）',  // 与后端 / frontend api.ts 对齐
   3: '服务中',
   4: '待确认',
   5: '已完成',

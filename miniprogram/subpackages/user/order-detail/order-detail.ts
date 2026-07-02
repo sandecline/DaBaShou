@@ -45,7 +45,7 @@ Page({
 
   onLoad(options: Record<string, string | undefined>) {
     const id = Number(options.id);
-    if (!id) { wx.showToast({ title: '参数错误', icon: 'error' }); wx.navigateBack(); return; }
+    if (!id) { wx.showToast({ title: '参数错误', icon: 'error' }); const pages = getCurrentPages(); if (pages.length > 1) wx.navigateBack(); else wx.switchTab({ url: '/pages/index/index' }); return; }
     this.setData({ orderId: id });
     this.loadDetail();
   },
@@ -73,7 +73,7 @@ Page({
   },
 
   // =====================================================================
-  //                           接单（卖家）
+  //                           开始服务（卖家）
   // =====================================================================
   onShowAcceptDialog() { this.setData({ showAcceptDialog: true }); },
   onCloseAcceptDialog() { this.setData({ showAcceptDialog: false }); },
@@ -83,12 +83,12 @@ Page({
     if (actionLoading) return;
     this.setData({ actionLoading: true });
     try {
-      await orderService.accept(orderId);
-      wx.showToast({ title: '已接单', icon: 'success' });
+      await orderService.startService(orderId);
+      wx.showToast({ title: '已开始服务', icon: 'success' });
       this.setData({ showAcceptDialog: false });
       this.loadDetail();
     } catch (err) {
-      console.error('接单失败:', err);
+      console.error('开始服务失败:', err);
       wx.showToast({ title: '操作失败', icon: 'error' });
     } finally { this.setData({ actionLoading: false }); }
   },
@@ -107,12 +107,14 @@ Page({
     if (actionLoading || !codeAction || !order) return;
     this.setData({ actionLoading: true });
     try {
-      if (codeAction === 'completeBuyer') {
-        await orderService.completeService(orderId, 'buyer', codeInput.trim());
-        wx.showToast({ title: '买家验证通过', icon: 'success' });
-      } else if (codeAction === 'completeSeller') {
-        await orderService.completeService(orderId, 'seller', codeInput.trim());
+      if (codeAction === 'completeSeller') {
+        // 卖家核销：输入买家验证码 → verify (3→4)
+        await orderService.verify(orderId, codeInput.trim());
         wx.showToast({ title: '卖家验证通过', icon: 'success' });
+      } else if (codeAction === 'completeBuyer') {
+        // 买家确认：输入卖家验证码 → confirmOrder (4→5)
+        await orderService.confirmOrder(orderId);
+        wx.showToast({ title: '买家确认通过', icon: 'success' });
       }
       this.setData({ showCodeDialog: false, codeInput: '' });
       this.loadDetail();
@@ -149,7 +151,7 @@ Page({
     if (actionLoading || !order) return;
     this.setData({ actionLoading: true });
     try {
-      await (orderService as unknown as Record<string, (id: number, role: string) => Promise<unknown>>).refundRequest(orderId, order.myRole || 'buyer');
+      await orderService.refundOrder(orderId);
       wx.showToast({ title: '退款申请已提交', icon: 'success' });
       this.loadDetail();
     } catch (err) {
@@ -162,7 +164,7 @@ Page({
     if (actionLoading) return;
     this.setData({ actionLoading: true });
     try {
-      await (orderService as unknown as Record<string, (id: number) => Promise<unknown>>).refundApprove(orderId);
+      await orderService.refundOrder(orderId, '同意退款');
       wx.showToast({ title: '退款已同意', icon: 'success' });
       this.loadDetail();
     } catch (err) {
@@ -185,7 +187,11 @@ Page({
       await orderService.cancel(orderId, cancelReason || undefined);
       wx.showToast({ title: '订单已取消', icon: 'success' });
       this.setData({ showCancelDialog: false });
-      setTimeout(() => wx.navigateBack(), 1200);
+      (this as any)._navTimer = setTimeout(() => {
+        const pages = getCurrentPages();
+        if (pages.length > 1) wx.navigateBack();
+        else wx.switchTab({ url: '/pages/index/index' });
+      }, 1200) as unknown as number;
     } catch (err) {
       console.error('取消订单失败:', err);
       wx.showToast({ title: '取消失败', icon: 'error' });
@@ -203,5 +209,10 @@ Page({
   canCancel(): boolean {
     const s = this.data.order?.status;
     return s !== undefined ? [1, 2, 3, 4].includes(s) : false;
+  },
+
+  onUnload() {
+    const self = this as any;
+    if (self._navTimer) clearTimeout(self._navTimer);
   },
 });

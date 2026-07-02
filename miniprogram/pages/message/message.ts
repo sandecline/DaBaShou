@@ -60,18 +60,14 @@ Page({
     wx.showModal({
       title: '删除会话',
       content: '确定删除此会话？',
-      success: async (res) => {
+      success: (res) => {
         if (res.confirm) {
-          try {
-            // #51 修复：调用真实的删除 API
-            await messageService.deleteSession(sessionId);
-            wx.showToast({ title: '已删除', icon: 'success' });
-            // 从本地列表移除并刷新
-            this.loadSessions();
-          } catch (err) {
-            console.error('删除会话失败:', err);
-            wx.showToast({ title: '删除失败', icon: 'error' });
-          }
+          // 后端无删除会话接口，仅从本地列表移除
+          const sessions = this.data.sessions.filter((s: { id: number }) => s.id !== sessionId);
+          this.setData({ sessions });
+          wx.showToast({ title: '已删除', icon: 'success' });
+        }
+      },
         }
       },
     });

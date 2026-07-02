@@ -57,7 +57,10 @@ Page({
     const id = Number(options.id);
     if (!id) {
       wx.showToast({ title: '参数错误', icon: 'error' });
-      wx.navigateBack();
+      // 安全返回：检查页面栈，防止无栈时直接 navigateBack
+      const pages = getCurrentPages();
+      if (pages.length > 1) wx.navigateBack();
+      else wx.switchTab({ url: '/pages/index/index' });
       return;
     }
     this.setData({ skillId: id });
@@ -89,7 +92,8 @@ Page({
       // 检查当前用户是否已对该技能下单（未取消）
       let hasOrdered = false;
       try {
-        const orderRes = await orderService.getMyOrders({ pageNum: 1, pageSize: 100 });
+        // 仅需确认是否存在有效订单，拉取少量最近订单即可
+        const orderRes = await orderService.getMyOrders({ pageNum: 1, pageSize: 20 });
         hasOrdered = orderRes.data.list.some(
           (o) => ((o as unknown as { skillShelfId?: number }).skillShelfId === skill.id) && o.status !== 0
         );
@@ -157,9 +161,9 @@ Page({
       wx.showToast({ title: '下单成功', icon: 'success' });
       this.setData({ showOrderDialog: false, hasOrdered: true });
       this.loadDetail();
-      setTimeout(() => {
+      (this as any)._navTimer = setTimeout(() => {
         wx.navigateTo({ url: '/subpackages/user/order-list/order-list' });
-      }, 1200);
+      }, 1200) as unknown as number;
     } catch (err) {
       console.error('下单失败:', err);
       wx.showToast({ title: '下单失败，请重试', icon: 'error' });
@@ -176,5 +180,10 @@ Page({
     wx.navigateTo({
       url: `/pages/chat/chat?targetUserId=${skill.userId}&targetNickname=${encodeURIComponent((skill as any).nickname || '')}`,
     });
+  },
+
+  onUnload() {
+    const self = this as any;
+    if (self._navTimer) clearTimeout(self._navTimer);
   },
 });

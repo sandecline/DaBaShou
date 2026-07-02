@@ -72,31 +72,36 @@ function request<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> 
 }
 
 let _refreshRetryCount = 0;
+let _isReLaunching = false; // 防止并发 reLaunch 导致路由冲突
+
+function safeReLaunch() {
+  if (_isReLaunching) return;
+  _isReLaunching = true;
+  const app = getApp();
+  app.clearSession();
+  wx.reLaunch({ url: '/pages/index/index', fail() { _isReLaunching = false; } });
+}
 
 async function refreshTokenAndRetry<T>(options: RequestOptions): Promise<ApiResponse<T>> {
   _refreshRetryCount++;
   if (_refreshRetryCount > MAX_REFRESH_RETRIES) {
     _refreshRetryCount = 0;
-    const app = getApp();
-    app.clearSession();
-    wx.reLaunch({ url: '/pages/index/index' });
+    safeReLaunch();
     throw { code: 401, msg: '登录已过期，请重新登录' };
   }
   try {
     const refreshToken = wx.getStorageSync('refresh_token');
     if (!refreshToken) {
-      const app = getApp();
-      app.clearSession();
-      wx.reLaunch({ url: '/pages/index/index' });
+      safeReLaunch();
       throw { code: 401, msg: '登录已过期，请重新登录' };
     }
-    const res = await rawRequest<{ access_token: string; refresh_token: string }>({
+    const res = await rawRequest<{ accessToken: string; refreshToken: string }>({
       url: '/v1/auth/refresh',
       method: 'POST',
-      data: { refresh_token: refreshToken },
+      data: { refreshToken },
     });
-    wx.setStorageSync('access_token', res.data.access_token);
-    wx.setStorageSync('refresh_token', res.data.refresh_token);
+    wx.setStorageSync('access_token', res.data.accessToken);
+    wx.setStorageSync('refresh_token', res.data.refreshToken);
     _refreshRetryCount = 0;
     return request<T>(options);
   } catch (err) {
@@ -167,22 +172,21 @@ function findTag(tagId: number) {
 
 let _mockId = 10000;
 function nextId() { return ++_mockId; }
+/** 通用日期补零辅助函数 */
+function pad(n: number) { return String(n).padStart(2, '0'); }
 function nowStr() {
   const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 /** n天前的时间字符串 */
 function daysAgo(n: number) {
   const d = new Date(Date.now() - n * 86400000);
-  const p = (n2: number) => String(n2).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 /** n天后的 ISO 格式截止时间 */
 function isoDaysLater(n: number) {
   const d = new Date(Date.now() + n * 86400000);
-  const p = (n2: number) => String(n2).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T23:59:59`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T23:59:59`;
 }
 
 // ── 内存 Store ──
@@ -417,9 +421,9 @@ function getMockData<T>(options: RequestOptions): T {
     return { list: list.slice(start, start + pageSize), total: list.length, pageNum, pageSize } as unknown as T;
   }
 
-  // ── 接单（揭榜）POST /v1/demands/:id/bid ──
-  if (isPost && url.match(/\/demands\/\d+\/bid$/)) {
-    const id = Number(url.match(/\/demands\/(\d+)\/bid$/)?.[1]);
+  // ── 接单（揭榜）POST /v1/demands/:id/accept ──
+  if (isPost && url.match(/\/demands\/\d+\/accept$/)) {
+    const id = Number(url.match(/\/demands\/(\d+)\/accept$/)?.[1]);
     const demand = mockDemandStore.find((d) => d.id === id);
     if (!demand || demand.status !== 1) throw { code: 400, msg: '该需求不可接单' };
     demand.status = 2; demand.statusDesc = '已接单';
@@ -429,8 +433,8 @@ function getMockData<T>(options: RequestOptions): T {
     const buyerCode = 'B' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
     const sellerCode = 'S' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
     mockOrderStore.unshift({
-      id: orderId, orderNo, title: demand.title,
-      pointAmount: demand.pointReward, status: 3, statusDesc: '服务中',
+      id: orderId, orderNo, shelfTitle: demand.title,
+      pointAmount: demand.pointReward, status: 3, statusName: '服务中',
       buyerId: demand.userId, buyerNickname: demand.nickname, buyerAvatar: '',
       sellerId: MOCK_ME.id, sellerNickname: MOCK_ME.nickname, sellerAvatar: '',
       counterpartNickname: demand.nickname, counterpartAvatar: '',
@@ -451,8 +455,8 @@ function getMockData<T>(options: RequestOptions): T {
     return {} as unknown as T;
   }
 
-  // ── 从货架创建订单 POST /v1/order/from-shelf ──
-  if (isPost && url.includes('/order/from-shelf')) {
+  // ── 从货架创建订单 POST /v1/orders/from-shelf ──
+  if (isPost && url.includes('/orders/from-shelf')) {
     const params = (data || {}) as Record<string, unknown>;
     const shelfId = Number(params.shelfId);
     const shelf = mockShelfStore.find((s) => s.id === shelfId);
@@ -464,8 +468,8 @@ function getMockData<T>(options: RequestOptions): T {
     const buyerCode = 'B' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
     const sellerCode = 'S' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
     mockOrderStore.unshift({
-      id: orderId, orderNo, title: shelf.title,
-      pointAmount: shelf.pointPrice, status: 3, statusDesc: '服务中',
+      id: orderId, orderNo, shelfTitle: shelf.title,
+      pointAmount: shelf.pointPrice, status: 3, statusName: '服务中',
       buyerId: MOCK_ME.id, buyerNickname: MOCK_ME.nickname, buyerAvatar: '',
       sellerId: shelf.userId, sellerNickname: shelf.nickname, sellerAvatar: '',
       counterpartNickname: shelf.nickname, counterpartAvatar: '',
@@ -479,8 +483,8 @@ function getMockData<T>(options: RequestOptions): T {
     return { orderId, orderNo, buyerCode, sellerCode } as unknown as T;
   }
 
-  // ── 订单列表 GET /v1/order ──
-  if (isGet && url.match(/\/order\/?$/) && !url.includes('/order/')) {
+  // ── 订单列表 GET /v1/orders ──
+  if (isGet && url.match(/\/orders\/?$/) && !url.includes('/orders/')) {
     const params = (data || {}) as Record<string, unknown>;
     const role = params.role as 'buyer' | 'seller' | undefined;
     const status = Number(params.status);
@@ -495,30 +499,30 @@ function getMockData<T>(options: RequestOptions): T {
   }
 
   // ── 订单详情 / 状态 兜底 ──
-  if (url.includes('/order')) {
-    if (isGet && url.match(/\/order\/\d+$/)) {
-      const id = Number(url.match(/\/order\/(\d+)$/)?.[1]);
+  if (url.includes('/orders')) {
+    if (isGet && url.match(/\/orders\/\d+$/)) {
+      const id = Number(url.match(/\/orders\/(\d+)$/)?.[1]);
       return (mockOrderStore.find((o) => o.id === id) || mockOrderStore[0]) as unknown as T;
     }
-    if (isGet && url.match(/\/order\/\d+\/status$/)) {
-      const id = Number(url.match(/\/order\/(\d+)\/status$/)?.[1]);
+    if (isGet && url.match(/\/orders\/\d+\/status$/)) {
+      const id = Number(url.match(/\/orders\/(\d+)\/status$/)?.[1]);
       const o = mockOrderStore.find((x) => x.id === id);
-      return { status: o?.status || 0, statusDesc: o?.statusDesc || '未知' } as unknown as T;
+      return { status: o?.status || 0, statusName: o?.statusName || '未知' } as unknown as T;
     }
-    // ── 接单 POST /v1/order/:id/accept ──
-    if (isPost && url.match(/\/order\/\d+\/accept$/)) {
-      const id = Number(url.match(/\/order\/(\d+)\/accept$/)?.[1]);
+    // ── 接单 POST /v1/orders/:id/accept ──
+    if (isPost && url.match(/\/orders\/\d+\/accept$/)) {
+      const id = Number(url.match(/\/orders\/(\d+)\/accept$/)?.[1]);
       const order = mockOrderStore.find((o) => o.id === id);
       if (!order || order.status !== 1) throw { code: 400, msg: '订单不可接单' };
-      order.status = 3; order.statusDesc = '服务中';
+      order.status = 3; order.statusName = '服务中';
       order.serviceStartTime = nowStr();
       console.log('[Mock] 订单已接单:', id);
-      return { id, status: 3, statusDesc: '服务中' } as unknown as T;
+      return { id, status: 3, statusName: '服务中' } as unknown as T;
     }
 
-    // ── 完成服务（双向验证）POST /v1/order/:id/complete ──
-    if (isPost && url.match(/\/order\/\d+\/complete$/)) {
-      const id = Number(url.match(/\/order\/(\d+)\/complete$/)?.[1]);
+    // ── 完成服务（双向验证）POST /v1/orders/:id/complete ──
+    if (isPost && url.match(/\/orders\/\d+\/complete$/)) {
+      const id = Number(url.match(/\/orders\/(\d+)\/complete$/)?.[1]);
       const params = (data || {}) as Record<string, unknown>;
       const order = mockOrderStore.find((o) => o.id === id);
       if (!order || order.status !== 3) throw { code: 400, msg: '当前状态不可完成' };
@@ -529,44 +533,44 @@ function getMockData<T>(options: RequestOptions): T {
       if (code !== expected) throw { code: 400, msg: '验证码错误' };
       order[role === 'buyer' ? 'buyerVerified' : 'sellerVerified'] = true;
       if (order.buyerVerified && order.sellerVerified) {
-        order.status = 5; order.statusDesc = '已完成';
+        order.status = 5; order.statusName = '已完成';
         order.completeTime = nowStr();
         console.log('[Mock] 订单已完成（双向验证通过）:', id);
       }
-      return { id, status: order.status, statusDesc: order.statusDesc } as unknown as T;
+      return { id, status: order.status, statusName: order.statusName } as unknown as T;
     }
 
-    // ── 退款申请 POST /v1/order/:id/refund-request ──
-    if (isPost && url.match(/\/order\/\d+\/refund-request$/)) {
-      const id = Number(url.match(/\/order\/(\d+)\/refund-request$/)?.[1]);
+    // ── 退款 POST /v1/orders/:id/refund（含退款申请 + 同意退款） ──
+    if (isPost && url.match(/\/orders\/\d+\/refund$/)) {
+      const id = Number(url.match(/\/orders\/(\d+)\/refund$/)?.[1]);
       const params = (data || {}) as Record<string, unknown>;
       const order = mockOrderStore.find((o) => o.id === id);
-      if (!order || ![3, 4].includes(order.status as number)) throw { code: 400, msg: '当前状态不可退款' };
+      if (!order) throw { code: 404, msg: '订单不存在' };
+      const action = params.action as string; // 'request' = 申请退款, 'approve' = 同意退款
+      if (action === 'approve' || order.refundRequesting) {
+        // 同意退款
+        if (!order.refundRequesting) throw { code: 400, msg: '无待处理的退款请求' };
+        order.status = 6; order.statusName = '已退款';
+        order.refundRequesting = false;
+        console.log('[Mock] 退款已同意:', id);
+        return { id, status: 6, statusName: '已退款' } as unknown as T;
+      }
+      // 申请退款
+      if (![3, 4].includes(order.status as number)) throw { code: 400, msg: '当前状态不可退款' };
       order.refundRequesting = true;
       order.refundRequester = params.role as 'buyer' | 'seller';
       console.log('[Mock] 退款申请已提交:', id);
       return { id, refundRequesting: true } as unknown as T;
     }
 
-    // ── 同意退款 POST /v1/order/:id/refund-approve ──
-    if (isPost && url.match(/\/order\/\d+\/refund-approve$/)) {
-      const id = Number(url.match(/\/order\/(\d+)\/refund-approve$/)?.[1]);
-      const order = mockOrderStore.find((o) => o.id === id);
-      if (!order || !order.refundRequesting) throw { code: 400, msg: '无待处理的退款请求' };
-      order.status = 6; order.statusDesc = '已退款';
-      order.refundRequesting = false;
-      console.log('[Mock] 退款已同意:', id);
-      return { id, status: 6, statusDesc: '已退款' } as unknown as T;
-    }
-
     // ── 取消 ──
-    if (isPost && url.match(/\/order\/\d+\/cancel$/)) {
-      const id = Number(url.match(/\/order\/(\d+)\/cancel$/)?.[1]);
+    if (isPost && url.match(/\/orders\/\d+\/cancel$/)) {
+      const id = Number(url.match(/\/orders\/(\d+)\/cancel$/)?.[1]);
       const order = mockOrderStore.find((o) => o.id === id);
-      if (order) { order.status = 0; order.statusDesc = '已取消'; }
-      return { id, status: 0, statusDesc: '已取消' } as unknown as T;
+      if (order) { order.status = 0; order.statusName = '已取消'; }
+      return { id, status: 0, statusName: '已取消' } as unknown as T;
     }
-    return { id: 1, orderNo: 'DB202607010001', status: 3, statusDesc: '服务中' } as unknown as T;
+    return { id: 1, orderNo: 'DB202607010001', status: 3, statusName: '服务中' } as unknown as T;
   }
 
   // ── 积分 ──

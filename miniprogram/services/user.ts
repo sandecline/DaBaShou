@@ -5,6 +5,7 @@
  */
 
 import { api } from '../utils/request';
+import { fileService } from './file';
 import type { UserProfile } from '../types/user';
 
 export const userService = {
@@ -39,23 +40,10 @@ export const userService = {
     return api.get<UserProfile>(`/v1/users/${userId}`);
   },
 
-  /** 上传头像（wx.uploadFile） */
-  uploadAvatar(filePath: string) {
-    const token = wx.getStorageSync('access_token');
-    return new Promise<{ url: string }>((resolve, reject) => {
-      wx.uploadFile({
-        url: '/v1/user/avatar',
-        filePath,
-        name: 'file',
-        header: { Authorization: `Bearer ${token}` },
-        success(res) {
-          const data = JSON.parse(res.data);
-          if (data.code === 200) resolve(data.data);
-          else reject(data);
-        },
-        fail: reject,
-      });
-    });
+  /** 上传头像（统一文件上传） */
+  async uploadAvatar(filePath: string) {
+    const url = await fileService.upload(filePath);
+    return { url };
   },
 
   /** 提交校园认证 */

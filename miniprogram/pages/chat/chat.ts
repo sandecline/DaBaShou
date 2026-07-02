@@ -4,6 +4,7 @@
  */
 
 import { messageService } from '../../services/message';
+import { fileService } from '../../services/file';
 import { connect, on, off, send } from '../../utils/websocket';
 import { ensureLogin } from '../../utils/auth';
 import type { ChatMessage } from '../../types/message';
@@ -55,7 +56,9 @@ Page({
       // TODO: 若无 sessionId，需先创建会话再拉取消息
     } else {
       wx.showToast({ title: '参数错误', icon: 'error' });
-      wx.navigateBack();
+      const pages = getCurrentPages();
+      if (pages.length > 1) wx.navigateBack();
+      else wx.switchTab({ url: '/pages/index/index' });
       return;
     }
 
@@ -98,8 +101,8 @@ Page({
           [`messages[${idx}]`]: msg,
           scrollIntoId: `msg-${msg.id}`,
         });
-        // 标记已读
-        messageService.readSession(this.data.sessionId).catch(() => {});
+        // 标记已读（通过 WebSocket 发送 read 事件）
+        send('read', { sessionId: this.data.sessionId });
       }
     };
     on('new_message', this.messageHandler);
@@ -110,13 +113,12 @@ Page({
   async loadMessages() {
     const { sessionId, pageNum, pageSize } = this.data;
     if (!sessionId) {
-      // 无 sessionId 时，暂且不加载（后续创建会话后加载）
       this.setData({ loading: false });
       return;
     }
 
     try {
-      const res = await messageService.getMessages(sessionId, { pageNum, pageSize });
+      const res = await messageService.getMessages(this.data.targetUserId, { pageNum, pageSize });
       const newMessages = res.data.list;
 
       // 标记 isMine：对比 senderId 和当前用户ID
@@ -134,6 +136,7 @@ Page({
         messages,
         hasMore: messages.length < res.data.total,
         loading: false,
+        pageNum: pageNum + 1, // 仅成功后递增，避免失败时跳过数据页
         scrollIntoId: pageNum === 1 && messages.length > 0
           ? `msg-${messages[messages.length - 1].id}`
           : '',
@@ -147,11 +150,9 @@ Page({
   // 加载更多历史消息
   async loadMore() {
     if (!this.data.hasMore || this.data.loading) return;
-    this.setData({
-      loading: true,
-      pageNum: this.data.pageNum + 1,
-    });
+    this.setData({ loading: true });
     await this.loadMessages();
+    // 仅在加载成功后才递增页码（loadMessages 中已更新 pageNum + hasMore）
   },
 
   // ===== 消息发送 =====
@@ -176,7 +177,7 @@ Page({
 
     this.setData({ sending: true, inputValue: '' });
     try {
-      const res = await messageService.sendMessage(sessionId, inputValue.trim(), 1);
+      const res = await messageService.sendMessage({ receiverId: this.data.targetUserId, content: inputValue.trim(), msgType: 1 });
       // 直接追加到本地消息列表（#79 修复：不依赖 WS 回显）
       const myUserId = getApp().globalData.userInfo?.id;
       const localMsg: ChatMessage = {
@@ -232,27 +233,9 @@ Page({
   async uploadAndSendImage(filePath: string) {
     wx.showLoading({ title: '发送中...' });
     try {
-      // TODO: 替换为真实图片上传地址，当前使用 Base URL + upload 路径 (#80 修复)
-      const uploadRes = await wx.uploadFile({
-        url: `${getApp().globalData.apiBaseUrl || 'https://api.dabashou.example.com'}/api/v1/upload/image`,
-        filePath,
-        name: 'file',
-        header: {
-          Authorization: `Bearer ${getApp().globalData.token || ''}`,
-        },
-      });
+      const imageUrl = await fileService.upload(filePath);
 
-      // #81 修复：JSON.parse 加 try-catch
-      let imageUrl: string;
-      try {
-        const parsed = JSON.parse(uploadRes.data);
-        imageUrl = parsed.data as string;
-      } catch {
-        console.error('[Chat] 上传响应解析失败:', uploadRes.data);
-        throw { code: -1, msg: '上传响应解析失败' };
-      }
-
-      const res = await messageService.sendMessage(this.data.sessionId, imageUrl, 2);
+      const res = await messageService.sendMessage({ receiverId: this.data.targetUserId, content: imageUrl, msgType: 2 });
       // 直接追加图片消息到本地列表
       const myUserId = getApp().globalData.userInfo?.id;
       const localMsg: ChatMessage = {

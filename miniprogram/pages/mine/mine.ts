@@ -13,6 +13,13 @@ interface MenuItem {
   url: string;
 }
 
+/** 信任分等级颜色映射（模块级常量，避免每次setData重建） */
+const TRUST_COLOR_MAP: Record<string, string> = {
+  '金牌': 'primary',
+  '靠谱': 'success',
+  '新人': 'warning',
+};
+
 Page({
   data: {
     /** 用户信息 */
@@ -109,16 +116,10 @@ Page({
 
   /** 设置用户数据并确定信任分标签颜色 */
   setUserData(user: UserProfile) {
-    const colorMap: Record<string, string> = {
-      '金牌': 'primary',
-      '靠谱': 'success',
-      '新人': 'warning',
-    };
-
     this.setData({
       userInfo: { ...user, avatar: user.avatar || '' },
       isLoggedIn: true,
-      trustLevelColor: colorMap[user.trustLevel] || 'warning',
+      trustLevelColor: TRUST_COLOR_MAP[user.trustLevel] || 'warning',
     });
   },
 

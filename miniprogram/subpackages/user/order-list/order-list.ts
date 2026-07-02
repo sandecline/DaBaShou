@@ -110,8 +110,12 @@ Page({
         pageNum,
         pageSize,
       });
-      const newList = (append ? [...this.data.orderList, ...res.data.list] : res.data.list)
-        .map((order) => ({ ...order, _statusTheme: STATUS_THEME_MAP[order.status] || 'default', myRole: this.data.activeRole }));
+      const rawList = append ? [...this.data.orderList, ...res.data.list] : res.data.list;
+      const newList = rawList.map((order, i) => {
+        // 仅对新追加的数据计算派生值，已有数据直接保留
+        if (append && i < this.data.orderList.length) return order;
+        return { ...order, _statusTheme: STATUS_THEME_MAP[order.status] || 'default', myRole: this.data.activeRole };
+      });
       this.setData({
         orderList: newList,
         hasMore: newList.length < res.data.total,

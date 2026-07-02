@@ -23,12 +23,12 @@ export const demandService = {
     return api.post<{ id: number }>('/v1/demands', params as unknown as Record<string, unknown>);
   },
 
-  /** 接单（揭榜） */
-  bid(demandId: number) {
-    return api.post<void>(`/v1/demands/${demandId}/bid`);
+  /** 接单（揭榜）。后端 POST /v1/demands/{id}/accept，接收 @RequestBody AcceptDto */
+  accept(demandId: number) {
+    return api.post<{ orderId: number }>(`/v1/demands/${demandId}/accept`, {} as unknown as Record<string, unknown>);
   },
 
-  /** 关闭需求 */
+  /** 关闭/取消需求 */
   close(demandId: number) {
     return api.put<void>(`/v1/demands/${demandId}/close`);
   },
@@ -54,10 +54,5 @@ export const demandService = {
       `/v1/demands/${demandId}/match`,
       limit ? { limit } as unknown as Record<string, unknown> : undefined
     );
-  },
-
-  /** 取消需求 */
-  cancel(demandId: number) {
-    return api.post<void>(`/v1/demands/${demandId}/cancel`);
   },
 };

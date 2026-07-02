@@ -19,7 +19,7 @@ export const messageService = {
 
   /** 获取聊天会话列表 */
   getSessions(pageNum = 1, pageSize = 20) {
-    return api.get<ChatSession[]>('/v1/chat/sessions', { pageNum, pageSize } as unknown as Record<string, unknown>);
+    return api.get<PageResult<ChatSession>>('/v1/chat/sessions', { pageNum, pageSize } as unknown as Record<string, unknown>);
   },
 
   /** 创建聊天会话 */
@@ -40,15 +40,7 @@ export const messageService = {
     return api.post<{ id: number }>('/v1/chat/send', params as unknown as Record<string, unknown>);
   },
 
-  /** 标记会话已读（前端无对应接口，保留） */
-  readSession(sessionId: number) {
-    return api.put<void>(`/v1/chat/sessions/${sessionId}/read`);
-  },
-
-  /** 删除会话（前端无对应接口，保留） */
-  deleteSession(sessionId: number) {
-    return api.delete<void>(`/v1/chat/sessions/${sessionId}`);
-  },
+  /** 标记会话已读（通过 WebSocket 发送 read 事件，不走 HTTP） */
 
   // ===== 系统通知 =====
 

@@ -5,6 +5,7 @@
 
 import { demandService } from '../../services/demand';
 import { skillService } from '../../services/skill';
+import { fileService } from '../../services/file';
 import { ensureLogin } from '../../utils/auth';
 import { isTitleValid, isDescValid, isPointPrice } from '../../utils/validator';
 import type { SkillCategory, SkillTag, LocationType } from '../../types/skill';
@@ -59,11 +60,12 @@ Page({
   },
 
   async onLoad() {
+    (this as any)._navigateTimer = null as number | null;
     // #102 修复：检查登录状态
     const loggedIn = await ensureLogin();
     if (!loggedIn) {
       wx.showToast({ title: '请先登录', icon: 'error' });
-      setTimeout(() => wx.navigateBack(), 1000);
+      this.navigateBackSafe(1000);
       return;
     }
     this.loadCategories();
@@ -154,13 +156,22 @@ Page({
   },
 
   // ===== 表单输入 =====
+  // 输入节流：避免每次按键都触发 setData（对 textarea 尤其重要）
 
   onTitleInput(e: WechatMiniprogram.Input) {
-    this.setData({ title: e.detail.value, titleLength: e.detail.value.length });
+    const val = e.detail.value;
+    if ((this as any)._titleTimer) clearTimeout((this as any)._titleTimer);
+    (this as any)._titleTimer = setTimeout(() => {
+      this.setData({ title: val, titleLength: val.length });
+    }, 100);
   },
 
   onDescInput(e: WechatMiniprogram.TextareaInput) {
-    this.setData({ description: e.detail.value, descLength: e.detail.value.length });
+    const val = e.detail.value;
+    if ((this as any)._descTimer) clearTimeout((this as any)._descTimer);
+    (this as any)._descTimer = setTimeout(() => {
+      this.setData({ description: val, descLength: val.length });
+    }, 150);
   },
 
   onRewardInput(e: WechatMiniprogram.Input) {
@@ -275,9 +286,9 @@ Page({
       wx.hideLoading();
 
       wx.showToast({ title: '发布成功', icon: 'success', duration: 1200 });
-      setTimeout(() => {
+      (this as any)._navigateTimer = setTimeout(() => {
         wx.redirectTo({ url: `/pages/demand-detail/demand-detail?id=${res.data.id}` });
-      }, 1200);
+      }, 1200) as unknown as number;
     } catch (err) {
       wx.hideLoading();
       console.error('发布需求失败:', err);
@@ -289,25 +300,23 @@ Page({
 
   /** 并行上传图片，返回远程 URL 列表 */
   async uploadImages(filePaths: string[]): Promise<string[]> {
-    if (filePaths.length === 0) return [];
-    const results = await Promise.allSettled(
-      filePaths.map((filePath) =>
-        wx.uploadFile({
-          url: `${getApp().globalData.apiBaseUrl || 'https://api.dabashou.example.com'}/api/v1/upload/image`,
-          filePath,
-          name: 'file',
-          header: { Authorization: `Bearer ${getApp().globalData.token || ''}` },
-        })
-      )
-    );
-    return results
-      .filter((r) => r.status === 'fulfilled')
-      .map((r) => {
-        try {
-          const d = JSON.parse((r as PromiseFulfilledResult<WechatMiniprogram.UploadFileSuccessCallbackResult>).value.data);
-          return (d.code === 200 && d.data) ? d.data as string : '';
-        } catch { return ''; }
-      })
-      .filter(Boolean);
+    return fileService.uploadBatch(filePaths);
+  },
+
+  onUnload() {
+    // 清理定时器，防止页面销毁后触发导航
+    const self = this as any;
+    if (self._titleTimer) clearTimeout(self._titleTimer);
+    if (self._descTimer) clearTimeout(self._descTimer);
+    if (self._navigateTimer) clearTimeout(self._navigateTimer);
+  },
+
+  /** 安全延迟返回上一页 */
+  navigateBackSafe(delayMs: number) {
+    (this as any)._navigateTimer = setTimeout(() => {
+      const pages = getCurrentPages();
+      if (pages.length > 1) wx.navigateBack();
+      else wx.switchTab({ url: '/pages/index/index' });
+    }, delayMs) as unknown as number;
   },
 });

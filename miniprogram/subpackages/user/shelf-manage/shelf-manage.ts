@@ -121,8 +121,7 @@ Page({
         title: toggleTargetStatus === 1 ? '已上架' : '已下架',
         icon: 'success',
       });
-      this.setData({ showToggleDialog: false });
-      this.setData({ pageNum: 1, hasMore: true });
+      this.setData({ showToggleDialog: false, pageNum: 1, hasMore: true });
       this.loadMyShelf();
     } catch (err) {
       console.error('上下架失败:', err);

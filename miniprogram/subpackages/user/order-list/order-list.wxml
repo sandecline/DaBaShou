@@ -41,7 +41,7 @@
 
       <!-- 服务标题 + 积分 -->
       <view class="order-card__body">
-        <text class="order-card__title">{{item.title}}</text>
+        <text class="order-card__title">{{item.shelfTitle}}</text>
         <text class="order-card__point">{{item.pointAmount}} 积分</text>
       </view>
 

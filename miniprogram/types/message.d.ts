@@ -55,7 +55,7 @@ export interface Notification {
   /** 关联业务 */
   relatedType: string;
   relatedId?: number;
-  isRead: boolean;
+  isRead: 0 | 1;
   readTime?: string | null;
   createTime: string;
 }

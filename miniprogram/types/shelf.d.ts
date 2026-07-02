@@ -4,14 +4,17 @@
  * 与 frontend/src/types/shelf.ts 保持一致
  */
 
-/** 时间格子 */
+/** 时间格子（与后端 TimeSlotVo / TimeSlotDto 对齐） */
 export interface TimeSlot {
   id?: number;
   userId?: number;
   date: string; // YYYY-MM-DD
+  dayOfWeek?: number; // 1=周一 ... 7=周日（后端必填，创建时由服务端推算）
   startTime: string; // HH:mm
   endTime: string; // HH:mm
-  status?: 0 | 1 | 2; // 0-不可用 1-可预约 2-已预约
+  available?: boolean; // 是否可预约（后端 VO 使用 available，取代旧 status）
+  /** @deprecated 请使用 available */
+  status?: 0 | 1 | 2;
   createTime?: string;
   updateTime?: string;
 }

@@ -3,20 +3,10 @@
  * 与 frontend/src/ 中的枚举定义保持一致
  * 
  * 注意：此文件不受 types/d.ts 运行时不可用的限制，可被所有页面/组件直接 import
+ * 
+ * ORDER_STATUS_MAP 统一在 utils/order-status.ts 中维护
+ * POINT_TRANSACTION_TYPE_MAP 统一在 utils/point-transaction.ts 中维护
  */
-
-// ===== 订单状态 =====
-// 与 frontend/src/types/order.ts 一致
-export const ORDER_STATUS_MAP: Record<number, string> = {
-  0: '已取消',
-  1: '待支付',
-  2: '已支付（担保中）',  // 与前端对齐
-  3: '服务中',
-  4: '待确认',
-  5: '已完成',
-  6: '已退款',
-  7: '争议中',
-};
 
 // ===== 需求状态 =====
 // 与 frontend views/demand/detail.vue 一致
@@ -71,15 +61,7 @@ export const PROFICIENCY_MAP: Record<number, string> = {
 };
 
 // ===== 积分流水类型 =====
-// 与 frontend/src/types/api.ts 一致
-export const POINT_TRANSACTION_TYPE_MAP: Record<number, string> = {
-  1: '收入',
-  2: '支出',
-  3: '冻结',
-  4: '解冻',
-  5: '签到奖励',
-  6: '系统调整',
-};
+// 统一在 utils/point-transaction.ts 中维护，此处仅保留全局通用枚举
 
 // ===== 通知类型 =====
 // 与 frontend/src/types/message.ts 一致

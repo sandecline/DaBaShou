@@ -39,23 +39,23 @@ export async function silentLogin(): Promise<UserProfile> {
 
     // 2. 后端用 code 换取 openid，生成 JWT
     const res = await request<{
-      access_token: string;
-      refresh_token: string;
+      accessToken: string;
+      refreshToken: string;
       user: UserProfile;
     }>({
-      url: '/api/v1/auth/wechat-login',
+      url: '/v1/auth/login',
       method: 'POST',
       data: { code },
     });
 
     // 3. 存储 token
-    wx.setStorageSync('access_token', res.data.access_token);
-    wx.setStorageSync('refresh_token', res.data.refresh_token);
+    wx.setStorageSync('access_token', res.data.accessToken);
+    wx.setStorageSync('refresh_token', res.data.refreshToken);
     wx.setStorageSync('user_info', res.data.user);
 
     // 4. 更新全局状态
     const app = getApp();
-    app.globalData.token = res.data.access_token;
+    app.globalData.token = res.data.accessToken;
     app.globalData.userInfo = res.data.user;
     app.globalData.isLoggedIn = true;
 

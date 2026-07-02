@@ -26,7 +26,7 @@ export interface Order {
   counterpartNickname?: string;
   counterpartAvatar?: string;
   /** 服务标题 */
-  title: string;
+  shelfTitle: string;
   /** 技能标签名 */
   skillTagName?: string;
   /** 积分金额 */
@@ -34,7 +34,7 @@ export interface Order {
   /** 订单状态 */
   status: OrderStatus;
   /** 状态描述 */
-  statusDesc?: string;
+  statusName?: string;
   createTime: string;
 }
 

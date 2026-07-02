@@ -7,6 +7,8 @@ import { demandService } from '../../services/demand';
 import type { Demand } from '../../types/demand';
 import { getTrustLevel } from '../../utils/enums';
 
+const STATUS_LABEL_MAP: Record<number, string> = { 0: '已关闭', 1: '待接单', 2: '进行中', 3: '已完成' };
+
 Page({
   data: {
     /** 需求ID */
@@ -43,7 +45,9 @@ Page({
     const id = Number(options.id);
     if (!id) {
       wx.showToast({ title: '参数错误', icon: 'error' });
-      wx.navigateBack();
+      const pages = getCurrentPages();
+      if (pages.length > 1) wx.navigateBack();
+      else wx.switchTab({ url: '/pages/index/index' });
       return;
     }
     this.setData({ demandId: id });
@@ -78,8 +82,6 @@ Page({
       const deadlineCountdown = expired ? 0 : Math.max(0, deadline - now);
 
       // 预计算 WXML 派生值，避免嵌套三元
-      const STATUS_LABEL_MAP: Record<number, string> = { 0: '已关闭', 1: '待接单', 2: '进行中', 3: '已完成' };
-      const statusTheme = demand.status === 1 ? 'warning' : demand.status === 2 ? 'primary' : demand.status === 3 ? 'success' : 'default';
       const statusLabel = STATUS_LABEL_MAP[demand.status] || '未知';
       const trust = getTrustLevel(demand.trustScore || 0);
       const trustTheme = trust.level === '金牌' ? 'success' : trust.level === '靠谱' ? 'primary' : 'default';
@@ -123,7 +125,7 @@ Page({
 
         this.setData({ accepting: true });
         try {
-          await demandService.bid(demandId);
+          await demandService.accept(demandId);
           wx.showToast({ title: '接单成功', icon: 'success' });
           // 局部更新状态，避免全量 setData 导致页面闪烁
           const newStatus = 2;

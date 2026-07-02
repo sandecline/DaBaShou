@@ -200,9 +200,11 @@ Page({
       }
 
       // 延迟返回上一页
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
+      (this as any)._navTimer = setTimeout(() => {
+        const pages = getCurrentPages();
+        if (pages.length > 1) wx.navigateBack();
+        else wx.switchTab({ url: '/pages/index/index' });
+      }, 1500) as unknown as number;
     } catch (err) {
       console.error('[ProfileEdit] 保存失败:', err);
       wx.hideLoading();
@@ -210,5 +212,10 @@ Page({
     } finally {
       this.setData({ submitting: false });
     }
+  },
+
+  onUnload() {
+    const self = this as any;
+    if (self._navTimer) clearTimeout(self._navTimer);
   },
 });

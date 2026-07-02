@@ -106,10 +106,9 @@ Page({
 
     this.setData({ actionLoading: true });
     try {
-      await demandService.cancel(cancelTargetId);
+      await demandService.close(cancelTargetId);
       wx.showToast({ title: '已取消', icon: 'success' });
-      this.setData({ showCancelDialog: false });
-      this.setData({ pageNum: 1, hasMore: true });
+      this.setData({ showCancelDialog: false, pageNum: 1, hasMore: true });
       this.loadMyDemands();
     } catch (err) {
       console.error('取消求助失败:', err);
