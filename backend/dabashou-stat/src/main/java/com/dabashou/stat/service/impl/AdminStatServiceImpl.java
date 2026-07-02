@@ -2,12 +2,14 @@ package com.dabashou.stat.service.impl;
 
 import com.dabashou.stat.service.AdminStatService;
 import com.dabashou.stat.vo.*;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -39,7 +41,7 @@ public class AdminStatServiceImpl implements AdminStatService {
         vo.setTotalPointsInCirculation(qi("SELECT IFNULL(SUM(point_balance),0) FROM dbs_user"));
         vo.setPendingAppeals(qi("SELECT COUNT(*) FROM credit_appeal WHERE status=0"));
         vo.setDisputingOrders(qi("SELECT COUNT(*) FROM dbs_order WHERE status=7"));
-        vo.setPendingCampusAuths(qi("SELECT COUNT(*) FROM dbs_user_campus_auth WHERE status=0"));
+        vo.setPendingCampusAuths(hasTable("dbs_user_campus_auth") ? qi("SELECT COUNT(*) FROM dbs_user_campus_auth WHERE status=0") : 0);
         vo.setPendingViolations(qi("SELECT COUNT(*) FROM credit_violation WHERE status=0"));
         return vo;
     }
@@ -49,12 +51,34 @@ public class AdminStatServiceImpl implements AdminStatService {
         Map<String, Map<String, Integer>> map = new LinkedHashMap<>();
         jdbc.queryForList("SELECT DATE(create_time) dt, COUNT(*) cnt FROM dbs_user WHERE create_time >= DATE_SUB(NOW(), INTERVAL ? DAY) GROUP BY dt", days)
                 .forEach(r -> data(map, r, "newUserCount"));
-        jdbc.queryForList("SELECT DATE(create_time) dt, COUNT(DISTINCT buyer_id) + COUNT(DISTINCT seller_id) cnt FROM dbs_order WHERE create_time >= DATE_SUB(NOW(), INTERVAL ? DAY) GROUP BY dt", days)
+        jdbc.queryForList("""
+                SELECT DATE(create_time) dt, COUNT(DISTINCT CASE WHEN buyer_id IS NOT NULL THEN buyer_id END) +
+                COUNT(DISTINCT CASE WHEN seller_id IS NOT NULL AND seller_id != buyer_id THEN seller_id END) cnt
+                FROM dbs_order WHERE create_time >= DATE_SUB(NOW(), INTERVAL ? DAY) GROUP BY dt
+                """, days)
                 .forEach(r -> data(map, r, "activeUserCount"));
         jdbc.queryForList("SELECT DATE(create_time) dt, COUNT(*) cnt FROM dbs_order WHERE create_time >= DATE_SUB(NOW(), INTERVAL ? DAY) GROUP BY dt", days)
                 .forEach(r -> data(map, r, "newOrderCount"));
         jdbc.queryForList("SELECT DATE(create_time) dt, COUNT(*) cnt FROM dbs_order WHERE status=5 AND create_time >= DATE_SUB(NOW(), INTERVAL ? DAY) GROUP BY dt", days)
                 .forEach(r -> data(map, r, "completedOrderCount"));
+
+        Map<String, Integer> inflowMap = new LinkedHashMap<>();
+        Map<String, Integer> outflowMap = new LinkedHashMap<>();
+        try {
+            jdbc.queryForList("""
+                    SELECT DATE(create_time) dt,
+                           SUM(CASE WHEN type IN (1, 5) THEN amount ELSE 0 END) AS inflow,
+                           SUM(CASE WHEN type IN (2, 3) THEN amount ELSE 0 END) AS outflow
+                    FROM dbs_point_transaction
+                    WHERE create_time >= DATE_SUB(NOW(), INTERVAL ? DAY)
+                    GROUP BY dt
+                    """, days).forEach(r -> {
+                String dt = r.get("dt").toString();
+                inflowMap.put(dt, ((Number) r.get("inflow")).intValue());
+                outflowMap.put(dt, ((Number) r.get("outflow")).intValue());
+            });
+        } catch (Exception ignored) {
+        }
 
         List<DailyTrendVo> list = new ArrayList<>();
         LocalDate start = LocalDate.now().minusDays(days - 1);
@@ -68,8 +92,8 @@ public class AdminStatServiceImpl implements AdminStatService {
             vo.setActiveUserCount(m.getOrDefault("activeUserCount", 0));
             vo.setNewOrderCount(m.getOrDefault("newOrderCount", 0));
             vo.setCompletedOrderCount(m.getOrDefault("completedOrderCount", 0));
-            vo.setPointInflow(0);
-            vo.setPointOutflow(0);
+            vo.setPointInflow(inflowMap.getOrDefault(date, 0));
+            vo.setPointOutflow(outflowMap.getOrDefault(date, 0));
             list.add(vo);
         }
         return list;
@@ -95,18 +119,24 @@ public class AdminStatServiceImpl implements AdminStatService {
 
     @Override
     public List<TrustDistributionVo> getTrustDistribution() {
+        List<Map<String, Object>> rows = jdbc.queryForList("""
+                SELECT
+                  CASE WHEN trust_score < 3.0 THEN '新人'
+                       WHEN trust_score < 4.0 THEN '靠谱'
+                       ELSE '金牌' END AS level,
+                  COUNT(*) AS cnt
+                FROM dbs_user
+                GROUP BY level
+                """);
         Map<String, Integer> map = new LinkedHashMap<>();
         map.put("新人", 0);
         map.put("靠谱", 0);
         map.put("金牌", 0);
-        jdbc.queryForList("SELECT trust_score FROM dbs_user").forEach(r -> {
-            Object v = r.get("trust_score");
-            if (v == null) return;
-            double s = v instanceof BigDecimal ? ((BigDecimal) v).doubleValue() : Double.parseDouble(v.toString());
-            if (s < 3.0) map.merge("新人", 1, Integer::sum);
-            else if (s < 4.0) map.merge("靠谱", 1, Integer::sum);
-            else map.merge("金牌", 1, Integer::sum);
-        });
+        for (Map<String, Object> r : rows) {
+            String level = r.get("level").toString();
+            int cnt = ((Number) r.get("cnt")).intValue();
+            map.put(level, cnt);
+        }
         int total = map.values().stream().mapToInt(i -> i).sum();
         return map.entrySet().stream().map(e -> {
             TrustDistributionVo vo = new TrustDistributionVo();
@@ -122,6 +152,29 @@ public class AdminStatServiceImpl implements AdminStatService {
         return "stub export".getBytes(StandardCharsets.UTF_8);
     }
 
+    @Override
+    public List<SkillHeatVo> getSkillHeat(int limit) {
+        String sql = """
+                SELECT t.id, t.name,
+                    (SELECT COUNT(*) FROM dbs_skill_shelf s WHERE s.skill_tag_id=t.id) AS shelf_count,
+                    (SELECT COUNT(*) FROM dbs_demand d WHERE d.skill_tag_id=t.id) AS demand_count,
+                    (SELECT COUNT(*) FROM dbs_order o WHERE o.skill_tag_id=t.id) AS order_count
+                FROM dbs_skill_tag t ORDER BY order_count DESC LIMIT ?""";
+        return jdbc.queryForList(sql, limit).stream().map(r -> {
+            SkillHeatVo vo = new SkillHeatVo();
+            vo.setSkillTagId(((Number) r.get("id")).longValue());
+            vo.setSkillTagName((String) r.get("name"));
+            int shelf = ((Number) r.get("shelf_count")).intValue();
+            int demand = ((Number) r.get("demand_count")).intValue();
+            int order = ((Number) r.get("order_count")).intValue();
+            vo.setShelfCount(shelf);
+            vo.setDemandCount(demand);
+            vo.setOrderCount(order);
+            vo.setHeatScore(BigDecimal.valueOf(shelf * 1L + demand * 2L + order * 3L));
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
     private void data(Map<String, Map<String, Integer>> map, Map<String, Object> r, String key) {
         String dt = r.get("dt").toString();
         map.computeIfAbsent(dt, k -> new HashMap<>()).put(key, ((Number) r.get("cnt")).intValue());
@@ -130,5 +183,21 @@ public class AdminStatServiceImpl implements AdminStatService {
     private Integer qi(String sql, Object... args) {
         Number n = jdbc.queryForObject(sql, Number.class, args);
         return n != null ? n.intValue() : 0;
+    }
+
+    private boolean hasTable(String tableName) {
+        try {
+            return Boolean.TRUE.equals(jdbc.execute((org.springframework.jdbc.core.ConnectionCallback<Boolean>) connection -> {
+                String upperName = tableName.toUpperCase(Locale.ROOT);
+                try (ResultSet rs = connection.getMetaData().getTables(null, null, upperName, new String[]{"TABLE"})) {
+                    if (rs.next()) return true;
+                }
+                try (ResultSet rs = connection.getMetaData().getTables(null, null, tableName, new String[]{"TABLE"})) {
+                    return rs.next();
+                }
+            }));
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

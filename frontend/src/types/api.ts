@@ -543,9 +543,6 @@ export interface AdminOverviewVo {
 
 export interface DailyTrendItem {
   date: string
-  newUsers?: number
-  newOrders?: number
-  completedOrders?: number
   newUserCount: number
   activeUserCount: number
   newOrderCount: number
@@ -556,9 +553,7 @@ export interface DailyTrendItem {
 
 export interface UserActiveItem {
   date: string
-  activeUsers: number
-  newUsers: number
-  value?: number
+  value: number
 }
 
 export interface TrustDistributionItem {

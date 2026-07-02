@@ -4,7 +4,6 @@
  */
 
 import { userService } from '../../services/user';
-import { login } from '../../utils/auth';
 import type { UserProfile } from '../../types/user';
 
 interface MenuItem {
@@ -136,43 +135,9 @@ Page({
     });
   },
 
-  /** 点击登录按钮 — 调起微信静默登录 */
-  async onLogin() {
-    try {
-      const input = await new Promise<string>((resolve, reject) => {
-        wx.showModal({
-          title: '账号登录',
-          editable: true,
-          placeholderText: '请输入: 用户名 密码',
-          confirmText: '登录',
-          success(res) {
-            if (res.confirm) resolve((res.content || '').trim());
-            else reject(new Error('cancelled'));
-          },
-          fail: reject,
-        });
-      });
-      const [username, password] = input.split(/\s+/);
-      if (!username || !password) {
-        wx.showToast({ title: '请输入用户名和密码', icon: 'none' });
-        return;
-      }
-      wx.showLoading({ title: '登录中...', mask: true });
-      await login(username, password);
-      wx.hideLoading();
-
-      const app = getApp();
-      const user = app.globalData.userInfo;
-      if (user) {
-        this.setUserData(user);
-      }
-
-      wx.showToast({ title: '登录成功', icon: 'success' });
-    } catch (err) {
-      wx.hideLoading();
-      console.error('[Mine] 登录失败:', err);
-      wx.showToast({ title: '登录失败，请重试', icon: 'none' });
-    }
+  /** 点击登录按钮 — 跳转登录页 */
+  onLogin() {
+    wx.navigateTo({ url: '/pages/login/login' });
   },
 
   onShareAppMessage() {

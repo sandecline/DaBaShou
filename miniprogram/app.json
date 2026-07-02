@@ -4,6 +4,7 @@
     "pages/publish/publish",
     "pages/message/message",
     "pages/mine/mine",
+    "pages/login/login",
     "pages/skill-detail/skill-detail",
     "pages/demand-detail/demand-detail",
     "pages/publish-skill/publish-skill",

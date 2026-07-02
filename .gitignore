@@ -55,6 +55,7 @@ build/
 # Node
 node_modules/
 dist/
+miniprogram/miniprogram_npm/
 .nuxt/
 .next/
 out/

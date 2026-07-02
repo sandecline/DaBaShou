@@ -17,13 +17,13 @@ const adminRoutes: RouteRecordRaw[] = [
     path: '/admin/orders',
     name: 'AdminOrders',
     component: () => import('@/views/admin/order/index.vue'),
-    meta: { title: '订单管理', requiresAuth: true, role: 'admin' },
+    meta: { title: '订单仲裁', requiresAuth: true, role: 'admin' },
   },
   {
     path: '/admin/credit',
     name: 'AdminCredit',
     component: () => import('@/views/admin/credit/index.vue'),
-    meta: { title: '信用管理', requiresAuth: true, role: 'admin' },
+    meta: { title: '信用审核', requiresAuth: true, role: 'admin' },
   },
   {
     path: '/admin/campus-auths',

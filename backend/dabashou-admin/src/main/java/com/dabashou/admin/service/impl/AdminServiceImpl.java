@@ -159,7 +159,7 @@ public class AdminServiceImpl implements AdminService {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 SELECT v.id, v.user_id AS targetUserId, u.nickname AS targetNickname, v.reporter_id AS reporterId,
                        r.nickname AS reporterNickname, v.order_id AS orderId, v.type, v.description AS reason,
-                       v.description, v.status, v.create_time AS createTime
+                       v.description, v.handle_result AS handleResult, v.status, v.create_time AS createTime
                   FROM credit_violation v
                   LEFT JOIN dbs_user u ON u.id = v.user_id
                   LEFT JOIN dbs_user r ON r.id = v.reporter_id
@@ -172,11 +172,19 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void handleViolation(Long adminId, Long id, AdminDto.ViolationHandleRequest request) {
-        Map<String, Object> violation = queryOne("SELECT id, user_id, order_id, penalty_score FROM credit_violation WHERE id = ?", id);
-        jdbcTemplate.update("UPDATE credit_violation SET status = 1, description = ?, update_time = ? WHERE id = ?",
-                request.getResult(), LocalDateTime.now(), id);
-        addTrustLog(asLong(violation.get("user_id")), asLong(violation.get("order_id")), "violation", -0.5, request.getResult());
-        audit(adminId, "ADMIN_VIOLATION_HANDLE", "处理违规 violationId=" + id, 1, null);
+        Map<String, Object> violation = queryOne("SELECT id, user_id, order_id, penalty_score, status FROM credit_violation WHERE id = ?", id);
+        if (asInt(violation.get("status")) != 0) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "该违规记录已处理，不可重复操作");
+        }
+        String handleText = request.getResult() + (request.getReason() != null && !request.getReason().isBlank() ? ": " + request.getReason() : "");
+        int updated = jdbcTemplate.update("UPDATE credit_violation SET status = 1, handle_result = ?, update_time = ? WHERE id = ? AND status = 0",
+                handleText, LocalDateTime.now(), id);
+        if (updated != 1) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "违规记录不存在或已被处理");
+        }
+        double penalty = getViolationPenalty();
+        addTrustLog(asLong(violation.get("user_id")), asLong(violation.get("order_id")), "violation", -penalty, handleText);
+        audit(adminId, "ADMIN_VIOLATION_HANDLE", "处理违规 violationId=" + id + ", result=" + request.getResult(), 1, null);
     }
 
     @Override
@@ -196,14 +204,18 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void handleAppeal(Long adminId, Long id, AdminDto.AppealHandleRequest request) {
+        Map<String, Object> appeal = queryOne("SELECT id, status FROM credit_appeal WHERE id = ?", id);
+        if (asInt(appeal.get("status")) != 0) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "该申诉已处理，不可重复操作");
+        }
         int status = Boolean.TRUE.equals(request.getApproved()) ? 1 : 2;
         int updated = jdbcTemplate.update("""
                 UPDATE credit_appeal
                    SET status = ?, reviewer_id = ?, review_remark = ?, review_time = ?, update_time = ?
-                 WHERE id = ?
+                 WHERE id = ? AND status = 0
                 """, status, adminId, request.getReason(), LocalDateTime.now(), LocalDateTime.now(), id);
         if (updated != 1) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "申诉不存在: " + id);
+            throw new BusinessException(ErrorCode.NOT_FOUND, "申诉不存在或已被处理");
         }
         audit(adminId, "ADMIN_APPEAL_HANDLE", "处理申诉 appealId=" + id + ", approved=" + request.getApproved(), 1, null);
     }
@@ -369,8 +381,7 @@ public class AdminServiceImpl implements AdminService {
 
     private void normalizeViolationRow(Map<String, Object> row) {
         row.put("typeDesc", asString(row.get("type")));
-        row.put("statusDesc", asInt(row.get("status")) == 0 ? "已撤销" : "有效");
-        row.put("handleResult", row.get("description"));
+        row.put("statusDesc", asInt(row.get("status")) == 0 ? "待处理" : "已处理");
         row.put("evidence", List.of());
     }
 
@@ -405,6 +416,16 @@ public class AdminServiceImpl implements AdminService {
                 INSERT INTO dbs_user_trust_score_log (user_id, order_id, type, score_change, score_before, score_after, reason)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, userId, orderId, type, scoreChange, before, after, reason);
+    }
+
+    private double getViolationPenalty() {
+        try {
+            String val = jdbcTemplate.queryForObject(
+                    "SELECT config_value FROM sys_config WHERE config_key = 'credit.violation_penalty'", String.class);
+            return val != null ? Double.parseDouble(val) : 0.5;
+        } catch (Exception e) {
+            return 0.5;
+        }
     }
 
     private void audit(Long operatorId, String type, String content, int status, String errorMsg) {

@@ -3,6 +3,7 @@
  */
 
 import { messageService } from '../../services/message';
+import { ensureLogin } from '../../utils/auth';
 import type { ChatSession } from '../../types/message';
 
 let _lastLoadTime = 0;
@@ -14,17 +15,20 @@ Page({
     loading: true,
   },
 
-  onLoad() {
+  async onLoad() {
     _lastLoadTime = Date.now();
+    if (!(await ensureLogin())) {
+      this.setData({ loading: false });
+      return;
+    }
     this.loadSessions();
   },
 
-  onShow() {
-    // 3 秒内不重复请求
-    if (Date.now() - _lastLoadTime > LOAD_DEBOUNCE) {
-      _lastLoadTime = Date.now();
-      this.loadSessions();
-    }
+  async onShow() {
+    if (Date.now() - _lastLoadTime < LOAD_DEBOUNCE) return;
+    _lastLoadTime = Date.now();
+    if (!(await ensureLogin())) return;
+    this.loadSessions();
   },
 
   onPullDownRefresh() {

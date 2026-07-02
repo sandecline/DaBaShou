@@ -19,6 +19,16 @@ const MOCK_DELAY = 120;
 /** Token 刷新最大重试次数 */
 const MAX_REFRESH_RETRIES = 3;
 
+/** 移除 data 中的 undefined/null 值，避免 wx.request 序列化为字符串 "undefined" */
+function cleanParams(data?: Record<string, unknown>): Record<string, unknown> {
+  if (!data) return {};
+  const cleaned: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (v !== undefined && v !== null) cleaned[k] = v;
+  }
+  return cleaned;
+}
+
 interface RequestOptions {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -46,7 +56,7 @@ function request<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> 
     wx.request({
       url: `${BASE_URL}${options.url}`,
       method: options.method || 'GET',
-      data: options.data || {},
+      data: cleanParams(options.data),
       header: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -130,7 +140,7 @@ function rawRequest<T = unknown>(options: RequestOptions): Promise<ApiResponse<T
     wx.request({
       url: `${BASE_URL}${options.url}`,
       method: options.method || 'POST',
-      data: options.data || {},
+      data: cleanParams(options.data),
       header: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),

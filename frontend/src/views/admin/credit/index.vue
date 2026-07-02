@@ -40,6 +40,9 @@
         </template>
       </el-table-column>
     </el-table>
+    <div v-if="activeTab === 'violations' && violationsTotal > 0" class="pagination-wrap">
+      <el-pagination v-model:current-page="violationsPage" :page-size="pageSize" :total="violationsTotal" layout="prev, pager, next, total" @current-change="loadViolations" />
+    </div>
 
     <el-table v-if="activeTab === 'appeals'" :data="appeals" stripe v-loading="appealsLoading" border>
       <el-table-column prop="appellantNickname" label="申诉人" width="130" />
@@ -63,6 +66,9 @@
         </template>
       </el-table-column>
     </el-table>
+    <div v-if="activeTab === 'appeals' && appealsTotal > 0" class="pagination-wrap">
+      <el-pagination v-model:current-page="appealsPage" :page-size="pageSize" :total="appealsTotal" layout="prev, pager, next, total" @current-change="loadAppeals" />
+    </div>
 
     <el-table v-if="activeTab === 'reviews'" :data="reviews" stripe v-loading="reviewsLoading" border>
       <el-table-column prop="orderTitle" label="订单" min-width="170" show-overflow-tooltip />
@@ -83,6 +89,9 @@
         </template>
       </el-table-column>
     </el-table>
+    <div v-if="activeTab === 'reviews' && reviewsTotal > 0" class="pagination-wrap">
+      <el-pagination v-model:current-page="reviewsPage" :page-size="pageSize" :total="reviewsTotal" layout="prev, pager, next, total" @current-change="loadReviews" />
+    </div>
 
     <el-dialog v-model="violationDialog" title="处理违规记录" width="420px">
       <el-form label-position="top">
@@ -152,6 +161,13 @@ const violationAction = ref<'confirm' | 'dismiss'>('confirm')
 const appealApproved = ref(true)
 const violationReason = ref('')
 const appealReason = ref('')
+const pageSize = 20
+const violationsPage = ref(1)
+const violationsTotal = ref(0)
+const appealsPage = ref(1)
+const appealsTotal = ref(0)
+const reviewsPage = ref(1)
+const reviewsTotal = ref(0)
 
 const currentLoading = computed(() => {
   if (activeTab.value === 'violations') return violationsLoading.value
@@ -162,8 +178,9 @@ const currentLoading = computed(() => {
 async function loadViolations() {
   violationsLoading.value = true
   try {
-    const result = await getAdminViolations({ pageNum: 1, pageSize: 50 })
+    const result = await getAdminViolations({ pageNum: violationsPage.value, pageSize })
     violations.value = result.list as ViolationRow[]
+    violationsTotal.value = result.total
   } catch {
     // handled
   } finally {
@@ -174,8 +191,9 @@ async function loadViolations() {
 async function loadAppeals() {
   appealsLoading.value = true
   try {
-    const result = await getAdminAppeals({ pageNum: 1, pageSize: 50 })
+    const result = await getAdminAppeals({ pageNum: appealsPage.value, pageSize })
     appeals.value = result.list as AppealRow[]
+    appealsTotal.value = result.total
   } catch {
     // handled
   } finally {
@@ -186,8 +204,9 @@ async function loadAppeals() {
 async function loadReviews() {
   reviewsLoading.value = true
   try {
-    const result = await getAdminReviews({ pageNum: 1, pageSize: 50 })
+    const result = await getAdminReviews({ pageNum: reviewsPage.value, pageSize })
     reviews.value = result.list
+    reviewsTotal.value = result.total
   } catch {
     // handled
   } finally {
@@ -233,7 +252,7 @@ async function submitViolation() {
   }
   submitting.value = true
   try {
-    await adminHandleViolation(currentViolation.value.id, `${violationAction.value}:${violationReason.value.trim()}`)
+    await adminHandleViolation(currentViolation.value.id, { result: violationAction.value, reason: violationReason.value.trim() })
     ElMessage.success('违规记录已处理')
     violationDialog.value = false
     loadViolations()
@@ -283,3 +302,11 @@ onMounted(() => {
   loadReviews()
 })
 </script>
+
+<style scoped lang="scss">
+.pagination-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+</style>

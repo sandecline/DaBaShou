@@ -291,6 +291,8 @@ export async function ensureLogin(): Promise<boolean> {
     return true;
   }
 
+  // 未登录，跳转登录页
+  wx.navigateTo({ url: '/pages/login/login' });
   return false;
 }
 

@@ -1,5 +1,6 @@
 package com.dabashou.admin.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -22,6 +23,7 @@ public final class AdminDto {
         @NotBlank(message = "仲裁结果不能为空")
         private String result;
         private String reason;
+        @Min(value = 0, message = "退款金额不能为负数")
         private Integer refundAmount;
 
         public String getResult() { return result; }
@@ -35,9 +37,12 @@ public final class AdminDto {
     public static class ViolationHandleRequest {
         @NotBlank(message = "处理结果不能为空")
         private String result;
+        private String reason;
 
         public String getResult() { return result; }
         public void setResult(String result) { this.result = result; }
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
     }
 
     public static class AppealHandleRequest {

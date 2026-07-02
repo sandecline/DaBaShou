@@ -9,5 +9,6 @@ public interface AdminStatService {
     List<DailyTrendVo> getDailyTrend(int days);
     List<TrendItemVo> getUserActive(int days);
     List<TrustDistributionVo> getTrustDistribution();
+    List<SkillHeatVo> getSkillHeat(int limit);
     byte[] exportData(String type);
 }

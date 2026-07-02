@@ -42,10 +42,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Refresh } from '@element-plus/icons-vue'
-import { getAdminDailyTrend, getAdminOverview, getAdminTrustDistribution, getAdminUserActive } from '@/api/admin'
-import { getSkillHeat } from '@/api/stat'
+import { getAdminDailyTrend, getAdminOverview, getAdminSkillHeat, getAdminTrustDistribution, getAdminUserActive } from '@/api/admin'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import * as echarts from 'echarts'
@@ -61,6 +60,12 @@ const lineChartRef = ref<HTMLElement>()
 const barChartRef = ref<HTMLElement>()
 const trustChartRef = ref<HTMLElement>()
 const activeChartRef = ref<HTMLElement>()
+const chartInstances: echarts.ECharts[] = []
+
+function disposeCharts() {
+  chartInstances.forEach((c) => c.dispose())
+  chartInstances.length = 0
+}
 
 const statCards = computed(() => [
   { label: '注册用户', value: overview.value?.totalUsers ?? 0, hint: `今日新增 ${overview.value?.todayNewUsers ?? 0}` },
@@ -77,7 +82,7 @@ async function loadData() {
     const [overviewResult, dailyResult, heatResult, activeResult, trustResult] = await Promise.all([
       getAdminOverview().catch(() => null),
       getAdminDailyTrend(30).catch(() => []),
-      getSkillHeat(10).catch(() => []),
+      getAdminSkillHeat(10).catch(() => []),
       getAdminUserActive(30).catch(() => []),
       getAdminTrustDistribution().catch(() => []),
     ])
@@ -119,23 +124,25 @@ function fillActive(data: UserActiveItem[]) {
   if (data.length > 0) return data
   return dailyData.value.map((item) => ({
     date: item.date,
-    activeUsers: item.activeUserCount,
-    newUsers: item.newUserCount,
+    value: item.activeUserCount,
   }))
 }
 
 function renderCharts() {
+  disposeCharts()
+
   if (lineChartRef.value) {
     const chart = echarts.init(lineChartRef.value)
+    chartInstances.push(chart)
     chart.setOption({
       tooltip: { trigger: 'axis' },
       legend: { data: ['新增用户', '新增订单', '完成订单'] },
       xAxis: { type: 'category', data: dailyData.value.map((d) => d.date.slice(5)) },
       yAxis: { type: 'value' },
       series: [
-        { name: '新增用户', type: 'line', data: dailyData.value.map((d) => d.newUsers ?? d.newUserCount ?? 0), smooth: true, itemStyle: { color: '#0f766e' } },
-        { name: '新增订单', type: 'line', data: dailyData.value.map((d) => d.newOrders ?? d.newOrderCount ?? 0), smooth: true, itemStyle: { color: '#b45309' } },
-        { name: '完成订单', type: 'line', data: dailyData.value.map((d) => d.completedOrders ?? d.completedOrderCount ?? 0), smooth: true, itemStyle: { color: '#2563eb' } },
+        { name: '新增用户', type: 'line', data: dailyData.value.map((d) => d.newUserCount), smooth: true, itemStyle: { color: '#0f766e' } },
+        { name: '新增订单', type: 'line', data: dailyData.value.map((d) => d.newOrderCount), smooth: true, itemStyle: { color: '#b45309' } },
+        { name: '完成订单', type: 'line', data: dailyData.value.map((d) => d.completedOrderCount), smooth: true, itemStyle: { color: '#2563eb' } },
       ],
     })
   }
@@ -145,6 +152,7 @@ function renderCharts() {
       ? heatData.value
       : [{ skillTagId: 0, skillTagName: '暂无数据', shelfCount: 0, demandCount: 0, orderCount: 0, heatScore: 0 }]
     const chart = echarts.init(barChartRef.value)
+    chartInstances.push(chart)
     chart.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       xAxis: { type: 'category', data: chartData.map((d) => d.tagName ?? d.skillTagName) },
@@ -155,6 +163,7 @@ function renderCharts() {
 
   if (trustChartRef.value) {
     const chart = echarts.init(trustChartRef.value)
+    chartInstances.push(chart)
     chart.setOption({
       tooltip: { trigger: 'item' },
       series: [{
@@ -168,18 +177,20 @@ function renderCharts() {
 
   if (activeChartRef.value) {
     const chart = echarts.init(activeChartRef.value)
+    chartInstances.push(chart)
     chart.setOption({
       tooltip: { trigger: 'axis' },
       xAxis: { type: 'category', data: activeData.value.map((d) => d.date.slice(5)) },
       yAxis: { type: 'value' },
       series: [
-        { name: '活跃用户', type: 'line', areaStyle: {}, data: activeData.value.map((d) => d.activeUsers ?? d.value ?? 0), smooth: true, itemStyle: { color: '#2563eb' } },
+        { name: '活跃用户', type: 'line', areaStyle: {}, data: activeData.value.map((d) => d.value), smooth: true, itemStyle: { color: '#2563eb' } },
       ],
     })
   }
 }
 
 onMounted(loadData)
+onBeforeUnmount(disposeCharts)
 </script>
 
 <style scoped lang="scss">

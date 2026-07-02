@@ -1,0 +1,79 @@
+<!-- 登录页 -->
+<view class="page-login">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="nav-back" bindtap="onBack">
+      <t-icon name="chevron-left" size="48rpx" color="#333" />
+    </view>
+  </view>
+
+  <!-- Logo + 标题 -->
+  <view class="login-hero">
+    <view class="logo-wrap">
+      <view class="logo-text">搭</view>
+    </view>
+    <text class="app-name">搭把手</text>
+    <text class="app-desc">校园技能互助平台</text>
+  </view>
+
+  <!-- 登录表单 -->
+  <view class="login-form">
+    <view class="input-group">
+      <t-icon name="user" size="40rpx" color="#bbb" class="input-icon" />
+      <input
+        class="form-input"
+        placeholder="请输入用户名"
+        value="{{username}}"
+        bindinput="onUsernameInput"
+        maxlength="30"
+        confirm-type="next"
+        bindconfirm="focusPassword"
+      />
+    </view>
+
+    <view class="input-group">
+      <t-icon name="lock-on" size="40rpx" color="#bbb" class="input-icon" />
+      <input
+        class="form-input"
+        placeholder="请输入密码"
+        password="{{!showPassword}}"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+        maxlength="30"
+        confirm-type="done"
+        bindconfirm="onLogin"
+        id="passwordInput"
+      />
+      <view class="eye-btn" bindtap="togglePassword">
+        <t-icon
+          name="{{showPassword ? 'browse' : 'browse-off'}}"
+          size="40rpx"
+          color="#bbb"
+        />
+      </view>
+    </view>
+
+    <button class="login-btn" bindtap="onLogin" loading="{{loading}}">
+      登 录
+    </button>
+  </view>
+
+  <!-- 测试账号提示 -->
+  <view class="test-hint">
+    <text class="hint-title">测试账号</text>
+    <view class="hint-accounts">
+      <view class="hint-account" bindtap="fillAccount" data-u="admin" data-p="123456">
+        <text class="hint-user">admin</text>
+        <text class="hint-pwd">123456</text>
+      </view>
+      <view class="hint-account" bindtap="fillAccount" data-u="zhangsan" data-p="123456">
+        <text class="hint-user">zhangsan</text>
+        <text class="hint-pwd">123456</text>
+      </view>
+      <view class="hint-account" bindtap="fillAccount" data-u="lisi" data-p="123456">
+        <text class="hint-user">lisi</text>
+        <text class="hint-pwd">123456</text>
+      </view>
+    </view>
+  </view>
+</view>

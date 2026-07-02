@@ -45,6 +45,12 @@ public class AdminStatController {
         return AjaxResult.ok(adminStatService.getTrustDistribution());
     }
 
+    @Operation(summary = "技能热度排行")
+    @GetMapping("/skills/heat")
+    public AjaxResult<List<SkillHeatVo>> skillsHeat(@RequestParam(defaultValue = "10") int limit) {
+        return AjaxResult.ok(adminStatService.getSkillHeat(limit));
+    }
+
     @Operation(summary = "数据导出")
     @GetMapping("/export")
     public ResponseEntity<byte[]> export(@RequestParam String type) {
