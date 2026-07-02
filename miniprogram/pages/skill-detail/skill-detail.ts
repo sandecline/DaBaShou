@@ -19,16 +19,6 @@ function getCurrentUserId(): number {
   }
 }
 
-function getCurrentUserId(): number {
-  try {
-    const app = getApp();
-    const user = app.globalData.userInfo || wx.getStorageSync('user_info');
-    return user?.id || 1001;
-  } catch {
-    return 1001;
-  }
-}
-
 Page({
   data: {
     /** 技能ID */
@@ -49,8 +39,6 @@ Page({
     orderRemark: '',
     /** 当前用户是否已下单 */
     hasOrdered: false,
-    /** 是否为当前用户自己的发布 */
-    isOwner: false,
     /** 是否为当前用户自己的发布 */
     isOwner: false,
     /** 预计算：信任等级主题 */

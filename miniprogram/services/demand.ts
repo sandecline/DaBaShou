@@ -55,4 +55,9 @@ export const demandService = {
       limit ? { limit } as unknown as Record<string, unknown> : undefined
     );
   },
+
+  /** 取消需求 */
+  cancel(demandId: number) {
+    return api.post<void>(`/v1/demands/${demandId}/cancel`);
+  },
 };

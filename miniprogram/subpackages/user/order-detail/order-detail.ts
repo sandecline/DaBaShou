@@ -8,6 +8,16 @@ import { orderService } from '../../../services/order';
 import type { OrderDetail } from '../../../types/order';
 import { ORDER_STATUS_MAP } from '../../../utils/order-status';
 
+function getCurrentUserId(): number {
+  try {
+    const app = getApp();
+    const user = app.globalData.userInfo || wx.getStorageSync('user_info');
+    return user?.id || 1001;
+  } catch {
+    return 1001;
+  }
+}
+
 Page({
   data: {
     orderId: 0,
@@ -53,7 +63,9 @@ Page({
         status === 0 ? 'default' : status === 1 ? 'warning' :
         status === 3 ? 'primary' : status === 5 ? 'success' :
         status === 7 ? 'danger' : 'default';
-      this.setData({ order, statusTheme, loading: false, loadError: false });
+      const myId = getCurrentUserId();
+      const myRole: 'buyer' | 'seller' = order.buyerId === myId ? 'buyer' : 'seller';
+      this.setData({ order: { ...order, myRole }, statusTheme, loading: false, loadError: false });
     } catch (err) {
       console.error('加载订单详情失败:', err);
       this.setData({ loading: false, loadError: true });
@@ -183,6 +195,11 @@ Page({
   // =====================================================================
   //                       辅助判断
   // =====================================================================
+  onCodeBtnTap(e: WechatMiniprogram.BaseEvent) {
+    const { title, action } = e.currentTarget.dataset as { title: string; action: string };
+    this.openCodeDialog(title || '', action || '');
+  },
+
   canCancel(): boolean {
     const s = this.data.order?.status;
     return s !== undefined ? [1, 2, 3, 4].includes(s) : false;

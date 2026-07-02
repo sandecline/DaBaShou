@@ -58,10 +58,10 @@
     <t-button wx:if="{{order.myRole === 'seller' && order.status === 1}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onShowAcceptDialog">接单</t-button>
 
     <!-- 卖家完成验证（卖家 + 服务中） -->
-    <t-button wx:if="{{order.myRole === 'seller' && order.status === 3}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="openCodeDialog" data-title="请输入买家验证码" data-action="completeSeller">验证完成服务</t-button>
+    <t-button wx:if="{{order.myRole === 'seller' && order.status === 3}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="请输入买家验证码" data-action="completeSeller">验证完成服务</t-button>
 
     <!-- 买家完成验证（买家 + 服务中/待确认，但自己还没验证） -->
-    <t-button wx:if="{{order.myRole === 'buyer' && (order.status === 3 || order.status === 4)}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="openCodeDialog" data-title="请输入卖家验证码" data-action="completeBuyer">验证完成服务</t-button>
+    <t-button wx:if="{{order.myRole === 'buyer' && (order.status === 3 || order.status === 4)}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="请输入卖家验证码" data-action="completeBuyer">验证完成服务</t-button>
 
     <!-- 退款（服务中/待确认，双方均可发起） -->
     <t-button wx:if="{{order.status === 3 || order.status === 4}}" theme="light" size="large" block loading="{{actionLoading}}" bindtap="onShowRefundDialog">

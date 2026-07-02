@@ -71,8 +71,8 @@ Page({
 
       // 计算过期状态 & 倒计时（毫秒，供 t-count-down 使用 #73 修复）
       const now = Date.now();
-      // iOS 兼容：将 YYYY-MM-DD 转为 YYYY/MM/DD 再 parse
-      const deadlineStr = demand.deadline.replace(/-/g, '/');
+      // iOS 兼容：将 ISO 时间转为可解析格式（'2026-07-16T23:59:59' → '2026/07/16 23:59:59'）
+      const deadlineStr = (demand.deadline || '').split('-').join('/').split('T').join(' ');
       const deadline = new Date(deadlineStr).getTime();
       const expired = now > deadline || isNaN(deadline);
       const deadlineCountdown = expired ? 0 : Math.max(0, deadline - now);
@@ -125,12 +125,17 @@ Page({
         try {
           await demandService.bid(demandId);
           wx.showToast({ title: '接单成功', icon: 'success' });
-          // 刷新详情
-          this.loadDetail();
+          // 局部更新状态，避免全量 setData 导致页面闪烁
+          const newStatus = 2;
+          this.setData({
+            demand: { ...demand, status: newStatus, statusDesc: '已接单' } as Demand,
+            statusTheme: 'primary',
+            statusLabel: '进行中',
+            accepting: false,
+          });
         } catch (err) {
           console.error('接单失败:', err);
           wx.showToast({ title: '接单失败，请重试', icon: 'error' });
-        } finally {
           this.setData({ accepting: false });
         }
       },

@@ -80,14 +80,14 @@ Page({
   // ===== 跳转发布 =====
 
   goPublish() {
-    wx.navigateTo({ url: '/pages/publish/publish' });
+    wx.navigateTo({ url: '/pages/publish-skill/publish-skill' });
   },
 
   // ===== 编辑技能 =====
 
   onEdit(e: WechatMiniprogram.CustomEvent) {
     const { id } = e.currentTarget.dataset;
-    wx.navigateTo({ url: `/pages/publish/publish?editId=${id}` });
+    wx.navigateTo({ url: `/pages/publish-skill/publish-skill?editId=${id}` });
   },
 
   // ===== 上下架 =====

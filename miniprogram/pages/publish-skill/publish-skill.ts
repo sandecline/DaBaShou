@@ -8,6 +8,7 @@ import { shelfService } from '../../services/shelf';
 import { ensureLogin } from '../../utils/auth';
 import { isTitleValid, isDescValid, isPointPrice } from '../../utils/validator';
 import type { SkillCategory, SkillTag, PublishSkillParams, LocationType } from '../../types/skill';
+import type { SkillShelfForm } from '../../types/shelf';
 
 /** 位置类型选项 */
 const LOCATION_OPTIONS = [
@@ -39,12 +40,16 @@ Page({
     // 提交状态
     submitting: false,
 
+    // 编辑模式
+    editMode: false,
+    editId: 0,
+
     // 字符计数
     titleLength: 0,
     descLength: 0,
   },
 
-  async onLoad() {
+  async onLoad(options: Record<string, string | undefined>) {
     // #92 修复：检查登录状态
     const loggedIn = await ensureLogin();
     if (!loggedIn) {
@@ -52,7 +57,15 @@ Page({
       setTimeout(() => wx.navigateBack(), 1000);
       return;
     }
-    this.loadCategories();
+    // 先加载分类
+    await this.loadCategories();
+    // 编辑模式：加载已有技能数据
+    const editId = Number(options.editId);
+    if (editId) {
+      this.setData({ editMode: true, editId });
+      wx.setNavigationBarTitle({ title: '编辑技能' });
+      this.loadEditData(editId);
+    }
   },
 
   // ===== 数据加载 =====
@@ -72,6 +85,41 @@ Page({
         categories: [{ id: 0, name: '加载失败', icon: '', sortOrder: 0 }],
         tags: [],
       });
+    }
+  },
+
+  /** 加载已有技能数据填充表单 */
+  async loadEditData(shelfId: number) {
+    try {
+      const res = await shelfService.getDetail(shelfId);
+      const skill = (res.data && typeof res.data === 'object') ? res.data : (res as unknown as { title?: string; description?: string; pointPrice?: number; durationMinutes?: number; locationType?: number; skillTagId?: number; images?: string[]; });
+      if (!skill) return;
+
+      // 计算 categoryIndex / tagIndex
+      let catIdx = 0; let tagIdx = 0;
+      const { categories } = this.data;
+      if (categories.length > 0 && skill.skillTagId) {
+        for (let i = 0; i < categories.length; i++) {
+          const tag = categories[i].tags?.find((t) => t.id === skill.skillTagId);
+          if (tag) { catIdx = i; tagIdx = categories[i].tags?.indexOf(tag) ?? 0; break; }
+        }
+      }
+
+      this.setData({
+        title: skill.title || '',
+        description: skill.description || '',
+        pointPrice: String(skill.pointPrice ?? ''),
+        durationMinutes: String(skill.durationMinutes ?? ''),
+        locationType: (skill.locationType || 1) as LocationType,
+        images: (skill as any).images || [],
+        categoryIndex: catIdx,
+        tagIndex: tagIdx,
+        tags: categories[catIdx]?.tags || [],
+        titleLength: (skill.title || '').length,
+        descLength: (skill.description || '').length,
+      });
+    } catch (err) {
+      console.error('加载技能数据失败:', err);
     }
   },
 
@@ -192,9 +240,9 @@ Page({
       return;
     }
 
-    const { tagIndex, tags, title, description, pointPrice, durationMinutes, locationType, images } = this.data;
+    const { tagIndex, tags, title, description, pointPrice, durationMinutes, locationType, images, editMode, editId } = this.data;
 
-    wx.showLoading({ title: '发布中...', mask: true });
+    wx.showLoading({ title: editMode ? '保存中...' : '发布中...', mask: true });
     this.setData({ submitting: true });
 
     try {
@@ -214,13 +262,19 @@ Page({
         images: remoteImages,
       };
 
-      const res = await shelfService.publish(params);
       wx.hideLoading();
 
-      wx.showToast({ title: '发布成功', icon: 'success', duration: 1200 });
-      setTimeout(() => {
-        wx.redirectTo({ url: `/pages/skill-detail/skill-detail?id=${res.data.id}` });
-      }, 1200);
+      if (editMode && editId) {
+        await shelfService.update(editId, params as unknown as SkillShelfForm);
+        wx.showToast({ title: '保存成功', icon: 'success', duration: 1200 });
+        setTimeout(() => wx.navigateBack(), 1200);
+      } else {
+        const pubRes = await shelfService.publish(params);
+        wx.showToast({ title: '发布成功', icon: 'success', duration: 1200 });
+        setTimeout(() => {
+          wx.redirectTo({ url: `/pages/skill-detail/skill-detail?id=${pubRes.data.id}` });
+        }, 1200);
+      }
     } catch (err) {
       wx.hideLoading();
       console.error('发布技能失败:', err);

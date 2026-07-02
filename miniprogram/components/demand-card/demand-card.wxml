@@ -1,3 +1,5 @@
+<wxs module="timeUtil" src="../../utils/date.wxs" />
+
 <view class="demand-card" bind:tap="onTap">
   <view class="card-header">
     <view class="demand-title ellipsis">{{demand.title}}</view>
@@ -16,7 +18,7 @@
     </view>
     <view class="deadline-section">
       <text class="deadline-label">截止</text>
-      <text class="deadline-value">{{demand.deadline}}</text>
+      <text class="deadline-value">{{timeUtil.formatDeadline(demand.deadline)}}</text>
     </view>
     <view class="user-row">
       <image class="user-avatar" src="{{demand.avatar || demand.userAvatar}}" mode="aspectFill" />
