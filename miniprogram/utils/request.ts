@@ -5,12 +5,15 @@
  */
 
 import type { ApiResponse } from '../types/api-response';
+import { API_BASE_URL, USE_MOCK } from '../config/api';
 
 // TODO: 部署后替换为真实域名
-const BASE_URL = 'https://api.dabashou.example.com';
+const BASE_URL = API_BASE_URL;
+const TOKEN_KEY = 'dabashou_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
 
 // TODO: 后端未就绪时启用 Mock 模式
-const MOCK_MODE = true;
+const MOCK_MODE = USE_MOCK;
 const MOCK_DELAY = 120;
 
 /** Token 刷新最大重试次数 */
@@ -35,7 +38,8 @@ function request<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> 
   }
 
   return new Promise((resolve, reject) => {
-    const token = wx.getStorageSync('dabashou_token');
+    const isAuthEndpoint = options.url.includes('/v1/auth/');
+    const token = isAuthEndpoint ? '' : wx.getStorageSync(TOKEN_KEY);
     if (options.showLoading) {
       wx.showLoading({ title: options.loadingText || '加载中...', mask: true });
     }
@@ -54,7 +58,16 @@ function request<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> 
           return refreshTokenAndRetry<T>(options).then(resolve).catch(reject);
         }
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res.data as ApiResponse<T>);
+          const body = res.data as ApiResponse<T>;
+          if (body?.code === 401 && !isAuthEndpoint) {
+            console.log('[Request] Token 杩囨湡锛屽皾璇曞埛鏂?..');
+            return refreshTokenAndRetry<T>(options).then(resolve).catch(reject);
+          }
+          if (body && typeof body.code === 'number' && body.code !== 200) {
+            reject(body);
+            return;
+          }
+          resolve(body);
         } else {
           const body = res.data as { msg?: string };
           reject({ code: res.statusCode, msg: body?.msg || '请求失败', data: res.data });
@@ -90,7 +103,7 @@ async function refreshTokenAndRetry<T>(options: RequestOptions): Promise<ApiResp
     throw { code: 401, msg: '登录已过期，请重新登录' };
   }
   try {
-    const refreshToken = wx.getStorageSync('refresh_token');
+    const refreshToken = wx.getStorageSync(REFRESH_TOKEN_KEY);
     if (!refreshToken) {
       safeReLaunch();
       throw { code: 401, msg: '登录已过期，请重新登录' };
@@ -100,8 +113,8 @@ async function refreshTokenAndRetry<T>(options: RequestOptions): Promise<ApiResp
       method: 'POST',
       data: { refreshToken },
     });
-    wx.setStorageSync('access_token', res.data.accessToken);
-    wx.setStorageSync('refresh_token', res.data.refreshToken);
+    wx.setStorageSync(TOKEN_KEY, res.data.accessToken);
+    wx.setStorageSync(REFRESH_TOKEN_KEY, res.data.refreshToken);
     _refreshRetryCount = 0;
     return request<T>(options);
   } catch (err) {
@@ -112,7 +125,8 @@ async function refreshTokenAndRetry<T>(options: RequestOptions): Promise<ApiResp
 
 function rawRequest<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> {
   return new Promise((resolve, reject) => {
-    const token = wx.getStorageSync('dabashou_token');
+    const isAuthEndpoint = options.url.includes('/v1/auth/');
+    const token = isAuthEndpoint ? '' : wx.getStorageSync(TOKEN_KEY);
     wx.request({
       url: `${BASE_URL}${options.url}`,
       method: options.method || 'POST',
@@ -122,7 +136,14 @@ function rawRequest<T = unknown>(options: RequestOptions): Promise<ApiResponse<T
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       success(res) {
-        if (res.statusCode === 200) resolve(res.data as ApiResponse<T>);
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          const body = res.data as ApiResponse<T>;
+          if (body && typeof body.code === 'number' && body.code !== 200) {
+            reject(body);
+            return;
+          }
+          resolve(body);
+        }
         else reject({ code: res.statusCode, msg: '刷新失败' });
       },
       fail(err) { reject({ code: -1, msg: '网络错误', detail: err }); },

@@ -12,7 +12,8 @@ import { getTrustLevel } from '../../utils/enums';
 function getCurrentUserId(): number {
   try {
     const app = getApp();
-    const user = app.globalData.userInfo || wx.getStorageSync('user_info');
+    const storedUser = wx.getStorageSync('dabashou_user');
+    const user = app.globalData.userInfo || (typeof storedUser === 'string' ? JSON.parse(storedUser) : storedUser);
     return user?.id || 1001;
   } catch {
     return 1001;

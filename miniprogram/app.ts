@@ -8,6 +8,7 @@
  */
 
 import type { IAppOption } from './types/global';
+import { USE_MOCK } from './config/api';
 
 App<IAppOption>({
   // ========== 全局数据 ==========
@@ -16,7 +17,7 @@ App<IAppOption>({
     token: '',
     isLoggedIn: false,
     unreadCount: 0,
-    mockMode: true,
+    mockMode: USE_MOCK,
   },
 
   // ========== 生命周期 ==========

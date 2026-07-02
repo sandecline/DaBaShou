@@ -185,7 +185,7 @@ Page({
       // 更新全局状态
       const app = getApp();
       app.globalData.userInfo = updatedProfile;
-      wx.setStorageSync('user_info', updatedProfile);
+      wx.setStorageSync('dabashou_user', JSON.stringify(updatedProfile));
 
       // 更新本地 original
       this.setData({ originalProfile: updatedProfile });

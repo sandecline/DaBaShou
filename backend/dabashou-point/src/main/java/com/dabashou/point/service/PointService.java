@@ -1,5 +1,7 @@
 package com.dabashou.point.service;
 
+import com.dabashou.point.vo.SignInVo;
+
 /**
  * 积分服务接口 — 由订单模块调用的核心业务
  */
@@ -38,4 +40,20 @@ public interface PointService {
      * @param reason 奖励原因
      */
     void reward(Long userId, int amount, String reason);
+
+    /**
+     * 姣忔棩绛惧埌濂栧姳绉垎
+     *
+     * @param userId 鐢ㄦ埛ID
+     * @return 绛惧埌缁撴灉
+     */
+    SignInVo signIn(Long userId);
+
+    /**
+     * 鏌ヨ绛惧埌鐘舵€?
+     *
+     * @param userId 鐢ㄦ埛ID
+     * @return 绛惧埌鐘舵€?
+     */
+    SignInVo getSignInStatus(Long userId);
 }

@@ -10,6 +10,7 @@ import com.dabashou.point.domain.PointAccount;
 import com.dabashou.point.domain.PointTransaction;
 import com.dabashou.point.mapper.PointAccountMapper;
 import com.dabashou.point.mapper.PointTransactionMapper;
+import com.dabashou.point.service.PointService;
 import com.dabashou.point.vo.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,13 +33,16 @@ public class PointController {
 
     private final PointAccountMapper pointAccountMapper;
     private final PointTransactionMapper pointTransactionMapper;
+    private final PointService pointService;
     private final JdbcTemplate jdbcTemplate;
 
     public PointController(PointAccountMapper pointAccountMapper,
                            PointTransactionMapper pointTransactionMapper,
+                           PointService pointService,
                            JdbcTemplate jdbcTemplate) {
         this.pointAccountMapper = pointAccountMapper;
         this.pointTransactionMapper = pointTransactionMapper;
+        this.pointService = pointService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -151,20 +155,15 @@ public class PointController {
     @Operation(summary = "签到")
     @PostMapping("/sign-in")
     public AjaxResult<SignInVo> signIn() {
-        SecurityUtil.requireCurrentUserId();
-        // Stub: 签到功能待实现
-        return AjaxResult.ok(new SignInVo(5, 1));
+        Long userId = SecurityUtil.requireCurrentUserId();
+        return AjaxResult.ok(pointService.signIn(userId));
     }
 
     @Operation(summary = "签到状态")
     @GetMapping("/sign-in/status")
     public AjaxResult<SignInVo> getSignInStatus() {
-        SecurityUtil.requireCurrentUserId();
-        // Stub: 签到功能待实现
-        SignInVo vo = new SignInVo();
-        vo.setReward(0);
-        vo.setConsecutiveDays(0);
-        return AjaxResult.ok(vo);
+        Long userId = SecurityUtil.requireCurrentUserId();
+        return AjaxResult.ok(pointService.getSignInStatus(userId));
     }
 
     @Operation(summary = "担保池概览")

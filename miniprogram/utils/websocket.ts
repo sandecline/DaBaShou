@@ -5,10 +5,12 @@
  */
 
 // TODO: 替换为真实 WebSocket 地址
-const WS_URL = 'wss://api.dabashou.example.com/ws/chat';
+import { USE_MOCK, WS_BASE_URL } from '../config/api';
+
+const WS_URL = WS_BASE_URL;
 
 // 与 request.ts 保持一致：后端未就绪时跳过真实 WS 连接
-const MOCK_MODE = true;
+const MOCK_MODE = USE_MOCK;
 
 /** 重连配置 */
 const RECONNECT_MAX_RETRIES = 5;
@@ -60,7 +62,7 @@ export function connect(): void {
     return;
   }
 
-  const token = wx.getStorageSync('access_token');
+  const token = wx.getStorageSync('dabashou_token');
   if (!token) {
     console.warn('[WS] 未登录，跳过连接');
     return;

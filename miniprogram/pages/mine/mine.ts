@@ -4,7 +4,7 @@
  */
 
 import { userService } from '../../services/user';
-import { silentLogin } from '../../utils/auth';
+import { login } from '../../utils/auth';
 import type { UserProfile } from '../../types/user';
 
 interface MenuItem {
@@ -107,7 +107,7 @@ Page({
       const data = res.data || res;
       const app = getApp();
       app.globalData.userInfo = data;
-      wx.setStorageSync('user_info', data);
+      wx.setStorageSync('dabashou_user', JSON.stringify(data));
       this.setUserData(data);
     } catch (err) {
       console.error('[Mine] 获取用户信息失败:', err);
@@ -139,8 +139,26 @@ Page({
   /** 点击登录按钮 — 调起微信静默登录 */
   async onLogin() {
     try {
+      const input = await new Promise<string>((resolve, reject) => {
+        wx.showModal({
+          title: '账号登录',
+          editable: true,
+          placeholderText: '请输入: 用户名 密码',
+          confirmText: '登录',
+          success(res) {
+            if (res.confirm) resolve((res.content || '').trim());
+            else reject(new Error('cancelled'));
+          },
+          fail: reject,
+        });
+      });
+      const [username, password] = input.split(/\s+/);
+      if (!username || !password) {
+        wx.showToast({ title: '请输入用户名和密码', icon: 'none' });
+        return;
+      }
       wx.showLoading({ title: '登录中...', mask: true });
-      await silentLogin();
+      await login(username, password);
       wx.hideLoading();
 
       const app = getApp();

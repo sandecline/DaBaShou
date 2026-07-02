@@ -306,5 +306,3 @@ export function logout(): void {
   app.globalData.isLoggedIn = false;
 }
 
-// 保留旧版兼容导出（逐步迁移）
-export { mockLogin as silentLogin };

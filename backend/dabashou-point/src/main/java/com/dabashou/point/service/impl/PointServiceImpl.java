@@ -13,13 +13,18 @@ import com.dabashou.point.mapper.PointAccountMapper;
 import com.dabashou.point.mapper.PointFreezeMapper;
 import com.dabashou.point.mapper.PointTransactionMapper;
 import com.dabashou.point.service.PointService;
+import com.dabashou.point.vo.SignInVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -295,6 +300,127 @@ public class PointServiceImpl implements PointService {
         pointTransactionMapper.insert(trans);
 
         log.info("系统奖励成功: userId={}, amount={}, reason={}", userId, amount, reason);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public SignInVo signIn(Long userId) {
+        LocalDate today = LocalDate.now();
+        if (hasSigned(userId, today)) {
+            throw new BusinessException(ErrorCode.CONFLICT, "今日已签到");
+        }
+
+        int reward = getSignInReward();
+        int consecutiveDays = calculateConsecutiveDays(userId, today.minusDays(1)) + 1;
+        try {
+            jdbcTemplate.update(
+                    "INSERT INTO dbs_point_sign_in (user_id, sign_date, reward, consecutive_days, create_time) VALUES (?, ?, ?, ?, NOW())",
+                    userId, today, reward, consecutiveDays);
+        } catch (DuplicateKeyException e) {
+            throw new BusinessException(ErrorCode.CONFLICT, "今日已签到");
+        }
+
+        addSignInReward(userId, reward);
+        PointAccount account = queryAccount(userId);
+        int balanceAfter = (account.getAvailable() != null ? account.getAvailable() : 0)
+                + (account.getFrozen() != null ? account.getFrozen() : 0);
+
+        PointTransaction trans = new PointTransaction();
+        trans.setUserId(userId);
+        trans.setType(PointTransType.SYSTEM_REWARD.getCode());
+        trans.setAmount(reward);
+        trans.setBalanceAfter(balanceAfter);
+        trans.setDescription("每日签到奖励");
+        trans.setCreateTime(LocalDateTime.now());
+        pointTransactionMapper.insert(trans);
+
+        SignInVo vo = new SignInVo(reward, consecutiveDays);
+        vo.setTodaySigned(true);
+        return vo;
+    }
+
+    @Override
+    public SignInVo getSignInStatus(Long userId) {
+        LocalDate today = LocalDate.now();
+        boolean todaySigned = hasSigned(userId, today);
+        LocalDate anchorDate = todaySigned ? today : today.minusDays(1);
+
+        SignInVo vo = new SignInVo();
+        vo.setTodaySigned(todaySigned);
+        vo.setReward(getSignInReward());
+        vo.setConsecutiveDays(calculateConsecutiveDays(userId, anchorDate));
+        return vo;
+    }
+
+    private boolean hasSigned(Long userId, LocalDate signDate) {
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM dbs_point_sign_in WHERE user_id = ? AND sign_date = ?",
+                Integer.class, userId, signDate);
+        return count != null && count > 0;
+    }
+
+    private int getSignInReward() {
+        try {
+            String value = jdbcTemplate.queryForObject(
+                    "SELECT config_value FROM sys_config WHERE config_key = 'point.sign_in_reward'",
+                    String.class);
+            int reward = Integer.parseInt(value);
+            return reward > 0 ? reward : 5;
+        } catch (Exception e) {
+            return 5;
+        }
+    }
+
+    private int calculateConsecutiveDays(Long userId, LocalDate anchorDate) {
+        List<Object> rows = jdbcTemplate.queryForList(
+                "SELECT sign_date FROM dbs_point_sign_in WHERE user_id = ? AND sign_date <= ? ORDER BY sign_date DESC",
+                Object.class, userId, anchorDate);
+        int days = 0;
+        LocalDate expected = anchorDate;
+        for (Object row : rows) {
+            LocalDate signDate = toLocalDate(row);
+            if (signDate == null || signDate.isAfter(expected)) {
+                continue;
+            }
+            if (!signDate.equals(expected)) {
+                break;
+            }
+            days++;
+            expected = expected.minusDays(1);
+        }
+        return days;
+    }
+
+    private void addSignInReward(Long userId, int reward) {
+        int rows = jdbcTemplate.update(
+                "UPDATE dbs_point_account SET available = available + ?, total_earned = total_earned + ?, update_time = NOW() WHERE user_id = ?",
+                reward, reward, userId);
+        if (rows > 0) {
+            return;
+        }
+
+        PointAccount account = new PointAccount();
+        account.setUserId(userId);
+        account.setAvailable(reward);
+        account.setFrozen(0);
+        account.setTotalEarned(reward);
+        account.setTotalSpent(0);
+        account.setCreateTime(LocalDateTime.now());
+        account.setUpdateTime(LocalDateTime.now());
+        pointAccountMapper.insert(account);
+    }
+
+    private LocalDate toLocalDate(Object value) {
+        if (value instanceof LocalDate localDate) {
+            return localDate;
+        }
+        if (value instanceof Date date) {
+            return date.toLocalDate();
+        }
+        if (value instanceof java.util.Date date) {
+            return new Date(date.getTime()).toLocalDate();
+        }
+        return value != null ? LocalDate.parse(value.toString()) : null;
     }
 
     private PointAccount queryAccount(Long userId) {
