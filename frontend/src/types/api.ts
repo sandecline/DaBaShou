@@ -210,10 +210,10 @@ export type OrderStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 export const OrderStatusMap: Record<OrderStatus, string> = {
   0: '已取消',
-  1: '待支付',
-  2: '已支付（担保中）',
+  1: '待核销',
+  2: '已支付（担保中）',  // 兼容旧流程
   3: '服务中',
-  4: '待确认',
+  4: '待确认',           // 兼容旧流程
   5: '已完成',
   6: '已退款',
   7: '争议中',
@@ -282,6 +282,16 @@ export interface OrderDetailVo {
   statusDesc: string
   verifyCode: string | null
   verifyCodeExpire: string | null
+  buyerVerifyCode: string | null
+  sellerVerifyCode: string | null
+  buyerConfirmCode: string | null
+  sellerConfirmCode: string | null
+  buyerVerified: boolean
+  sellerVerified: boolean
+  buyerConfirmed: boolean
+  sellerConfirmed: boolean
+  refundRequester: string | null
+  refundAgreed: boolean
   serviceStartTime: string | null
   serviceEndTime: string | null
   completeTime: string | null

@@ -13,10 +13,8 @@
           <!-- 状态步骤条 -->
           <div class="status-section">
             <el-steps :active="activeStep" align-center finish-status="success">
-              <el-step title="待支付" :status="stepStatus(1)" />
-              <el-step title="已支付" :status="stepStatus(2)" />
+              <el-step title="待核销" :status="stepStatus(1)" />
               <el-step title="服务中" :status="stepStatus(3)" />
-              <el-step title="待确认" :status="stepStatus(4)" />
               <el-step title="已完成" :status="stepStatus(5)" />
             </el-steps>
 
@@ -50,8 +48,12 @@
               <span>{{ formatDateTime(order.createTime) }}</span>
             </div>
             <div v-if="order.serviceStartTime" class="info-row">
-              <span class="info-label">服务时间</span>
+              <span class="info-label">服务开始</span>
               <span>{{ formatDateTime(order.serviceStartTime) }}</span>
+            </div>
+            <div v-if="order.completeTime" class="info-row">
+              <span class="info-label">完成时间</span>
+              <span>{{ formatDateTime(order.completeTime) }}</span>
             </div>
             <div v-if="order.cancelReason" class="info-row">
               <span class="info-label">取消原因</span>
@@ -78,32 +80,113 @@
             </div>
           </div>
 
-          <!-- 核销码 -->
-          <div v-if="order.status === 2 || order.status === 3" class="verify-section">
+          <!-- 核销码区域 -->
+          <div v-if="order.status === 1 || order.status === 3" class="verify-section">
             <el-divider />
-            <VerifyCode
-              v-if="order.verifyCode"
-              mode="display"
-              :code="order.verifyCode"
-              :expire-at="order.verifyCodeExpire"
+
+            <!-- 阶段1: 开始核销 (1→3) -->
+            <div v-if="order.status === 1" class="verify-phase">
+              <h4>开始核销</h4>
+              <p class="verify-hint">双方输入对方的核销码后，服务正式开始，积分将被冻结</p>
+
+              <div class="verify-codes">
+                <div class="code-card">
+                  <div class="code-label">我的核销码（交给对方）</div>
+                  <div class="code-value">{{ myStartCode }}</div>
+                  <el-tag :type="myStartVerified ? 'success' : 'info'" size="small">
+                    {{ myStartVerified ? '已核销' : '等待对方输入' }}
+                  </el-tag>
+                </div>
+                <div class="code-card">
+                  <div class="code-label">对方的核销码</div>
+                  <div class="code-input-area">
+                    <el-input
+                      v-model="verifyCodeInput"
+                      placeholder="输入对方的6位核销码"
+                      maxlength="6"
+                      :disabled="otherStartVerified"
+                    />
+                    <el-button
+                      type="primary"
+                      :disabled="!verifyCodeInput || verifyCodeInput.length < 6 || otherStartVerified"
+                      :loading="verifyLoading"
+                      @click="handleVerifyStart"
+                    >
+                      {{ otherStartVerified ? '已核销' : '确认核销' }}
+                    </el-button>
+                  </div>
+                  <el-tag :type="otherStartVerified ? 'success' : 'info'" size="small">
+                    {{ otherStartVerified ? '已核销' : '等待输入' }}
+                  </el-tag>
+                </div>
+              </div>
+            </div>
+
+            <!-- 阶段2: 完成确认 (3→5) -->
+            <div v-if="order.status === 3" class="verify-phase">
+              <h4>完成确认</h4>
+              <p class="verify-hint">双方输入对方的确认码后，订单完成，积分将结算给卖家</p>
+
+              <div class="verify-codes">
+                <div class="code-card">
+                  <div class="code-label">我的确认码（交给对方）</div>
+                  <div class="code-value">{{ myConfirmCode }}</div>
+                  <el-tag :type="myConfirmed ? 'success' : 'info'" size="small">
+                    {{ myConfirmed ? '已确认' : '等待对方输入' }}
+                  </el-tag>
+                </div>
+                <div class="code-card">
+                  <div class="code-label">对方的确认码</div>
+                  <div class="code-input-area">
+                    <el-input
+                      v-model="confirmCodeInput"
+                      placeholder="输入对方的6位确认码"
+                      maxlength="6"
+                      :disabled="otherConfirmed"
+                    />
+                    <el-button
+                      type="success"
+                      :disabled="!confirmCodeInput || confirmCodeInput.length < 6 || otherConfirmed"
+                      :loading="verifyLoading"
+                      @click="handleVerifyComplete"
+                    >
+                      {{ otherConfirmed ? '已确认' : '确认完成' }}
+                    </el-button>
+                  </div>
+                  <el-tag :type="otherConfirmed ? 'success' : 'info'" size="small">
+                    {{ otherConfirmed ? '已确认' : '等待输入' }}
+                  </el-tag>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 退款状态 -->
+          <div v-if="order.refundRequester && !order.refundAgreed" class="refund-section">
+            <el-divider />
+            <el-alert
+              :title="refundStatusText"
+              type="warning"
+              :closable="false"
+              show-icon
             />
           </div>
 
           <!-- 操作按钮 -->
           <div class="actions-section">
             <template v-if="order.status === 1">
-              <el-button type="primary" size="large" @click="handlePay">支付（{{ order.pointAmount }} 积分）</el-button>
               <el-button size="large" @click="handleCancel">取消订单</el-button>
             </template>
 
-            <template v-if="order.status === 2">
-              <el-button type="primary" size="large" @click="handleStartService">开始服务</el-button>
+            <template v-if="order.status === 3">
+              <el-button type="warning" size="large" @click="handleRefund">
+                {{ order.refundRequester ? (order.refundRequester === myRole ? '等待对方同意' : '同意退款') : '申请退款' }}
+              </el-button>
+              <el-button type="danger" size="large" @click="handleDispute">发起争议</el-button>
             </template>
 
-            <template v-if="order.status === 3 || order.status === 4">
-              <el-button type="success" size="large" @click="$router.push(`/order/${order.id}/verify`)">
-                {{ order.status === 4 ? '确认完成' : '核销确认' }}
-              </el-button>
+            <template v-if="order.status === 5">
+              <el-button type="danger" size="large" @click="handleDispute">发起争议</el-button>
             </template>
 
             <template v-if="order.status === 7">
@@ -124,9 +207,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getOrderDetail, payOrder, startService, cancelOrder } from '@/api/order'
+import { getOrderDetail, verifyOrder, cancelOrder, disputeOrder, refundOrder } from '@/api/order'
 import { formatDateTime, getOrderStatusText } from '@/utils/format'
-import VerifyCode from '@/components/common/VerifyCode.vue'
+import { useUserStore } from '@/stores/user'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import type { OrderDetailVo, OrderStatus } from '@/types/api'
@@ -136,14 +219,52 @@ const router = useRouter()
 
 const loading = ref(true)
 const order = ref<OrderDetailVo | null>(null)
+const verifyCodeInput = ref('')
+const confirmCodeInput = ref('')
+const verifyLoading = ref(false)
+const myRole = ref<'buyer' | 'seller'>('buyer')
+
+const myStartCode = computed(() => {
+  if (!order.value) return ''
+  return myRole.value === 'buyer' ? order.value.buyerVerifyCode : order.value.sellerVerifyCode
+})
+
+const myStartVerified = computed(() => {
+  if (!order.value) return false
+  return myRole.value === 'buyer' ? order.value.buyerVerified : order.value.sellerVerified
+})
+
+const otherStartVerified = computed(() => {
+  if (!order.value) return false
+  return myRole.value === 'buyer' ? order.value.sellerVerified : order.value.buyerVerified
+})
+
+const myConfirmCode = computed(() => {
+  if (!order.value) return ''
+  return myRole.value === 'buyer' ? order.value.buyerConfirmCode : order.value.sellerConfirmCode
+})
+
+const myConfirmed = computed(() => {
+  if (!order.value) return false
+  return myRole.value === 'buyer' ? order.value.buyerConfirmed : order.value.sellerConfirmed
+})
+
+const otherConfirmed = computed(() => {
+  if (!order.value) return false
+  return myRole.value === 'buyer' ? order.value.sellerConfirmed : order.value.buyerConfirmed
+})
+
+const refundStatusText = computed(() => {
+  if (!order.value?.refundRequester) return ''
+  const requester = order.value.refundRequester === 'buyer' ? '买家' : '卖家'
+  return `${requester}发起退款申请，等待对方同意`
+})
 
 const activeStep = computed(() => {
   if (!order.value) return 0
   const status = order.value.status
-  if (status >= 5) return 5
-  if (status >= 4) return 4
-  if (status >= 3) return 3
-  if (status >= 2) return 2
+  if (status >= 5) return 3
+  if (status >= 3) return 2
   if (status >= 1) return 1
   return 0
 })
@@ -158,8 +279,8 @@ function stepStatus(step: number) {
   if (!order.value) return ''
   const status = order.value.status
   if (status === 0) return step <= 1 ? 'error' : 'wait'
-  if (status === 6) return step <= 2 ? 'error' : 'wait'
-  if (status === 7) return step >= 4 ? 'error' : 'finish'
+  if (status === 6) return step <= 1 ? 'error' : 'wait'
+  if (status === 7) return step >= 2 ? 'error' : 'finish'
   return ''
 }
 
@@ -167,6 +288,12 @@ async function fetchDetail() {
   loading.value = true
   try {
     order.value = await getOrderDetail(Number(props.id))
+    const userStore = useUserStore()
+    if (userStore.user?.id === order.value.buyerId) {
+      myRole.value = 'buyer'
+    } else {
+      myRole.value = 'seller'
+    }
   } catch {
     order.value = null
   } finally {
@@ -174,29 +301,33 @@ async function fetchDetail() {
   }
 }
 
-async function handlePay() {
-  if (!order.value) return
+async function handleVerifyStart() {
+  if (!order.value || verifyCodeInput.value.length < 6) return
+  verifyLoading.value = true
   try {
-    await ElMessageBox.confirm(`确认支付 ${order.value.pointAmount} 积分？`, '确认支付', {
-      confirmButtonText: '确认支付',
-      type: 'warning',
-    })
-    await payOrder(order.value.id)
-    ElMessage.success('支付成功！积分已冻结至担保池')
+    await verifyOrder(order.value.id, verifyCodeInput.value, 'start')
+    ElMessage.success('核销成功！')
+    verifyCodeInput.value = ''
     fetchDetail()
-  } catch {
-    // cancelled
+  } catch (err: any) {
+    ElMessage.error(err?.msg || '核销码错误')
+  } finally {
+    verifyLoading.value = false
   }
 }
 
-async function handleStartService() {
-  if (!order.value) return
+async function handleVerifyComplete() {
+  if (!order.value || confirmCodeInput.value.length < 6) return
+  verifyLoading.value = true
   try {
-    await startService(order.value.id)
-    ElMessage.success('服务已开始！')
+    await verifyOrder(order.value.id, confirmCodeInput.value, 'complete')
+    ElMessage.success('确认完成！')
+    confirmCodeInput.value = ''
     fetchDetail()
-  } catch {
-    // handled
+  } catch (err: any) {
+    ElMessage.error(err?.msg || '确认码错误')
+  } finally {
+    verifyLoading.value = false
   }
 }
 
@@ -212,6 +343,44 @@ async function handleCancel() {
     })
     await cancelOrder(order.value.id, reason.trim())
     ElMessage.success('订单已取消')
+    fetchDetail()
+  } catch {
+    // cancelled
+  }
+}
+
+async function handleRefund() {
+  if (!order.value) return
+  const isRequester = order.value.refundRequester === myRole.value
+  if (isRequester) {
+    ElMessage.warning('您已发起退款申请，请等待对方同意')
+    return
+  }
+  try {
+    await ElMessageBox.confirm('确认同意退款？积分将退还给买家', '退款确认', {
+      confirmButtonText: '同意退款',
+      type: 'warning',
+    })
+    await refundOrder(order.value.id, '同意退款')
+    ElMessage.success('退款已处理')
+    fetchDetail()
+  } catch {
+    // cancelled
+  }
+}
+
+async function handleDispute() {
+  if (!order.value) return
+  try {
+    const { value: reason } = await ElMessageBox.prompt('请输入争议原因', '发起争议', {
+      confirmButtonText: '提交争议',
+      cancelButtonText: '取消',
+      inputPlaceholder: '描述争议原因...',
+      inputPattern: /\S+/,
+      inputErrorMessage: '请输入争议原因',
+    })
+    await disputeOrder(order.value.id, reason.trim())
+    ElMessage.success('争议已提交，等待管理员仲裁')
     fetchDetail()
   } catch {
     // cancelled
@@ -300,5 +469,56 @@ onMounted(fetchDetail)
 
 .text-danger {
   color: $color-danger;
+}
+
+.verify-phase {
+  h4 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .verify-hint {
+    color: $color-text-secondary;
+    font-size: $font-size-sm;
+    margin-bottom: 16px;
+  }
+}
+
+.verify-codes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  .code-card {
+    background: $color-bg;
+    border-radius: $radius-md;
+    padding: 16px;
+    text-align: center;
+
+    .code-label {
+      font-size: $font-size-xs;
+      color: $color-text-secondary;
+      margin-bottom: 8px;
+    }
+
+    .code-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: $color-primary;
+      margin-bottom: 8px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .code-input-area {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.refund-section {
+  margin-top: 8px;
 }
 </style>

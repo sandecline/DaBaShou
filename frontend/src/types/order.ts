@@ -3,7 +3,7 @@ export type OrderStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 export const OrderStatusMap: Record<OrderStatus, string> = {
   0: '已取消',
-  1: '待支付',
+  1: '待核销',
   2: '已支付',
   3: '服务中',
   4: '待确认',

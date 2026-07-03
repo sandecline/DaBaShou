@@ -75,7 +75,7 @@ async function handleVerify(code: string) {
       await confirmOrder(Number(props.id))
       ElMessage.success('确认完成！积分已结算 🎉')
     } else {
-      await verifyOrder(Number(props.id), code)
+      await verifyOrder(Number(props.id), code, 'start')
       ElMessage.success('核销成功！积分已结算 🎉')
     }
     router.push('/order')

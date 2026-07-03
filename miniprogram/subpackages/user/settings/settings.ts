@@ -60,6 +60,8 @@ Page({
   onConfirmLogout() {
     this.setData({ showLogoutDialog: false });
     logout();
+    wx.showToast({ title: '已退出登录', icon: 'none' });
+    wx.switchTab({ url: '/pages/mine/mine' });
   },
 
   /** 取消退出登录 */

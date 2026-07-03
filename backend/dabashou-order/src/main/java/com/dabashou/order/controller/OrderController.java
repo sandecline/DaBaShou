@@ -65,8 +65,9 @@ public class OrderController {
         return AjaxResult.ok(orderService.getOrderStatus(userId, orderId));
     }
 
-    @Operation(summary = "支付订单(1→2)")
+    @Operation(summary = "支付订单(旧流程,已废弃)")
     @PostMapping("/{orderId}/pay")
+    @Deprecated
     public AjaxResult<PayResultVo> payOrder(
             @PathVariable Long orderId,
             @RequestHeader(value = "X-Idempotent-Token", required = false) String headerToken,
@@ -76,7 +77,7 @@ public class OrderController {
         return AjaxResult.ok(orderService.payOrder(userId, orderId, idempotentToken));
     }
 
-    @Operation(summary = "取消订单(1→0)")
+    @Operation(summary = "取消订单")
     @PostMapping("/{orderId}/cancel")
     public AjaxResult<Void> cancelOrder(@PathVariable Long orderId, @Valid @RequestBody CancelDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
@@ -84,11 +85,11 @@ public class OrderController {
         return AjaxResult.ok();
     }
 
-    @Operation(summary = "开始服务(2→3)")
-    @RequestMapping(value = "/{orderId}/start", method = {RequestMethod.POST, RequestMethod.PUT})
-    public AjaxResult<Void> startService(@PathVariable Long orderId) {
+    @Operation(summary = "核销订单(双方核销码驱动)")
+    @PostMapping("/{orderId}/verify")
+    public AjaxResult<Void> verifyOrder(@PathVariable Long orderId, @Valid @RequestBody VerifyDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        orderService.startService(userId, orderId);
+        orderService.verifyOrder(userId, orderId, dto);
         return AjaxResult.ok();
     }
 
@@ -106,23 +107,7 @@ public class OrderController {
         return AjaxResult.ok(orderService.refreshVerifyCode(userId, orderId));
     }
 
-    @Operation(summary = "核销订单(3→4)")
-    @PostMapping("/{orderId}/verify")
-    public AjaxResult<Void> verifyOrder(@PathVariable Long orderId, @Valid @RequestBody VerifyDto dto) {
-        Long userId = SecurityUtil.requireCurrentUserId();
-        orderService.verifyOrder(userId, orderId, dto);
-        return AjaxResult.ok();
-    }
-
-    @Operation(summary = "买家确认完成(4→5)")
-    @PostMapping("/{orderId}/confirm")
-    public AjaxResult<Void> confirmOrder(@PathVariable Long orderId) {
-        Long userId = SecurityUtil.requireCurrentUserId();
-        orderService.confirmOrder(userId, orderId);
-        return AjaxResult.ok();
-    }
-
-    @Operation(summary = "发起争议(4→7)")
+    @Operation(summary = "发起争议(服务中或已完成)")
     @PostMapping("/{orderId}/dispute")
     public AjaxResult<Void> disputeOrder(@PathVariable Long orderId, @Valid @RequestBody DisputeDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();

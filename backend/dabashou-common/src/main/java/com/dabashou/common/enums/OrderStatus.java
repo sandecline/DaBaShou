@@ -7,34 +7,37 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 订单状态枚举（8状态，不可跳变）
+ * 订单状态枚举（6状态，核销码驱动）
  *
  * 状态机:
  * 0-已取消(终态)
- * 1-待支付 → 2, 0
- * 2-已支付(担保中) → 3, 6, 0
- * 3-服务中 → 4, 6, 0
- * 4-待确认 → 5, 7, 6
- * 5-已完成(终态)
+ * 1-待核销 → 3, 0
+ * 3-服务中 → 5, 6, 7, 0
+ * 5-已完成(终态) → 7
  * 6-已退款 → 0
  * 7-争议中 → 5, 6
+ *
+ * 核销流程:
+ * 1→3: 双方输入对方的核销码（开始核销码），冻结买方积分
+ * 3→5: 双方输入对方的确认码（完成确认码），结算积分
+ * 3/5→7: 任一方发起争议
+ * 3→6: 双方同意退款（需对方同意）
  */
 public enum OrderStatus {
 
     CANCELLED(0, "已取消"),
-    PENDING_PAYMENT(1, "待支付"),
-    PAID(2, "已支付(担保中)"),
+    PENDING_PAYMENT(1, "待核销"),
+    PAID(2, "已支付(担保中)"),      // 保留兼容，新流程不再使用
     IN_SERVICE(3, "服务中"),
-    PENDING_CONFIRM(4, "待确认"),
+    PENDING_CONFIRM(4, "待确认"),    // 保留兼容，新流程不再使用
     COMPLETED(5, "已完成"),
     REFUNDED(6, "已退款"),
     DISPUTING(7, "争议中");
 
     private static final Map<Integer, List<Integer>> TRANSITIONS = Map.of(
-        1, Arrays.asList(2, 0),
-        2, Arrays.asList(3, 6, 0),
-        3, Arrays.asList(4, 6, 0),
-        4, Arrays.asList(5, 7, 6),
+        1, Arrays.asList(3, 0),
+        3, Arrays.asList(5, 6, 7, 0),
+        5, Arrays.asList(7),
         6, Arrays.asList(0),
         7, Arrays.asList(5, 6)
     );
