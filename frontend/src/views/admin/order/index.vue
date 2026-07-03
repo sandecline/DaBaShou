@@ -1,8 +1,7 @@
 <template>
   <AdminLayout
     title="订单仲裁"
-    eyebrow="ORDER CONTROL"
-    subtitle="查看订单状态和交易内容，集中处理争议订单。"
+    subtitle="查看订单状态和交易内容，集中处理争议订单"
   >
     <template #actions>
       <el-input
@@ -214,7 +213,7 @@ onMounted(fetchData)
 <style scoped lang="scss">
 .pagination-wrap {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 16px;
 }
 
@@ -228,11 +227,29 @@ onMounted(fetchData)
     gap: 10px;
     margin: 0;
     padding-bottom: 12px;
-    border-bottom: 1px solid #edf2ef;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
   }
 
   span {
-    color: #667a74;
+    color: #94a3b8;
   }
+}
+
+:deep(.el-table) {
+  --el-table-border-color: #f1f5f9;
+  --el-table-header-bg-color: #f8fafc;
+  --el-table-row-hover-bg-color: #f0f9ff;
+  font-size: 13px;
+}
+
+:deep(.el-table th) {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 12px;
+}
+
+:deep(.el-table td) {
+  padding: 8px 0;
 }
 </style>

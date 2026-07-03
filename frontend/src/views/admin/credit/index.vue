@@ -1,8 +1,7 @@
 <template>
   <AdminLayout
     title="信用审核"
-    eyebrow="TRUST REVIEW"
-    subtitle="处理违规记录、用户申诉和不当评价，维护平台信任分体系。"
+    subtitle="处理违规记录、用户申诉和不当评价，维护平台信任分体系"
   >
     <template #actions>
       <el-button :icon="Refresh" :loading="currentLoading" @click="reloadCurrent">刷新</el-button>
@@ -308,5 +307,27 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 16px;
+}
+
+:deep(.el-table) {
+  --el-table-border-color: #f1f5f9;
+  --el-table-header-bg-color: #f8fafc;
+  --el-table-row-hover-bg-color: #f0f9ff;
+  font-size: 13px;
+}
+
+:deep(.el-table th) {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 12px;
+}
+
+:deep(.el-table td) {
+  padding: 8px 0;
+}
+
+:deep(.el-tabs__item) {
+  font-size: 13px;
+  font-weight: 600;
 }
 </style>

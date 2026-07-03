@@ -1,8 +1,7 @@
 <template>
   <AdminLayout
     title="数据统计"
-    eyebrow="PLATFORM ANALYTICS"
-    subtitle="观察供需、订单、活跃和信用结构。"
+    subtitle="观察供需、订单、活跃和信用结构"
   >
     <template #actions>
       <el-button :icon="Refresh" :loading="loading" @click="loadData">刷新</el-button>
@@ -198,18 +197,18 @@ onBeforeUnmount(disposeCharts)
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .stat-card,
 .chart-panel {
-  border: 1px solid #dfe7e3;
-  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   background: #ffffff;
 }
 
 .stat-card {
-  padding: 15px;
+  padding: 16px;
 
   span,
   strong,
@@ -217,15 +216,25 @@ onBeforeUnmount(disposeCharts)
     display: block;
   }
 
-  span,
+  span {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
   small {
-    color: #667a74;
+    color: #94a3b8;
+    font-size: 12px;
+    margin-top: 4px;
   }
 
   strong {
     margin-top: 8px;
-    color: #17211f;
+    color: #0f172a;
     font-size: 24px;
+    font-weight: 800;
   }
 }
 
@@ -236,16 +245,17 @@ onBeforeUnmount(disposeCharts)
 }
 
 .chart-panel {
-  padding: 16px;
+  padding: 20px;
 
   &.wide {
     grid-column: 1 / -1;
   }
 
   h2 {
-    margin: 0 0 12px;
-    color: #17211f;
-    font-size: 17px;
+    margin: 0 0 14px;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
   }
 }
 

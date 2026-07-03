@@ -1,8 +1,7 @@
 <template>
   <AdminLayout
     title="用户管理"
-    eyebrow="USER OPERATIONS"
-    subtitle="查看用户资料、积分和信用状态，处理账号启用、禁用与密码重置。"
+    subtitle="查看用户资料、积分和信用状态，处理账号启用、禁用与密码重置"
   >
     <template #actions>
       <el-input
@@ -226,18 +225,20 @@ onMounted(fetchData)
   }
 
   strong {
-    color: #17211f;
+    color: #0f172a;
+    font-size: 13px;
   }
 
   small {
-    margin-top: 2px;
-    color: #667a74;
+    margin-top: 1px;
+    color: #94a3b8;
+    font-size: 11px;
   }
 }
 
 .pagination-wrap {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 16px;
 }
 
@@ -251,11 +252,31 @@ onMounted(fetchData)
     gap: 10px;
     margin: 0;
     padding-bottom: 12px;
-    border-bottom: 1px solid #edf2ef;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
   }
 
   span {
-    color: #667a74;
+    color: #94a3b8;
   }
+}
+
+:deep(.el-table) {
+  --el-table-border-color: #f1f5f9;
+  --el-table-header-bg-color: #f8fafc;
+  --el-table-row-hover-bg-color: #f0f9ff;
+  font-size: 13px;
+}
+
+:deep(.el-table th) {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+:deep(.el-table td) {
+  padding: 8px 0;
 }
 </style>

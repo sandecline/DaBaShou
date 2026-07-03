@@ -1,8 +1,7 @@
 <template>
   <AdminLayout
     title="校园认证"
-    eyebrow="IDENTITY REVIEW"
-    subtitle="审核学生身份材料，通过后同步用户校区信息。"
+    subtitle="审核学生身份材料，通过后同步用户校区信息"
   >
     <template #actions>
       <el-select v-model="statusFilter" placeholder="认证状态" clearable style="width: 140px" @change="search">
@@ -176,7 +175,7 @@ onMounted(fetchData)
 <style scoped lang="scss">
 .pagination-wrap {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 16px;
 }
 
@@ -190,12 +189,30 @@ onMounted(fetchData)
     gap: 10px;
     margin: 0;
     padding-bottom: 12px;
-    border-bottom: 1px solid #edf2ef;
-    color: #17211f;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: 13px;
   }
 
   span {
-    color: #667a74;
+    color: #94a3b8;
   }
+}
+
+:deep(.el-table) {
+  --el-table-border-color: #f1f5f9;
+  --el-table-header-bg-color: #f8fafc;
+  --el-table-row-hover-bg-color: #f0f9ff;
+  font-size: 13px;
+}
+
+:deep(.el-table th) {
+  font-weight: 600;
+  color: #64748b;
+  font-size: 12px;
+}
+
+:deep(.el-table td) {
+  padding: 8px 0;
 }
 </style>

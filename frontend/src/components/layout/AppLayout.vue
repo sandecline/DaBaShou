@@ -1,12 +1,12 @@
 <template>
   <div class="app-layout">
-    <AppHeader v-if="!$route.meta.noLayout" />
+    <AppHeader v-if="!$route.meta.noLayout && !isAdminRoute" />
 
     <main
       class="app-main"
       :class="{
-        'no-header': $route.meta.noLayout,
-        'has-bottom-nav': !$route.meta.noLayout && !$route.meta.noBottomNav,
+        'no-header': $route.meta.noLayout || isAdminRoute,
+        'has-bottom-nav': !$route.meta.noLayout && !$route.meta.noBottomNav && !isAdminRoute,
       }"
     >
       <router-view v-slot="{ Component }">
@@ -17,7 +17,7 @@
     </main>
 
     <nav
-      v-if="!$route.meta.noLayout && !$route.meta.noBottomNav"
+      v-if="!$route.meta.noLayout && !$route.meta.noBottomNav && !isAdminRoute"
       class="bottom-nav"
       aria-label="底部导航"
     >
@@ -58,17 +58,19 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useMessageStore } from '@/stores/message'
 import { isAdminSession } from '@/utils/auth'
 import { startWebSocket, stopWebSocket } from '@/composables/useWebSocket'
 import AppHeader from './Header.vue'
 
+const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const messageStore = useMessageStore()
 const isAdmin = computed(() => isAdminSession(userStore.token))
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
 
 onMounted(() => {
   if (userStore.isLoggedIn) {

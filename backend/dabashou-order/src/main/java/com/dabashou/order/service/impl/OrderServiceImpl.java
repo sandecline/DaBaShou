@@ -193,12 +193,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             pointService.unfreeze(orderId);
         }
 
-        // 恢复货架状态为上架
+        // 恢复货架状态为上架（仅当货架仍处于被订单占用的下架状态时）
         if (order.getSkillShelfId() != null) {
-            jdbcTemplate.update(
-                    "UPDATE dbs_skill_shelf SET status = 1, update_time = NOW() WHERE id = ?",
+            int restored = jdbcTemplate.update(
+                    "UPDATE dbs_skill_shelf SET status = 1, update_time = NOW() WHERE id = ? AND status = 0",
                     order.getSkillShelfId());
-            log.info("订单取消，恢复货架状态: shelfId={}", order.getSkillShelfId());
+            if (restored > 0) {
+                log.info("订单取消，恢复货架状态: shelfId={}", order.getSkillShelfId());
+            }
         }
 
         // 恢复需求状态为开放
@@ -358,6 +360,40 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
         log.info("订单仲裁: orderId={}, result={}", orderId, dto.getResult());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int autoConfirmTimeout() {
+        // 查询系统配置的确认超时时间
+        Integer timeoutHours = 72; // 默认72小时
+        try {
+            String val = jdbcTemplate.queryForObject(
+                    "SELECT config_value FROM sys_config WHERE config_key = 'order.confirm_timeout_hours'", String.class);
+            if (val != null) timeoutHours = Integer.parseInt(val);
+        } catch (Exception ignored) {
+        }
+
+        // 找到超时的待确认订单
+        List<Map<String, Object>> overdue = jdbcTemplate.queryForList(
+                "SELECT id FROM dbs_order WHERE status = 4 AND service_end_time < DATE_SUB(NOW(), INTERVAL ? HOUR)",
+                timeoutHours);
+
+        int count = 0;
+        for (Map<String, Object> row : overdue) {
+            Long orderId = ((Number) row.get("id")).longValue();
+            try {
+                pointService.settle(orderId);
+                jdbcTemplate.update(
+                        "UPDATE dbs_order SET status = 5, complete_time = NOW(), update_time = NOW() WHERE id = ? AND status = 4",
+                        orderId);
+                count++;
+                log.info("自动确认完成: orderId={}", orderId);
+            } catch (Exception e) {
+                log.warn("自动确认失败: orderId={}, error={}", orderId, e.getMessage());
+            }
+        }
+        return count;
     }
 
     @Override

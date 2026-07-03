@@ -41,7 +41,7 @@ public class AdminStatServiceImpl implements AdminStatService {
         vo.setTotalPointsInCirculation(qi("SELECT IFNULL(SUM(point_balance),0) FROM dbs_user"));
         vo.setPendingAppeals(qi("SELECT COUNT(*) FROM credit_appeal WHERE status=0"));
         vo.setDisputingOrders(qi("SELECT COUNT(*) FROM dbs_order WHERE status=7"));
-        vo.setPendingCampusAuths(hasTable("dbs_user_campus_auth") ? qi("SELECT COUNT(*) FROM dbs_user_campus_auth WHERE status=0") : 0);
+        vo.setPendingCampusAuths(hasTable("user_campus_auth") ? qi("SELECT COUNT(*) FROM user_campus_auth WHERE status=0") : 0);
         vo.setPendingViolations(qi("SELECT COUNT(*) FROM credit_violation WHERE status=0"));
         return vo;
     }

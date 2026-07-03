@@ -1,8 +1,7 @@
 <template>
   <AdminLayout
     title="系统配置"
-    eyebrow="RULE SETTINGS"
-    subtitle="调整积分、信任分、超时熔断和退改规则。"
+    subtitle="调整积分、信任分、超时熔断和退改规则"
   >
     <template #actions>
       <el-button :loading="loading" @click="loadConfig">重新读取</el-button>
@@ -164,15 +163,18 @@ loadConfig()
 }
 
 .config-panel {
-  border: 1px solid #dfe7e3;
-  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   background: #ffffff;
-  padding: 18px;
+  padding: 20px;
 
   h2 {
-    margin: 0 0 14px;
-    color: #17211f;
-    font-size: 17px;
+    margin: 0 0 16px;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
   }
 }
 

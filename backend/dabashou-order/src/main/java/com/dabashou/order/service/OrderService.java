@@ -85,4 +85,10 @@ public interface OrderService extends IService<Order> {
      * 申请退款
      */
     void refundOrder(Long userId, Long orderId, RefundDto dto);
+
+    /**
+     * 自动确认超时订单（待确认超过配置时间自动完成并结算）
+     * @return 处理的订单数
+     */
+    int autoConfirmTimeout();
 }
