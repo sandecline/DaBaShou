@@ -48,19 +48,37 @@ export interface OrderDetail extends Order {
   description?: string;
   durationMinutes?: number;
   locationType?: import('./skill').LocationType;
-  /** 核销码（旧字段） */
+  /** 核销码（旧字段，兼容） */
   verifyCode?: string | null;
   verifyCodeExpire?: string | null;
-  /** 买家验证码（卖家接单/启动服务时需输入） */
+  /** 买家启动核销码（status=1时双方可见） */
+  buyerVerifyCode?: string;
+  /** 卖家启动核销码（status=1时双方可见） */
+  sellerVerifyCode?: string;
+  /** 买家确认核销码（status=3时双方可见） */
+  buyerConfirmCode?: string;
+  /** 卖家确认核销码（status=3时双方可见） */
+  sellerConfirmCode?: string;
+  /** 买家是否已输入启动核销码 */
+  buyerVerified?: boolean;
+  /** 卖家是否已输入启动核销码 */
+  sellerVerified?: boolean;
+  /** 买家是否已输入确认核销码 */
+  buyerConfirmed?: boolean;
+  /** 卖家是否已输入确认核销码 */
+  sellerConfirmed?: boolean;
+  /** 退款发起方 */
+  refundRequester?: 'buyer' | 'seller';
+  /** 退款对方是否已同意 */
+  refundAgreed?: boolean;
+  /** 买家验证码（兼容旧字段） */
   buyerCode?: string;
-  /** 卖家验证码（买家确认完成时需输入） */
+  /** 卖家验证码（兼容旧字段） */
   sellerCode?: string;
   /** 当前用户角色 */
   myRole?: 'buyer' | 'seller';
   /** 当前是否有待处理的退款请求 */
   refundRequesting?: boolean;
-  /** 退款发起方 */
-  refundRequester?: 'buyer' | 'seller';
   /** 时间预约 */
   timeSlotId?: number;
   /** 备注 */

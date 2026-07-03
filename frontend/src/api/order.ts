@@ -53,8 +53,14 @@ export function refreshVerifyCode(id: number): Promise<VerifyCodeVo> {
   return request.put('/v1/orders/' + id + '/verify-code')
 }
 
-export function verifyOrder(id: number, verifyCode: string): Promise<null> {
-  return request.post('/v1/orders/' + id + '/verify', { verifyCode })
+/**
+ * 核销订单 — 双方核销码驱动
+ * @param id 订单ID
+ * @param code 核销码
+ * @param phase start=开始核销(1→3), complete=完成确认(3→5)
+ */
+export function verifyOrder(id: number, code: string, phase: 'start' | 'complete'): Promise<null> {
+  return request.post('/v1/orders/' + id + '/verify', { code, phase })
 }
 
 export function confirmOrder(id: number): Promise<null> {

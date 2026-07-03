@@ -79,19 +79,9 @@ export const orderService = {
     return api.post<void>(`/v1/orders/${orderId}/cancel`, { reason });
   },
 
-  /** 开始服务（卖家确认开始 #2→#3） */
-  startService(orderId: number) {
-    return api.post<void>(`/v1/orders/${orderId}/start`);
-  },
-
-  /** 核销（卖家输入核销码 #3→#4 卖家验证通过） */
-  verify(orderId: number, verifyCode: string) {
-    return api.post<void>(`/v1/orders/${orderId}/verify`, { verifyCode });
-  },
-
-  /** 确认完成（买家确认 #4→#5 买家验证通过） */
-  confirmOrder(orderId: number) {
-    return api.post<void>(`/v1/orders/${orderId}/confirm`);
+  /** 核销（双阶段：start=启动服务，complete=确认完成） */
+  verify(orderId: number, verifyCode: string, phase: 'start' | 'complete' = 'start') {
+    return api.post<void>(`/v1/orders/${orderId}/verify`, { verifyCode, phase });
   },
 
   /** 发起争议 */

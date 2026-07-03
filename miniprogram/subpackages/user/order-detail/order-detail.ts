@@ -1,7 +1,7 @@
 /**
- * 订单详情 + 核销页
- * 接单 → 双向验证启动 → 服务进行 → 双向验证完成 → 积分结算
- * 服务期间双方可发起退款，需对方同意
+ * 订单详情 + 核销页（新流程）
+ * 1(待核销) → 双方输入对方核销码 → 3(服务中) → 双方输入对方确认码 → 5(已完成)
+ * 服务中可申请退款（需对方同意），争议可在3/5发起
  */
 
 import { orderService } from '../../../services/order';
@@ -27,19 +27,17 @@ Page({
     loading: true,
     loadError: false,
     statusTheme: 'default' as string,
-    // ── 接单弹窗 ──
-    showAcceptDialog: false,
-    acceptCode: '',
-    // ── 取消弹窗 ──
-    showCancelDialog: false,
-    cancelReason: '',
-    // ── 通用验证码弹窗 ──
+    // ── 核销码弹窗 ──
     showCodeDialog: false,
     codeDialogTitle: '',
     codeInput: '',
-    codeAction: '' as '' | 'completeBuyer' | 'completeSeller' | 'refund',
-    // ── 退款确认弹窗 ──
-    showRefundDialog: false,
+    codeAction: '' as '' | 'start' | 'complete',
+    // ── 取消弹窗 ──
+    showCancelDialog: false,
+    cancelReason: '',
+    // ── 争议弹窗 ──
+    showDisputeDialog: false,
+    disputeReason: '',
     // ── 操作 loading ──
     actionLoading: false,
   },
@@ -74,53 +72,28 @@ Page({
   },
 
   // =====================================================================
-  //                           开始服务（卖家）
+  //                    核销码弹窗（start / complete）
   // =====================================================================
-  onShowAcceptDialog() { this.setData({ showAcceptDialog: true }); },
-  onCloseAcceptDialog() { this.setData({ showAcceptDialog: false }); },
-
-  async onConfirmAccept() {
-    const { orderId, actionLoading } = this.data;
-    if (actionLoading) return;
-    this.setData({ actionLoading: true });
-    try {
-      await orderService.startService(orderId);
-      wx.showToast({ title: '已开始服务', icon: 'success' });
-      this.setData({ showAcceptDialog: false });
-      this.loadDetail();
-    } catch (err) {
-      console.error('开始服务失败:', err);
-      wx.showToast({ title: '操作失败', icon: 'error' });
-    } finally { this.setData({ actionLoading: false }); }
-  },
-
-  // =====================================================================
-  //                    通用验证码弹窗
-  // =====================================================================
-  openCodeDialog(title: string, action: string) {
-    this.setData({ showCodeDialog: true, codeDialogTitle: title, codeInput: '', codeAction: action as '' | 'completeBuyer' | 'completeSeller' });
+  onCodeBtnTap(e: WechatMiniprogram.BaseEvent) {
+    const { title, action } = e.currentTarget.dataset as { title: string; action: string };
+    this.setData({ showCodeDialog: true, codeDialogTitle: title || '', codeInput: '', codeAction: (action || '') as '' | 'start' | 'complete' });
   },
   onCloseCodeDialog() { this.setData({ showCodeDialog: false, codeInput: '' }); },
   onCodeInput(e: WechatMiniprogram.Input) { this.setData({ codeInput: e.detail.value }); },
 
   async onConfirmCode() {
-    const { orderId, codeInput, codeAction, actionLoading, order } = this.data;
-    if (actionLoading || !codeAction || !order) return;
+    const { orderId, codeInput, codeAction, actionLoading } = this.data;
+    if (actionLoading || !codeAction) return;
+    const code = codeInput.trim();
+    if (!code) { wx.showToast({ title: '请输入核销码', icon: 'error' }); return; }
     this.setData({ actionLoading: true });
     try {
-      if (codeAction === 'completeSeller') {
-        // 卖家核销：输入买家验证码 → verify (3→4)
-        await orderService.verify(orderId, codeInput.trim());
-        wx.showToast({ title: '卖家验证通过', icon: 'success' });
-      } else if (codeAction === 'completeBuyer') {
-        // 买家确认：输入卖家验证码 → confirmOrder (4→5)
-        await orderService.confirmOrder(orderId);
-        wx.showToast({ title: '买家确认通过', icon: 'success' });
-      }
+      await orderService.verify(orderId, code, codeAction);
+      wx.showToast({ title: codeAction === 'start' ? '启动核销成功' : '确认核销成功', icon: 'success' });
       this.setData({ showCodeDialog: false, codeInput: '' });
       this.loadDetail();
     } catch (err: unknown) {
-      wx.showToast({ title: (err as Record<string,string>)?.msg || '验证码错误', icon: 'error' });
+      wx.showToast({ title: (err as Record<string, string>)?.msg || '核销码错误', icon: 'error' });
     } finally { this.setData({ actionLoading: false }); }
   },
 
@@ -136,37 +109,45 @@ Page({
       wx.showModal({
         title: '退款确认',
         content: `${requester}发起退款申请，是否同意？`,
-        success: (res) => { if (res.confirm) page.onConfirmRefundApprove(); },
+        success: (res) => { if (res.confirm) page.onConfirmRefund(); },
       });
     } else {
       wx.showModal({
         title: '发起退款',
         content: '发起后将等待对方同意，确定继续？',
-        success: (res) => { if (res.confirm) page.onConfirmRefundRequest(); },
+        success: (res) => { if (res.confirm) page.onConfirmRefund(); },
       });
     }
   },
 
-  async onConfirmRefundRequest() {
-    const { orderId, actionLoading, order } = this.data;
-    if (actionLoading || !order) return;
+  async onConfirmRefund() {
+    const { orderId, actionLoading } = this.data;
+    if (actionLoading) return;
     this.setData({ actionLoading: true });
     try {
       await orderService.refundOrder(orderId);
-      wx.showToast({ title: '退款申请已提交', icon: 'success' });
+      wx.showToast({ title: '退款操作成功', icon: 'success' });
       this.loadDetail();
     } catch (err) {
       wx.showToast({ title: '操作失败', icon: 'error' });
     } finally { this.setData({ actionLoading: false }); }
   },
 
-  async onConfirmRefundApprove() {
-    const { orderId, actionLoading } = this.data;
+  // =====================================================================
+  //                     争议
+  // =====================================================================
+  onShowDisputeDialog() { this.setData({ showDisputeDialog: true, disputeReason: '' }); },
+  onCloseDisputeDialog() { this.setData({ showDisputeDialog: false }); },
+  onDisputeReasonInput(e: WechatMiniprogram.Input) { this.setData({ disputeReason: e.detail.value }); },
+
+  async onConfirmDispute() {
+    const { orderId, disputeReason, actionLoading } = this.data;
     if (actionLoading) return;
     this.setData({ actionLoading: true });
     try {
-      await orderService.refundOrder(orderId, '同意退款');
-      wx.showToast({ title: '退款已同意', icon: 'success' });
+      await orderService.disputeOrder(orderId, disputeReason || undefined);
+      wx.showToast({ title: '争议已提交', icon: 'success' });
+      this.setData({ showDisputeDialog: false });
       this.loadDetail();
     } catch (err) {
       wx.showToast({ title: '操作失败', icon: 'error' });
@@ -200,18 +181,8 @@ Page({
   },
 
   // =====================================================================
-  //                       辅助判断
+  //                       辅助
   // =====================================================================
-  onCodeBtnTap(e: WechatMiniprogram.BaseEvent) {
-    const { title, action } = e.currentTarget.dataset as { title: string; action: string };
-    this.openCodeDialog(title || '', action || '');
-  },
-
-  canCancel(): boolean {
-    const s = this.data.order?.status;
-    return s !== undefined ? [1, 2, 3, 4].includes(s) : false;
-  },
-
   onUnload() {
     const self = this as any;
     if (self._navTimer) clearTimeout(self._navTimer);

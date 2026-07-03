@@ -25,17 +25,43 @@
       <t-cell title="{{order.myRole === 'seller' ? '买家' : '卖家'}}" note="{{order.myRole === 'seller' ? order.buyerNickname : order.sellerNickname}}" />
     </t-cell-group>
 
-    <!-- 验证码（服务中/待确认时双方可见自己的码） -->
-    <view wx:if="{{order.status === 3 || order.status === 4}}" class="code-section">
-      <view wx:if="{{order.myRole === 'seller'}}" class="code-box">
-        <text class="code-label">卖家验证码</text>
-        <text class="code-text">{{order.sellerCode}}</text>
-        <text class="code-hint">买家完成服务时需输入此码</text>
+    <!-- ====== Status 1: 待核销 — 启动核销码 ====== -->
+    <view wx:if="{{order.status === 1}}" class="code-section">
+      <view class="section-title">启动服务核销码</view>
+      <view class="code-row">
+        <view class="code-box">
+          <text class="code-label">我的核销码</text>
+          <text class="code-text">{{order.myRole === 'buyer' ? order.buyerVerifyCode : order.sellerVerifyCode}}</text>
+        </view>
+        <view class="code-box">
+          <text class="code-label">对方核销码</text>
+          <text class="code-text">{{order.myRole === 'buyer' ? order.sellerVerifyCode : order.buyerVerifyCode}}</text>
+        </view>
       </view>
-      <view wx:if="{{order.myRole === 'buyer'}}" class="code-box">
-        <text class="code-label">买家验证码</text>
-        <text class="code-text">{{order.buyerCode}}</text>
-        <text class="code-hint">卖家接单时需输入此码</text>
+      <view class="code-hint">双方均输入对方的核销码后，订单进入服务中状态</view>
+      <view class="verify-status">
+        <text>我方：{{(order.myRole === 'buyer' ? order.buyerVerified : order.sellerVerified) ? '已核销' : '待核销'}}</text>
+        <text>对方：{{(order.myRole === 'buyer' ? order.sellerVerified : order.buyerVerified) ? '已核销' : '待核销'}}</text>
+      </view>
+    </view>
+
+    <!-- ====== Status 3: 服务中 — 确认核销码 ====== -->
+    <view wx:if="{{order.status === 3}}" class="code-section">
+      <view class="section-title">完成服务核销码</view>
+      <view class="code-row">
+        <view class="code-box">
+          <text class="code-label">我的确认码</text>
+          <text class="code-text">{{order.myRole === 'buyer' ? order.buyerConfirmCode : order.sellerConfirmCode}}</text>
+        </view>
+        <view class="code-box">
+          <text class="code-label">对方确认码</text>
+          <text class="code-text">{{order.myRole === 'buyer' ? order.sellerConfirmCode : order.buyerConfirmCode}}</text>
+        </view>
+      </view>
+      <view class="code-hint">双方均输入对方的确认码后，订单完成并结算积分</view>
+      <view class="verify-status">
+        <text>我方：{{(order.myRole === 'buyer' ? order.buyerConfirmed : order.sellerConfirmed) ? '已确认' : '待确认'}}</text>
+        <text>对方：{{(order.myRole === 'buyer' ? order.sellerConfirmed : order.buyerConfirmed) ? '已确认' : '待确认'}}</text>
       </view>
     </view>
 
@@ -54,38 +80,36 @@
 
   <!-- 底部操作按钮 -->
   <view wx:if="{{order}}" class="bottom-actions">
-    <!-- 接单（卖家 + 待支付） -->
-    <t-button wx:if="{{order.myRole === 'seller' && order.status === 1}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onShowAcceptDialog">接单</t-button>
+    <!-- Status 1: 输入对方核销码启动服务 -->
+    <t-button wx:if="{{order.status === 1}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="输入对方的核销码" data-action="start">核销启动服务</t-button>
 
-    <!-- 卖家完成验证（卖家 + 服务中） -->
-    <t-button wx:if="{{order.myRole === 'seller' && order.status === 3}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="请输入买家验证码" data-action="completeSeller">验证完成服务</t-button>
+    <!-- Status 3: 输入对方确认码完成服务 -->
+    <t-button wx:if="{{order.status === 3}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="输入对方的确认码" data-action="complete">核销完成服务</t-button>
 
-    <!-- 买家完成验证（买家 + 服务中/待确认，但自己还没验证） -->
-    <t-button wx:if="{{order.myRole === 'buyer' && (order.status === 3 || order.status === 4)}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="请输入卖家验证码" data-action="completeBuyer">验证完成服务</t-button>
+    <!-- Status 3/5: 争议 -->
+    <t-button wx:if="{{order.status === 3 || order.status === 5}}" theme="warning" size="large" block loading="{{actionLoading}}" bindtap="onShowDisputeDialog">发起争议</t-button>
 
-    <!-- 退款（服务中/待确认，双方均可发起） -->
-    <t-button wx:if="{{order.status === 3 || order.status === 4}}" theme="light" size="large" block loading="{{actionLoading}}" bindtap="onShowRefundDialog">
+    <!-- Status 3: 退款（双向同意） -->
+    <t-button wx:if="{{order.status === 3}}" theme="light" size="large" block loading="{{actionLoading}}" bindtap="onShowRefundDialog">
       {{order.refundRequesting ? (order.refundRequester === order.myRole ? '等待对方同意退款' : '点击同意退款') : '申请退款'}}
     </t-button>
 
-    <!-- 取消（待支付/已支付/服务中/待确认） -->
-    <t-button wx:if="{{order.status === 1 || order.status === 2 || order.status === 3 || order.status === 4}}" theme="default" size="large" block loading="{{actionLoading}}" bindtap="onShowCancelDialog">取消订单</t-button>
+    <!-- Status 1: 取消 -->
+    <t-button wx:if="{{order.status === 1}}" theme="default" size="large" block loading="{{actionLoading}}" bindtap="onShowCancelDialog">取消订单</t-button>
   </view>
 
-  <!-- 接单弹窗 -->
-  <t-dialog visible="{{showAcceptDialog}}" title="确认接单" confirm-btn="确认接单" cancel-btn="取消" bind:confirm="onConfirmAccept" bind:cancel="onCloseAcceptDialog">
-    <view slot="content" class="dialog-body">
-      <text class="dialog-text">确认接单后订单进入服务中状态，请确认无误</text>
-    </view>
-  </t-dialog>
-
-  <!-- 通用验证码弹窗 -->
+  <!-- 核销码弹窗 -->
   <t-dialog visible="{{showCodeDialog}}" title="{{codeDialogTitle}}" confirm-btn="确认" cancel-btn="取消" bind:confirm="onConfirmCode" bind:cancel="onCloseCodeDialog">
-    <input slot="content" class="code-input" placeholder="请输入验证码" value="{{codeInput}}" bindinput="onCodeInput" maxlength="6" />
+    <input slot="content" class="code-input" placeholder="请输入核销码" value="{{codeInput}}" bindinput="onCodeInput" maxlength="10" />
   </t-dialog>
 
   <!-- 取消弹窗 -->
   <t-dialog visible="{{showCancelDialog}}" title="取消订单" confirm-btn="确认取消" cancel-btn="再想想" bind:confirm="onConfirmCancel" bind:cancel="onCloseCancelDialog">
     <input slot="content" class="cancel-input" placeholder="取消原因（可选）" value="{{cancelReason}}" bindinput="onCancelReasonInput" />
+  </t-dialog>
+
+  <!-- 争议弹窗 -->
+  <t-dialog visible="{{showDisputeDialog}}" title="发起争议" confirm-btn="确认提交" cancel-btn="取消" bind:confirm="onConfirmDispute" bind:cancel="onCloseDisputeDialog">
+    <input slot="content" class="dispute-input" placeholder="请描述争议原因" value="{{disputeReason}}" bindinput="onDisputeReasonInput" />
   </t-dialog>
 </view>

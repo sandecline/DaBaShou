@@ -10,7 +10,7 @@ import { ORDER_STATUS_MAP } from '../../../utils/order-status';
 /** Tab 对应的状态筛选 */
 const TAB_FILTER: Record<number, OrderStatus | undefined> = {
   0: undefined,       // 全部
-  1: 3 as OrderStatus, // 进行中（服务中）
+  1: 3 as OrderStatus, // 进行中（服务中，状态3）— 待核销(1)也显示在全部里
   2: 5 as OrderStatus, // 已完成
 };
 

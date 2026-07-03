@@ -232,24 +232,39 @@ INSERT INTO `dbs_demand` (`id`, `user_id`, `skill_tag_id`, `title`, `description
 ALTER TABLE `dbs_demand` AUTO_INCREMENT = 17;
 
 -- ==================== 8. 订单 (14个，显式ID) ====================
+-- 新流程: 1(待核销)→3(服务中)→5(已完成)
+-- 核销码: buyer_verify_code/seller_verify_code (启动阶段), buyer_confirm_code/seller_confirm_code (完成阶段)
 
-INSERT INTO `dbs_order` (`id`, `order_no`, `buyer_id`, `seller_id`, `demand_id`, `skill_shelf_id`, `skill_tag_id`, `title`, `point_amount`, `status`, `verify_code`, `verify_code_expire`, `remark`, `create_time`, `update_time`) VALUES
-(1,  'DBS20260625001', 3,  2,  NULL, 1,  16, 'Python编程辅导',     150, 5, '123456', CONCAT(CURDATE() - INTERVAL 6 DAY, ' 18:00:00'), '老师讲得很好',     CONCAT(CURDATE() - INTERVAL 7 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 7 DAY, ' 16:00:00')),
-(2,  'DBS20260626001', 4,  3,  NULL, 3,  11, '海报设计',           180, 5, '234567', CONCAT(CURDATE() - INTERVAL 5 DAY, ' 18:00:00'), '设计效果超预期',   CONCAT(CURDATE() - INTERVAL 6 DAY, ' 09:00:00'), CONCAT(CURDATE() - INTERVAL 6 DAY, ' 15:00:00')),
-(3,  'DBS20260627001', 2,  4,  NULL, 5,  26, '篮球陪练',           120, 5, '345678', CONCAT(CURDATE() - INTERVAL 4 DAY, ' 18:00:00'), '技术很好',         CONCAT(CURDATE() - INTERVAL 5 DAY, ' 14:00:00'), CONCAT(CURDATE() - INTERVAL 5 DAY, ' 20:00:00')),
-(4,  'DBS20260628001', 8,  7,  1,   NULL, 1,  '高数期末冲刺',       150, 5, '456789', CONCAT(CURDATE() - INTERVAL 3 DAY, ' 18:00:00'), '讲得很清楚',       CONCAT(CURDATE() - INTERVAL 4 DAY, ' 08:00:00'), CONCAT(CURDATE() - INTERVAL 4 DAY, ' 17:00:00')),
-(5,  'DBS20260628002', 6,  5,  NULL, 1,  16, 'Python算法辅导',     200, 5, '567890', CONCAT(CURDATE() - INTERVAL 3 DAY, ' 18:00:00'), '学到很多',         CONCAT(CURDATE() - INTERVAL 4 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 4 DAY, ' 19:00:00')),
-(6,  'DBS20260629001', 8,  10, NULL, 12, 31, '吉他零基础教学',     120, 3, '678901', CONCAT(CURDATE() - INTERVAL 1 DAY, ' 18:00:00'), NULL,              CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00'), CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00')),
-(7,  'DBS20260629002', 15, 12, NULL, 14, 2,  '英语口语陪练',       130, 3, '789012', CONCAT(CURDATE(), ' 18:00:00'),                  NULL,              CONCAT(CURDATE() - INTERVAL 3 DAY, ' 14:00:00'), CONCAT(CURDATE() - INTERVAL 3 DAY, ' 14:00:00')),
-(8,  'DBS20260630001', 22, 14, NULL, 16, 17, 'Java项目实战',       250, 3, '890123', CONCAT(CURDATE(), ' 18:00:00'),                  NULL,              CONCAT(CURDATE() - INTERVAL 2 DAY, ' 08:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 08:00:00')),
-(9,  'DBS20260630002', 11, 5,  NULL, 7,  19, '微信小程序开发',     180, 4, '901234', CONCAT(CURDATE() - INTERVAL 1 DAY, ' 18:00:00'), '已学完',           CONCAT(CURDATE() - INTERVAL 4 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 10:00:00')),
-(10, 'DBS20260630003', 19, 13, NULL, 15, 13, 'APP界面设计',        280, 4, '012345', CONCAT(CURDATE() - INTERVAL 1 DAY, ' 18:00:00'), '设计完成',         CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 11:00:00')),
-(11, 'DBS20260630004', 7,  9,  NULL, 11, 16, '深度学习入门',       350, 1, '111111', CONCAT(CURDATE() - INTERVAL 1 DAY, ' 18:00:00'), NULL,              CONCAT(CURDATE() - INTERVAL 2 DAY, ' 12:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 12:00:00')),
-(12, 'DBS20260630005', 18, 11, NULL, 13, 26, '篮球技术提升',       100, 1, '222222', CONCAT(CURDATE() - INTERVAL 1 DAY, ' 18:00:00'), NULL,              CONCAT(CURDATE() - INTERVAL 2 DAY, ' 13:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 13:00:00')),
-(13, 'DBS20260625002', 2,  3,  NULL, 4,  14, 'PPT美化',            100, 0, '333333', CONCAT(CURDATE() - INTERVAL 6 DAY, ' 18:00:00'), '临时有事取消',     CONCAT(CURDATE() - INTERVAL 7 DAY, ' 15:00:00'), CONCAT(CURDATE() - INTERVAL 7 DAY, ' 16:00:00')),
-(14, 'DBS20260629003', 4,  2,  NULL, 2,  18, '前端页面开发',       200, 7, '444444', CONCAT(CURDATE() - INTERVAL 2 DAY, ' 18:00:00'), '效果不满意',       CONCAT(CURDATE() - INTERVAL 3 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 09:00:00'));
+INSERT INTO `dbs_order` (`id`, `order_no`, `buyer_id`, `seller_id`, `demand_id`, `skill_shelf_id`, `skill_tag_id`, `title`, `point_amount`, `status`,
+  `buyer_verify_code`, `seller_verify_code`, `buyer_confirm_code`, `seller_confirm_code`,
+  `buyer_verified`, `seller_verified`, `buyer_confirmed`, `seller_confirmed`,
+  `refund_requester`, `refund_agreed`, `remark`, `create_time`, `update_time`) VALUES
+-- 已完成 (status=5): 双方核销+确认完毕
+(1,  'DBS20260625001', 3,  2,  NULL, 1,  16, 'Python编程辅导',     150, 5, 'A1B2C3', 'D4E5F6', 'G7H8I9', 'J0K1L2', 1, 1, 1, 1, NULL, 0, '老师讲得很好',     CONCAT(CURDATE() - INTERVAL 7 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 6 DAY, ' 16:00:00')),
+(2,  'DBS20260626001', 4,  3,  NULL, 3,  11, '海报设计',           180, 5, 'M3N4O5', 'P6Q7R8', 'S9T0U1', 'V2W3X4', 1, 1, 1, 1, NULL, 0, '设计效果超预期',   CONCAT(CURDATE() - INTERVAL 6 DAY, ' 09:00:00'), CONCAT(CURDATE() - INTERVAL 5 DAY, ' 15:00:00')),
+(3,  'DBS20260627001', 2,  4,  NULL, 5,  26, '篮球陪练',           120, 5, 'Y5Z6A7', 'B8C9D0', 'E1F2G3', 'H4I5J6', 1, 1, 1, 1, NULL, 0, '技术很好',         CONCAT(CURDATE() - INTERVAL 5 DAY, ' 14:00:00'), CONCAT(CURDATE() - INTERVAL 4 DAY, ' 20:00:00')),
+(4,  'DBS20260628001', 8,  7,  1,   NULL, 1,  '高数期末冲刺',       150, 5, 'K7L8M9', 'N0O1P2', 'Q3R4S5', 'T6U7V8', 1, 1, 1, 1, NULL, 0, '讲得很清楚',       CONCAT(CURDATE() - INTERVAL 4 DAY, ' 08:00:00'), CONCAT(CURDATE() - INTERVAL 3 DAY, ' 17:00:00')),
+(5,  'DBS20260628002', 6,  5,  NULL, 1,  16, 'Python算法辅导',     200, 5, 'W9X0Y1', 'Z2A3B4', 'C5D6E7', 'F8G9H0', 1, 1, 1, 1, NULL, 0, '学到很多',         CONCAT(CURDATE() - INTERVAL 4 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 3 DAY, ' 19:00:00')),
+-- 服务中 (status=3): 双方已核销，等待确认
+(6,  'DBS20260629001', 8,  10, NULL, 12, 31, '吉他零基础教学',     120, 3, 'I1J2K3', 'L4M5N6', 'O7P8Q9', 'R0S1T2', 1, 1, 0, 0, NULL, 0, NULL,              CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 09:00:00')),
+(7,  'DBS20260629002', 15, 12, NULL, 14, 2,  '英语口语陪练',       130, 3, 'U3V4W5', 'X6Y7Z8', 'A9B0C1', 'D2E3F4', 1, 1, 0, 0, NULL, 0, NULL,              CONCAT(CURDATE() - INTERVAL 3 DAY, ' 14:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 14:00:00')),
+(8,  'DBS20260630001', 22, 14, NULL, 16, 17, 'Java项目实战',       250, 3, 'G5H6I7', 'J8K9L0', 'M1N2O3', 'P4Q5R6', 1, 1, 0, 0, NULL, 0, NULL,              CONCAT(CURDATE() - INTERVAL 2 DAY, ' 08:00:00'), CONCAT(CURDATE() - INTERVAL 1 DAY, ' 08:00:00')),
+-- 服务中 (status=3): 一方已确认，等待另一方
+(9,  'DBS20260630002', 11, 5,  NULL, 7,  19, '微信小程序开发',     180, 3, 'S7T8U9', 'V0W1X2', 'Y3Z4A5', 'B6C7D8', 1, 1, 1, 0, NULL, 0, '已学完',           CONCAT(CURDATE() - INTERVAL 4 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 1 DAY, ' 10:00:00')),
+(10, 'DBS20260630003', 19, 13, NULL, 15, 13, 'APP界面设计',        280, 3, 'E9F0G1', 'H2I3J4', 'K5L6M7', 'N8O9P0', 1, 1, 0, 1, NULL, 0, '设计完成',         CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00'), CONCAT(CURDATE() - INTERVAL 1 DAY, ' 11:00:00')),
+-- 待核销 (status=1): 等待双方输入核销码
+(11, 'DBS20260630004', 7,  9,  NULL, 11, 16, '深度学习入门',       350, 1, 'Q1R2S3', 'T4U5V6', NULL, NULL, 0, 0, 0, 0, NULL, 0, NULL,              CONCAT(CURDATE() - INTERVAL 2 DAY, ' 12:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 12:00:00')),
+(12, 'DBS20260630005', 18, 11, NULL, 13, 26, '篮球技术提升',       100, 1, 'W7X8Y9', 'Z0A1B2', NULL, NULL, 0, 0, 0, 0, NULL, 0, NULL,              CONCAT(CURDATE() - INTERVAL 2 DAY, ' 13:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 13:00:00')),
+-- 待核销 (status=1): 一方已核销，等待另一方
+(13, 'DBS20260630006', 21, 17, NULL, 9,  1,  '大学物理答疑',       130, 1, 'C3D4E5', 'F6G7H8', NULL, NULL, 1, 0, 0, 0, NULL, 0, NULL,              CONCAT(CURDATE() - INTERVAL 1 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 1 DAY, ' 10:30:00')),
+-- 已取消 (status=0)
+(14, 'DBS20260625002', 2,  3,  NULL, 4,  14, 'PPT美化',            100, 0, 'I9J0K1', 'L2M3N4', NULL, NULL, 0, 0, 0, 0, NULL, 0, '临时有事取消',     CONCAT(CURDATE() - INTERVAL 7 DAY, ' 15:00:00'), CONCAT(CURDATE() - INTERVAL 7 DAY, ' 16:00:00')),
+-- 争议中 (status=7)
+(15, 'DBS20260629003', 4,  2,  NULL, 2,  18, '前端页面开发',       200, 7, 'O5P6Q7', 'R8S9T0', 'U1V2W3', 'X4Y5Z6', 1, 1, 1, 1, NULL, 0, '效果不满意',       CONCAT(CURDATE() - INTERVAL 3 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 09:00:00')),
+-- 服务中 (status=3): 退款申请中
+(16, 'DBS20260630007', 23, 14, NULL, 21, 18, 'React前端开发',      220, 3, 'A7B8C9', 'D0E1F2', 'G3H4I5', 'J6K7L8', 1, 1, 0, 0, 'buyer', 0, NULL, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 14:00:00'), CONCAT(CURDATE() - INTERVAL 1 DAY, ' 16:00:00'));
 
-ALTER TABLE `dbs_order` AUTO_INCREMENT = 15;
+ALTER TABLE `dbs_order` AUTO_INCREMENT = 17;
 
 -- ==================== 9. 积分账户 (24个) ====================
 
@@ -264,19 +279,19 @@ INSERT INTO `dbs_point_account` (`user_id`, `available`, `frozen`, `total_earned
 (8,  60,    120,  150,   210),
 (9,  950,   250,  1200,  0),
 (10, 500,   0,    620,   240),
-(11, 100,   0,    200,   220),
+(11, 100,   180,  200,   220),
 (12, 430,   130,  560,   0),
 (13, 400,   280,  680,   0),
 (14, 850,   250,  1100,  0),
-(15, 50,    0,    130,   180),
+(15, 50,    130,  130,   180),
 (16, 200,   0,    350,   230),
 (17, 450,   0,    580,   260),
 (18, 300,   0,    400,   200),
-(19, 100,   0,    250,   330),
+(19, 100,   280,  250,   330),
 (20, 500,   0,    700,   350),
 (21, 380,   0,    480,   200),
-(22, 50,    0,    150,   200),
-(23, 380,   0,    530,   300),
+(22, 50,    250,  150,   200),
+(23, 380,   220,  530,   300),
 (24, 520,   200,  720,   0);
 
 -- ==================== 10. 积分流水 ====================
@@ -301,7 +316,10 @@ INSERT INTO `dbs_point_transaction` (`user_id`, `order_id`, `type`, `amount`, `b
 (2,  3,  2, 120, 130,  '订单DBS20260627001支出', CONCAT(CURDATE() - INTERVAL 5 DAY, ' 20:00:00')),
 (8,  6,  3, 120, 60,   '订单DBS20260629001冻结', CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00')),
 (15, 7,  3, 130, 50,   '订单DBS20260629002冻结', CONCAT(CURDATE() - INTERVAL 3 DAY, ' 14:00:00')),
-(22, 8,  3, 250, 50,   '订单DBS20260630001冻结', CONCAT(CURDATE() - INTERVAL 2 DAY, ' 08:00:00'));
+(22, 8,  3, 250, 50,   '订单DBS20260630001冻结', CONCAT(CURDATE() - INTERVAL 2 DAY, ' 08:00:00')),
+(11, 9,  3, 180, 100,  '订单DBS20260630002冻结', CONCAT(CURDATE() - INTERVAL 4 DAY, ' 10:00:00')),
+(19, 10, 3, 280, 100,  '订单DBS20260630003冻结', CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00')),
+(23, 16, 3, 220, 380,  '订单DBS20260630007冻结', CONCAT(CURDATE() - INTERVAL 2 DAY, ' 14:00:00'));
 
 -- ==================== 11. 积分冻结记录 ====================
 
@@ -309,8 +327,9 @@ INSERT INTO `dbs_point_freeze` (`order_id`, `user_id`, `amount`, `status`, `free
 (6,  8,  120, 1, CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00'), NULL),
 (7,  15, 130, 1, CONCAT(CURDATE() - INTERVAL 3 DAY, ' 14:00:00'), NULL),
 (8,  22, 250, 1, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 08:00:00'), NULL),
-(9,  11, 180, 2, CONCAT(CURDATE() - INTERVAL 4 DAY, ' 10:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 10:00:00')),
-(10, 19, 280, 2, CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00'), CONCAT(CURDATE() - INTERVAL 2 DAY, ' 11:00:00'));
+(9,  11, 180, 1, CONCAT(CURDATE() - INTERVAL 4 DAY, ' 10:00:00'), NULL),
+(10, 19, 280, 1, CONCAT(CURDATE() - INTERVAL 3 DAY, ' 09:00:00'), NULL),
+(16, 23, 220, 1, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 14:00:00'), NULL);
 
 -- ==================== 12. 担保池 ====================
 
@@ -320,7 +339,10 @@ INSERT INTO `dbs_guarantee_pool` (`order_id`, `amount`, `status`, `settle_time`)
 (3, 120, 2, CONCAT(CURDATE() - INTERVAL 5 DAY, ' 20:00:00')),
 (6, 120, 1, NULL),
 (7, 130, 1, NULL),
-(8, 250, 1, NULL);
+(8, 250, 1, NULL),
+(9, 180, 1, NULL),
+(10, 280, 1, NULL),
+(16, 220, 1, NULL);
 
 -- ==================== 13. 评价 ====================
 
@@ -378,13 +400,13 @@ INSERT INTO `dbs_notification` (`user_id`, `type`, `title`, `content`, `related_
 (7,  'point',  '积分到账',     '订单DBS20260628001收入150积分',            NULL,     NULL, 1, CONCAT(CURDATE() - INTERVAL 4 DAY, ' 17:00:00')),
 (5,  'point',  '积分到账',     '订单DBS20260628002收入200积分',            NULL,     NULL, 1, CONCAT(CURDATE() - INTERVAL 4 DAY, ' 19:00:00')),
 (8,  'system', '欢迎加入搭把手', '感谢注册搭把手平台，送您100积分新手礼包！', NULL,  NULL, 1, CONCAT(CURDATE() - INTERVAL 12 DAY, ' 10:00:00')),
-(22, 'order',  '订单争议',     '订单DBS20260629003存在争议，请处理',       'order',  14, 0, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 09:00:00')),
-(11, 'order',  '待确认',       '订单DBS20260630002等待您确认完成',         'order',  9,  0, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 10:00:00'));
+(22, 'order',  '订单争议',     '订单DBS20260629003存在争议，请处理',       'order',  15, 0, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 09:00:00')),
+(11, 'order',  '待核销',       '订单DBS20260630004等待您核销启动服务',     'order',  11, 0, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 10:00:00'));
 
 -- ==================== 16. 违规与申诉 ====================
 
 INSERT INTO `credit_violation` (`user_id`, `order_id`, `type`, `description`, `penalty_score`, `reporter_id`, `status`, `create_time`) VALUES
-(22, 14, 'other', '订单完成后恶意差评', 0.5, 2, 1, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 10:00:00'));
+(22, 15, 'other', '订单完成后恶意差评', 0.5, 2, 1, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 10:00:00'));
 
 INSERT INTO `credit_appeal` (`violation_id`, `appellant_id`, `reason`, `status`, `create_time`) VALUES
 (1, 22, '我认为评价是客观的，不存在恶意差评', 0, CONCAT(CURDATE() - INTERVAL 2 DAY, ' 10:30:00'));

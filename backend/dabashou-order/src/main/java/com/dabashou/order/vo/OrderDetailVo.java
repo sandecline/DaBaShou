@@ -24,6 +24,16 @@ public class OrderDetailVo {
     private String statusName;
     private String verifyCode;
     private LocalDateTime verifyCodeExpire;
+    private String buyerVerifyCode;
+    private String sellerVerifyCode;
+    private String buyerConfirmCode;
+    private String sellerConfirmCode;
+    private Boolean buyerVerified;
+    private Boolean sellerVerified;
+    private Boolean buyerConfirmed;
+    private Boolean sellerConfirmed;
+    private String refundRequester;
+    private Boolean refundAgreed;
     private Long timeSlotId;
     private LocalDateTime serviceStartTime;
     private LocalDateTime serviceEndTime;
@@ -67,6 +77,26 @@ public class OrderDetailVo {
     public void setVerifyCode(String verifyCode) { this.verifyCode = verifyCode; }
     public LocalDateTime getVerifyCodeExpire() { return verifyCodeExpire; }
     public void setVerifyCodeExpire(LocalDateTime verifyCodeExpire) { this.verifyCodeExpire = verifyCodeExpire; }
+    public String getBuyerVerifyCode() { return buyerVerifyCode; }
+    public void setBuyerVerifyCode(String buyerVerifyCode) { this.buyerVerifyCode = buyerVerifyCode; }
+    public String getSellerVerifyCode() { return sellerVerifyCode; }
+    public void setSellerVerifyCode(String sellerVerifyCode) { this.sellerVerifyCode = sellerVerifyCode; }
+    public String getBuyerConfirmCode() { return buyerConfirmCode; }
+    public void setBuyerConfirmCode(String buyerConfirmCode) { this.buyerConfirmCode = buyerConfirmCode; }
+    public String getSellerConfirmCode() { return sellerConfirmCode; }
+    public void setSellerConfirmCode(String sellerConfirmCode) { this.sellerConfirmCode = sellerConfirmCode; }
+    public Boolean getBuyerVerified() { return buyerVerified; }
+    public void setBuyerVerified(Boolean buyerVerified) { this.buyerVerified = buyerVerified; }
+    public Boolean getSellerVerified() { return sellerVerified; }
+    public void setSellerVerified(Boolean sellerVerified) { this.sellerVerified = sellerVerified; }
+    public Boolean getBuyerConfirmed() { return buyerConfirmed; }
+    public void setBuyerConfirmed(Boolean buyerConfirmed) { this.buyerConfirmed = buyerConfirmed; }
+    public Boolean getSellerConfirmed() { return sellerConfirmed; }
+    public void setSellerConfirmed(Boolean sellerConfirmed) { this.sellerConfirmed = sellerConfirmed; }
+    public String getRefundRequester() { return refundRequester; }
+    public void setRefundRequester(String refundRequester) { this.refundRequester = refundRequester; }
+    public Boolean getRefundAgreed() { return refundAgreed; }
+    public void setRefundAgreed(Boolean refundAgreed) { this.refundAgreed = refundAgreed; }
     public Long getTimeSlotId() { return timeSlotId; }
     public void setTimeSlotId(Long timeSlotId) { this.timeSlotId = timeSlotId; }
     public LocalDateTime getServiceStartTime() { return serviceStartTime; }

@@ -64,13 +64,19 @@ function request<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> 
       },
       success(res) {
         if (res.statusCode === 401) {
+          if (isAuthEndpoint) {
+            // 登录/注册等认证端点返回 401，直接拒绝，不尝试刷新 token
+            const body = res.data as { msg?: string };
+            reject({ code: 401, msg: body?.msg || '用户名或密码错误', data: res.data });
+            return;
+          }
           console.log('[Request] Token 过期，尝试刷新...');
           return refreshTokenAndRetry<T>(options).then(resolve).catch(reject);
         }
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const body = res.data as ApiResponse<T>;
           if (body?.code === 401 && !isAuthEndpoint) {
-            console.log('[Request] Token 杩囨湡锛屽皾璇曞埛鏂?..');
+            console.log('[Request] Token 过期，尝试刷新...');
             return refreshTokenAndRetry<T>(options).then(resolve).catch(reject);
           }
           if (body && typeof body.code === 'number' && body.code !== 200) {
