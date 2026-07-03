@@ -100,7 +100,7 @@ Page({
       const categories = res.data || [];
       this.setData({
         categories,
-        tags: categories[0]?.tags || [],
+        tags: categories[0]?.children || [],
       });
     } catch (err) {
       console.error('加载分类失败:', err);
@@ -118,7 +118,7 @@ Page({
     const category = this.data.categories[categoryIndex];
     this.setData({
       categoryIndex,
-      tags: category?.tags || [],
+      tags: category?.children || [],
       tagIndex: 0,
     });
   },
@@ -188,12 +188,13 @@ Page({
       return;
     }
 
-    wx.chooseImage({
+    wx.chooseMedia({
       count: remaining,
-      sizeType: ['compressed'],
+      mediaType: ['image'],
       sourceType: ['album', 'camera'],
       success: (res) => {
-        this.setData({ images: [...images, ...res.tempFilePaths] });
+        const paths = res.tempFiles.map((f) => f.tempFilePath);
+        this.setData({ images: [...images, ...paths] });
       },
     });
   },

@@ -19,22 +19,21 @@
 
     <div class="order-content">
       <el-tag v-if="orderTagName" size="small" type="info">{{ orderTagName }}</el-tag>
-      <span v-if="order.remark" class="order-remark text-ellipsis">{{ order.remark }}</span>
     </div>
 
     <div class="order-users">
       <div class="user-side">
-        <el-avatar :size="24" :src="order.buyerAvatar">
-          {{ (buyerName || '买').charAt(0) }}
+        <el-avatar :size="24">
+          {{ (order.buyerNickname || '买').charAt(0) }}
         </el-avatar>
-        <span>{{ buyerName || '买家' }}</span>
+        <span>{{ order.buyerNickname || '买家' }}</span>
       </div>
       <el-icon><Right /></el-icon>
       <div class="user-side">
-        <el-avatar :size="24" :src="order.sellerAvatar">
-          {{ (sellerName || '卖').charAt(0) }}
+        <el-avatar :size="24">
+          {{ (order.sellerNickname || '卖').charAt(0) }}
         </el-avatar>
-        <span>{{ sellerName || '卖家' }}</span>
+        <span>{{ order.sellerNickname || '卖家' }}</span>
       </div>
     </div>
 
@@ -56,10 +55,8 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const orderTitle = computed(() => props.order.title || props.order.shelfTitle || '未命名交易')
-const orderTagName = computed(() => props.order.skillTagName || props.order.tagName)
-const buyerName = computed(() => props.order.buyerName || props.order.buyerNickname)
-const sellerName = computed(() => props.order.sellerName || props.order.sellerNickname)
+const orderTitle = computed(() => props.order.shelfTitle || '未命名交易')
+const orderTagName = computed(() => props.order.tagName)
 
 function goDetail() {
   router.push(`/order/${props.order.id}`)

@@ -5,7 +5,6 @@
  */
 
 import { orderService } from '../../../services/order';
-import { paymentService } from '../../../services/payment';
 import { creditService } from '../../../services/credit';
 import type { OrderDetail } from '../../../types/order';
 import { ORDER_STATUS_MAP } from '../../../utils/order-status';
@@ -61,7 +60,7 @@ Page({
       const statusTheme =
         status === 0 ? 'default' : status === 1 ? 'warning' :
         status === 3 ? 'primary' : status === 5 ? 'success' :
-        status === 7 ? 'danger' : 'default';
+        status === 6 ? 'warning' : status === 7 ? 'danger' : 'default';
       const myId = getUserInfo()?.id || 0;
       let myRole: 'buyer' | 'seller' | null = null;
       if (order.buyerId === myId) myRole = 'buyer';
@@ -73,10 +72,11 @@ Page({
         ...order,
         myRole,
         createTimeFormatted,
-        startBuyerCode: order.buyerVerifyCode || order.buyerCode || '',
-        startSellerCode: order.sellerVerifyCode || order.sellerCode || '',
-        completeBuyerCode: order.buyerConfirmCode || order.buyerCode || '',
-        completeSellerCode: order.sellerConfirmCode || order.sellerCode || '',
+        myStartCode: myRole === 'buyer' ? order.buyerVerifyCode : order.sellerVerifyCode,
+        myStartVerified: myRole === 'buyer' ? order.buyerVerified : order.sellerVerified,
+        myConfirmCode: myRole === 'buyer' ? order.buyerConfirmCode : order.sellerConfirmCode,
+        myConfirmed: myRole === 'buyer' ? order.buyerConfirmed : order.sellerConfirmed,
+        refundRequesting: !!order.refundRequester && !order.refundAgreed,
       };
       // 已完成订单查询是否已评价
       let reviewed = false;
@@ -133,7 +133,7 @@ Page({
         if (!res.confirm) return;
         this.setData({ actionLoading: true });
         try {
-          await orderService.refundOrder(order.id, order.myRole);
+          await orderService.refundOrder(order.id, '申请退款');
           wx.showToast({ title: '退款申请已提交', icon: 'success' });
           this.loadDetail();
         } catch (err) {
@@ -155,7 +155,7 @@ Page({
         if (!res.confirm) return;
         this.setData({ actionLoading: true });
         try {
-          await orderService.refundOrder(order.id, order.myRole, true);
+          await orderService.refundOrder(order.id, '同意退款');
           wx.showToast({ title: '退款已同意', icon: 'success' });
           this.loadDetail();
         } catch (err) {
@@ -225,26 +225,8 @@ Page({
     } finally { this.setData({ actionLoading: false }); }
   },
 
-  // =====================================================================
-  //                     支付（虚拟积分冻结）
-  // =====================================================================
-  async onPayOrder() {
-    const { order, actionLoading } = this.data;
-    if (actionLoading || !order || !order.myRole) return;
-    if (order.status !== 1) {
-      wx.showToast({ title: '当前状态不可支付', icon: 'error' });
-      return;
-    }
-    this.setData({ actionLoading: true });
-    try {
-      await paymentService.freezePoints(getUserInfo()?.id || 0, order.pointAmount, order.id);
-      wx.showToast({ title: '支付成功', icon: 'success' });
-      this.loadDetail();
-    } catch (err: unknown) {
-      wx.showToast({ title: (err as Record<string, string>)?.msg || '支付失败', icon: 'error' });
-    } finally {
-      this.setData({ actionLoading: false });
-    }
+  onGoToAppeal() {
+    wx.navigateTo({ url: `/subpackages/user/credit/appeal/appeal` });
   },
 
   // =====================================================================

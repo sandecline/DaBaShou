@@ -14,11 +14,11 @@
     </el-tabs>
 
     <el-table v-if="activeTab === 'violations'" :data="violations" stripe v-loading="violationsLoading" border>
-      <el-table-column prop="targetNickname" label="违规用户" width="130" />
+      <el-table-column prop="userId" label="违规用户ID" width="130" />
       <el-table-column prop="reporterNickname" label="举报人" width="130" />
       <el-table-column label="类型" width="120">
         <template #default="{ row }">
-          <el-tag type="danger" size="small">{{ row.typeDesc || ViolationTypeMap[row.type as ViolationType] || row.type }}</el-tag>
+          <el-tag type="danger" size="small">{{ ViolationTypeMap[row.type] || row.type }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="description" label="描述" min-width="220" show-overflow-tooltip />
@@ -44,7 +44,7 @@
     </div>
 
     <el-table v-if="activeTab === 'appeals'" :data="appeals" stripe v-loading="appealsLoading" border>
-      <el-table-column prop="appellantNickname" label="申诉人" width="130" />
+      <el-table-column prop="violationId" label="违规ID" width="100" />
       <el-table-column prop="reason" label="申诉理由" min-width="260" show-overflow-tooltip />
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
@@ -70,9 +70,9 @@
     </div>
 
     <el-table v-if="activeTab === 'reviews'" :data="reviews" stripe v-loading="reviewsLoading" border>
-      <el-table-column prop="orderTitle" label="订单" min-width="170" show-overflow-tooltip />
-      <el-table-column prop="reviewerName" label="评价人" width="120" />
-      <el-table-column prop="revieweeName" label="被评价人" width="120" />
+      <el-table-column prop="orderId" label="订单ID" width="100" />
+      <el-table-column prop="reviewerNickname" label="评价人" width="120" />
+      <el-table-column prop="revieweeNickname" label="被评价人" width="120" />
       <el-table-column label="评分" width="140">
         <template #default="{ row }">
           <el-rate :model-value="row.rating" disabled size="small" />
@@ -139,10 +139,10 @@ import {
 import { formatDateTime } from '@/utils/format'
 import { ViolationTypeMap } from '@/types/api'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
-import type { AppealVo, ReviewVo, ViolationType, ViolationVo } from '@/types/api'
+import type { AppealVo, ReviewVo, ViolationVo } from '@/types/api'
 
-type AppealRow = AppealVo & { appellantNickname?: string; reviewRemark?: string }
-type ViolationRow = ViolationVo & { reporterNickname?: string; typeDesc?: string }
+type AppealRow = AppealVo
+type ViolationRow = ViolationVo
 
 const activeTab = ref<'violations' | 'appeals' | 'reviews'>('violations')
 const violations = ref<ViolationRow[]>([])

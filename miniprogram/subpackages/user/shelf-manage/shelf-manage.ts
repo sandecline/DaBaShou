@@ -99,6 +99,11 @@ Page({
 
   onToggleStatus(e: WechatMiniprogram.CustomEvent) {
     const { id, status } = e.currentTarget.dataset;
+    // 仅允许在上架(1)与下架(0)之间切换，审核中(2)不可操作
+    if (status !== 0 && status !== 1) {
+      wx.showToast({ title: '审核中商品不可操作', icon: 'none' });
+      return;
+    }
     const newStatus: ShelfStatus = status === 1 ? 0 : 1;
     this.setData({
       showToggleDialog: true,

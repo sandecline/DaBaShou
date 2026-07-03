@@ -18,6 +18,31 @@ const LOCATION_OPTIONS = [
   { label: '均可', value: 3 },
 ];
 
+/** 分类图标映射 */
+const CATEGORY_ICONS: Record<string, string> = {
+  '学': '📚',
+  '修': '🔧',
+  '设计': '🎨',
+  '美': '🎨',
+  '技术': '💻',
+  '运动': '🏆',
+  '音乐': '🎵',
+  '艺术': '🎭',
+  '生活': '🏠',
+};
+
+const CATEGORY_BGS: Record<string, string> = {
+  '学': '#e8f4fd',
+  '修': '#fff3e0',
+  '设计': '#f3e8fd',
+  '美': '#f3e8fd',
+  '技术': '#e0f7f5',
+  '运动': '#e8f5e9',
+  '音乐': '#fce4ec',
+  '艺术': '#fce4ec',
+  '生活': '#fff8e1',
+};
+
 Page({
   data: {
     // 分类与标签
@@ -93,16 +118,23 @@ Page({
   async loadCategories() {
     try {
       const res = await skillService.getCategories();
-      const categories = res.data || [];
+      const categories = (res.data || []).map((cat: SkillCategory) => {
+        let icon = '';
+        let bg = '#f5f5f5';
+        for (const [key, val] of Object.entries(CATEGORY_ICONS)) {
+          if (cat.name.includes(key)) { icon = val; bg = CATEGORY_BGS[key] || '#f5f5f5'; break; }
+        }
+        if (!icon) { icon = ''; bg = '#f5f5f5'; }
+        return { ...cat, _icon: icon, _bg: bg };
+      });
       this.setData({
         categories,
-        tags: categories[0]?.tags || [],
+        tags: categories[0]?.children || [],
       });
     } catch (err) {
       console.error('加载分类失败:', err);
-      // Mock 降级
       this.setData({
-        categories: [{ id: 0, name: '加载失败', icon: '', sortOrder: 0 }],
+        categories: [{ id: 0, name: '加载失败', icon: '', sortOrder: 0, _icon: '', _bg: '#f5f5f5' }],
         tags: [],
       });
     }
@@ -120,8 +152,8 @@ Page({
       const { categories } = this.data;
       if (categories.length > 0 && skill.skillTagId) {
         for (let i = 0; i < categories.length; i++) {
-          const tag = categories[i].tags?.find((t) => t.id === skill.skillTagId);
-          if (tag) { catIdx = i; tagIdx = categories[i].tags?.indexOf(tag) ?? 0; break; }
+          const tag = categories[i].children?.find((t) => t.id === skill.skillTagId);
+          if (tag) { catIdx = i; tagIdx = categories[i].children?.indexOf(tag) ?? 0; break; }
         }
       }
 
@@ -135,7 +167,7 @@ Page({
         timeSlots: (skill as any).timeSlots || [],
         categoryIndex: catIdx,
         tagIndex: tagIdx,
-        tags: categories[catIdx]?.tags || [],
+        tags: categories[catIdx]?.children || [],
         titleLength: (skill.title || '').length,
         descLength: (skill.description || '').length,
       });
@@ -146,18 +178,18 @@ Page({
 
   // ===== 分类选择 =====
 
-  onCategoryChange(e: WechatMiniprogram.PickerChange) {
-    const categoryIndex = Number(e.detail.value);
+  onCategoryTap(e: WechatMiniprogram.CustomEvent) {
+    const categoryIndex = Number(e.currentTarget.dataset.index);
     const category = this.data.categories[categoryIndex];
     this.setData({
       categoryIndex,
-      tags: category?.tags || [],
+      tags: category?.children || [],
       tagIndex: 0,
     });
   },
 
-  onTagChange(e: WechatMiniprogram.PickerChange) {
-    this.setData({ tagIndex: Number(e.detail.value) });
+  onTagTap(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ tagIndex: Number(e.currentTarget.dataset.index) });
   },
 
   // ===== 位置选择 =====
@@ -268,12 +300,13 @@ Page({
       return;
     }
 
-    wx.chooseImage({
+    wx.chooseMedia({
       count: remaining,
-      sizeType: ['compressed'],
+      mediaType: ['image'],
       sourceType: ['album', 'camera'],
       success: (res) => {
-        this.setData({ images: [...images, ...res.tempFilePaths] });
+        const paths = res.tempFiles.map((f) => f.tempFilePath);
+        this.setData({ images: [...images, ...paths] });
       },
     });
   },

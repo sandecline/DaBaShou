@@ -4,6 +4,7 @@
  */
 
 import { demandService } from '../../services/demand';
+import { orderService } from '../../services/order';
 import type { Demand } from '../../types/demand';
 import { getTrustLevel } from '../../utils/enums';
 
@@ -11,33 +12,19 @@ const STATUS_LABEL_MAP: Record<number, string> = { 0: '已关闭', 1: '待接单
 
 Page({
   data: {
-    /** 需求ID */
     demandId: 0,
-    /** 需求详情 */
     demand: null as Demand | null,
-    /** 加载状态 */
     loading: true,
-    /** 加载是否出错 */
     loadError: false,
-    /** 是否已过期 */
     expired: false,
-    /** 截止倒计时（剩余毫秒，供 t-count-down 使用） */
     deadlineCountdown: 0,
-    /** 接单按钮 loading */
     accepting: false,
-    /** 预计算：状态主题 */
     statusTheme: 'default' as string,
-    /** 预计算：状态文本标签 */
     statusLabel: '未知' as string,
-    /** 预计算：信任等级主题 */
     trustTheme: 'default' as string,
-    /** 预计算：信任等级标签 */
     trustLabel: '新人' as string,
-    /** 预计算：位置图标 */
     locationIcon: 'check-circle' as string,
-    /** 预计算：位置主题 */
     locationTheme: 'success' as string,
-    /** 预计算：位置标签 */
     locationLabel: '均可' as string,
   },
 
@@ -54,9 +41,7 @@ Page({
     this.loadDetail();
   },
 
-  onUnload() {
-    // 清理资源（倒计时已改用 t-count-down 组件，无需手动清除）
-  },
+  onUnload() {},
 
   onShareAppMessage() {
     const { demand } = this.data;
@@ -66,22 +51,17 @@ Page({
     };
   },
 
-  // ===== 数据加载 =====
-
   async loadDetail() {
     try {
       const res = await demandService.getDetail(this.data.demandId);
       const demand = res.data;
 
-      // 计算过期状态 & 倒计时（毫秒，供 t-count-down 使用 #73 修复）
       const now = Date.now();
-      // iOS 兼容：将 ISO 时间转为可解析格式（'2026-07-16T23:59:59' → '2026/07/16 23:59:59'）
       const deadlineStr = (demand.deadline || '').split('-').join('/').split('T').join(' ');
       const deadline = new Date(deadlineStr).getTime();
       const expired = now > deadline || isNaN(deadline);
       const deadlineCountdown = expired ? 0 : Math.max(0, deadline - now);
 
-      // 预计算 WXML 派生值，避免嵌套三元
       const statusTheme = demand.status === 1 ? 'warning' : demand.status === 2 ? 'primary' : demand.status === 3 ? 'success' : 'default';
       const statusLabel = STATUS_LABEL_MAP[demand.status] || '未知';
       const trust = getTrustLevel(demand.trustScore || 0);
@@ -94,12 +74,9 @@ Page({
       this.setData({ demand, expired, deadlineCountdown, statusTheme, statusLabel, trustTheme, trustLabel: trust.label, locationIcon, locationTheme, locationLabel, loading: false, loadError: false });
     } catch (err) {
       console.error('加载需求详情失败:', err);
-      // #69 修复：设置错误状态
       this.setData({ loading: false, loadError: true });
     }
   },
-
-  // ===== 图片预览 =====
 
   onPreviewImage(e: WechatMiniprogram.CustomEvent) {
     const { index } = e.currentTarget.dataset;
@@ -111,10 +88,8 @@ Page({
     });
   },
 
-  // ===== 接单 =====
-
-  async onAccept() {
-    const { demandId, accepting, expired, demand } = this.data;
+  onAccept() {
+    const { accepting, expired, demand } = this.data;
     if (accepting || expired) return;
     if (!demand) return;
 
@@ -132,9 +107,10 @@ Page({
 
         this.setData({ accepting: true });
         try {
-          await demandService.accept(demandId);
+          const result = await orderService.createFromDemand({ demandId: this.data.demandId });
+          const orderId = result.data?.orderId;
           wx.showToast({ title: '接单成功', icon: 'success' });
-          // 局部更新状态，避免全量 setData 导致页面闪烁
+          // 更新页面状态
           const newStatus = 2;
           this.setData({
             demand: { ...demand, status: newStatus, statusDesc: '进行中' } as Demand,
@@ -142,6 +118,14 @@ Page({
             statusLabel: '进行中',
             accepting: false,
           });
+          // 跳转订单列表
+          if (orderId) {
+            (this as any)._navTimer = setTimeout(() => {
+              const pages = getCurrentPages();
+              if (pages.length > 1) wx.navigateBack();
+              else wx.switchTab({ url: '/pages/index/index' });
+            }, 1200);
+          }
         } catch (err) {
           console.error('接单失败:', err);
           wx.showToast({ title: '接单失败，请重试', icon: 'error' });
@@ -151,13 +135,16 @@ Page({
     });
   },
 
-  // ===== 聊天 =====
-
   onChat() {
     const { demand } = this.data;
     if (!demand) return;
     wx.navigateTo({
       url: `/pages/chat/chat?targetUserId=${demand.userId}&targetNickname=${encodeURIComponent(demand.nickname || '')}`,
     });
+  },
+
+  onUnload() {
+    const self = this as any;
+    if (self._navTimer) clearTimeout(self._navTimer);
   },
 });

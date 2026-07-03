@@ -15,9 +15,51 @@
 }
 
 /* 核销码区域 */
-.verify-code-section {
+.verify-code-section,
+.code-section {
   margin: 24rpx 0;
-  text-align: center;
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.code-section .section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.code-card {
+  background: #f0f5ff;
+  border-radius: 12rpx;
+  padding: 24rpx 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  margin-top: 16rpx;
+}
+
+.code-label {
+  font-size: 22rpx;
+  color: #666;
+}
+
+.code-text {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #0052d9;
+  letter-spacing: 6rpx;
+  font-family: 'Courier New', monospace;
+}
+
+.code-hint {
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.6;
 }
 
 .verify-code-box {
@@ -159,6 +201,49 @@
   font-size: 48rpx;
 }
 
+
+/* 退款提示 */
+.refund-banner {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  background: #fff7e6;
+  border-radius: 12rpx;
+  margin: 24rpx 0;
+  font-size: 26rpx;
+  color: #d46b08;
+}
+
+/* 时间线 */
+.timeline {
+  margin: 24rpx 0;
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.timeline-item {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.8;
+}
+
+/* 加载失败 */
+.error-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 0;
+  gap: 24rpx;
+}
+
+.error-text {
+  font-size: 28rpx;
+  color: #999;
+}
 
 /* 底部固定按钮 */
 .bottom-actions {

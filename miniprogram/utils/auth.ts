@@ -169,7 +169,7 @@ export async function refreshAuthToken(): Promise<LoginVo | null> {
       data: { refreshToken } as Record<string, unknown>,
     });
     if (res.code === 200 && res.data) {
-      saveLoginResult(res.data, '', true);
+      saveLoginResult(res.data, '', false);
       return res.data;
     }
     return null;

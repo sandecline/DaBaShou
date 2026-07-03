@@ -205,12 +205,16 @@ Page({
   async onSendText() {
     // 从缓存同步最新输入（用户点发送时 input 可能未失焦）
     const cache = (this as unknown as Record<string, unknown>)._inputCache;
-    if (cache !== undefined) this.data.inputValue = cache as string;
+    if (cache !== undefined) this.setData({ inputValue: cache as string });
 
-    const { inputValue, sessionId, sending } = this.data;
+    const { inputValue, sessionId, sending, targetUserId } = this.data;
     if (!inputValue.trim() || sending) return;
     if (!sessionId) {
       wx.showToast({ title: '会话未就绪', icon: 'error' });
+      return;
+    }
+    if (!targetUserId) {
+      wx.showToast({ title: '对方用户未识别', icon: 'error' });
       return;
     }
 
@@ -246,9 +250,13 @@ Page({
   // ===== 图片消息 =====
 
   onSendImage() {
-    const { sessionId } = this.data;
+    const { sessionId, targetUserId } = this.data;
     if (!sessionId) {
       wx.showToast({ title: '会话未就绪', icon: 'error' });
+      return;
+    }
+    if (!targetUserId) {
+      wx.showToast({ title: '对方用户未识别', icon: 'error' });
       return;
     }
 

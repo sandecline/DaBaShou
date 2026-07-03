@@ -78,6 +78,7 @@ export function connect(): void {
     },
     fail(err) {
       console.error('[WS] 连接发起失败:', err);
+      state.task = null;
       scheduleReconnect();
     },
   });

@@ -23,7 +23,11 @@ export const fileService = {
         success(res) {
           try {
             const data = JSON.parse(res.data);
-            if (data.code === 200 && data.data) resolve(data.data as string);
+            if (data.code === 200 && data.data) {
+              const url = typeof data.data === 'string' ? data.data : (data.data as { url?: string }).url;
+              if (url) resolve(url);
+              else reject(data);
+            }
             else reject(data);
           } catch { reject(res.data); }
         },

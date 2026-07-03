@@ -26,9 +26,11 @@ Page({
     /** 加载状态 */
     loading: true,
     /** 分页 */
-    pageNum: 1,
     pageSize: 10,
-    hasMore: true,
+    skillPageNum: 1,
+    skillHasMore: true,
+    demandPageNum: 1,
+    demandHasMore: true,
   },
 
   onLoad() {
@@ -43,7 +45,7 @@ Page({
 
   // 下拉刷新
   async onPullDownRefresh() {
-    this.setData({ pageNum: 1, hasMore: true });
+    this.setData({ skillPageNum: 1, skillHasMore: true, demandPageNum: 1, demandHasMore: true });
     if (this.data.activeTab === 0) {
       await this.loadSkillList();
     } else {
@@ -54,10 +56,11 @@ Page({
 
   // 上拉加载更多
   onReachBottom() {
-    if (!this.data.hasMore) return;
     if (this.data.activeTab === 0) {
+      if (!this.data.skillHasMore) return;
       this.loadSkillList(true);
     } else {
+      if (!this.data.demandHasMore) return;
       this.loadDemandList(true);
     }
   }
@@ -66,24 +69,24 @@ Page({
   // Tab 切换
   onTabChange(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value;
-    this.setData({ activeTab: index, pageNum: 1, hasMore: true });
+    this.setData({ activeTab: index });
     if (index === 0) {
-      this.loadSkillList();
+      if (this.data.skillList.length === 0) this.loadSkillList();
     } else {
-      this.loadDemandList();
+      if (this.data.demandList.length === 0) this.loadDemandList();
     }
   },
 
   // 分类切换
   onCategoryChange(e: WechatMiniprogram.CustomEvent) {
     const id = e.currentTarget.dataset.id;
-    this.setData({ activeCategoryId: id, pageNum: 1, hasMore: true });
+    this.setData({ activeCategoryId: id, skillPageNum: 1, skillHasMore: true });
     this.loadSkillList();
   },
 
   // 搜索
   onSearch(e: WechatMiniprogram.CustomEvent) {
-    this.setData({ searchKeyword: e.detail.value, pageNum: 1, hasMore: true });
+    this.setData({ searchKeyword: e.detail.value, skillPageNum: 1, skillHasMore: true, demandPageNum: 1, demandHasMore: true });
     if (this.data.activeTab === 0) {
       this.loadSkillList();
     } else {
@@ -116,8 +119,8 @@ Page({
 
   async loadSkillList(append = false) {
     try {
-      const { activeCategoryId, searchKeyword, pageSize } = this.data;
-      const pageNum = append ? this.data.pageNum : 1;
+      const { activeCategoryId, searchKeyword, pageSize, skillPageNum } = this.data;
+      const pageNum = append ? skillPageNum : 1;
       const res = await shelfService.search({
         categoryId: activeCategoryId || undefined,
         keyword: searchKeyword || undefined,
@@ -127,8 +130,8 @@ Page({
       const newList = append ? [...this.data.skillList, ...res.data.list] : res.data.list;
       this.setData({
         skillList: newList,
-        pageNum: pageNum + 1,
-        hasMore: newList.length < res.data.total,
+        skillPageNum: pageNum + 1,
+        skillHasMore: newList.length < res.data.total,
         loading: false,
       });
     } catch (err) {
@@ -139,8 +142,8 @@ Page({
 
   async loadDemandList(append = false) {
     try {
-      const { searchKeyword, pageSize } = this.data;
-      const pageNum = append ? this.data.pageNum : 1;
+      const { searchKeyword, pageSize, demandPageNum } = this.data;
+      const pageNum = append ? demandPageNum : 1;
       const res = await demandService.search({
         keyword: searchKeyword || undefined,
         pageNum,
@@ -149,8 +152,8 @@ Page({
       const newList = append ? [...this.data.demandList, ...res.data.list] : res.data.list;
       this.setData({
         demandList: newList,
-        pageNum: pageNum + 1,
-        hasMore: newList.length < res.data.total,
+        demandPageNum: pageNum + 1,
+        demandHasMore: newList.length < res.data.total,
         loading: false,
       });
     } catch (err) {

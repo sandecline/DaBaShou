@@ -113,7 +113,7 @@
   </block>
 
   <!-- 底部接单栏 -->
-  <view class="bottom-bar" wx:if="{{!loading}}">
+  <view class="bottom-bar" wx:if="{{!loading && demand}}">
     <t-button
       wx:if="{{demand.status === 1 && !expired}}"
       theme="primary"

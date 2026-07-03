@@ -174,7 +174,7 @@ public class ReviewServiceImpl implements ReviewService {
         String sql = "SELECT * FROM dbs_review WHERE reviewer_id = ? AND order_id = ?";
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, userId, orderId);
         if (rows.isEmpty()) {
-            throw new BusinessException(ErrorCode.NOT_FOUND, "未评价");
+            return null;
         }
         return mapToReviewVo(rows.get(0), null);
     }

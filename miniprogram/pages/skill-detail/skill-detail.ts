@@ -5,20 +5,10 @@
 
 import { shelfService } from '../../services/shelf';
 import { orderService } from '../../services/order';
-import type { SkillShelf } from '../../types/shelf';
+import type { SkillShelf, TimeSlot } from '../../types/shelf';
 import type { CreateFromShelfParams } from '../../services/order';
 import { getTrustLevel } from '../../utils/enums';
-
-function getCurrentUserId(): number {
-  try {
-    const app = getApp();
-    const storedUser = wx.getStorageSync('dabashou_user');
-    const user = app.globalData.userInfo || (typeof storedUser === 'string' ? JSON.parse(storedUser) : storedUser);
-    return user?.id || 1001;
-  } catch {
-    return 1001;
-  }
-}
+import { getCurrentUserId } from '../../utils/auth';
 
 Page({
   data: {
@@ -52,6 +42,10 @@ Page({
     locationTheme: 'success' as string,
     /** 预计算：位置类型标签文本 */
     locationLabel: '均可' as string,
+    /** 可用时段列表 */
+    availableSlots: [] as TimeSlot[],
+    /** 选中的时段ID */
+    selectedSlotId: 0,
   },
 
   onLoad(options: Record<string, string | undefined>) {
@@ -82,7 +76,6 @@ Page({
     try {
       const res = await shelfService.getDetail(this.data.skillId);
       const skill = res.data;
-      // 预计算 WXML 中使用的派生值，避免嵌套三元表达式
       const trust = getTrustLevel(skill.trustScore || 0);
       const trustTheme = trust.level === '金牌' ? 'success' : trust.level === '靠谱' ? 'primary' : 'default';
       const locType = skill.locationType;
@@ -90,21 +83,30 @@ Page({
       const locationTheme = locType === 1 ? 'warning' : locType === 2 ? 'danger' : 'success';
       const locationLabel = locType === 1 ? '线上' : locType === 2 ? '线下' : '均可';
       const isOwner = skill.userId === getCurrentUserId();
-      // 检查当前用户是否已对该技能下单（未取消）
       let hasOrdered = false;
       try {
-        // 仅需确认是否存在有效订单，拉取少量最近订单即可
         const orderRes = await orderService.getMyOrders({ pageNum: 1, pageSize: 20 });
         hasOrdered = orderRes.data.list.some(
-          (o) => ((o as unknown as { skillShelfId?: number }).skillShelfId === skill.id) && o.status !== 0
+          (o) => o.skillShelfId === skill.id && o.status !== 0
         );
       } catch (e) {
         console.error('查询订单状态失败:', e);
       }
-      this.setData({ skill, isOwner, hasOrdered, trustTheme, trustLabel: trust.label, locationIcon, locationTheme, locationLabel, loading: false, loadError: false });
+      // 加载可用时段
+      let availableSlots: TimeSlot[] = [];
+      let selectedSlotId = 0;
+      try {
+        const slotsRes = await shelfService.getTimeSlots(this.data.skillId);
+        availableSlots = (slotsRes.data || [])
+          .filter((s: TimeSlot) => s.available !== false)
+          .sort((a: TimeSlot, b: TimeSlot) => `${a.date || ''} ${a.startTime}`.localeCompare(`${b.date || ''} ${b.startTime}`));
+        selectedSlotId = availableSlots[0]?.id || 0;
+      } catch (e) {
+        console.error('加载时段失败:', e);
+      }
+      this.setData({ skill, isOwner, hasOrdered, trustTheme, trustLabel: trust.label, locationIcon, locationTheme, locationLabel, availableSlots, selectedSlotId, loading: false, loadError: false });
     } catch (err) {
       console.error('加载技能详情失败:', err);
-      // #61 修复：设置错误状态，而非保持 skill=null 导致白屏
       this.setData({ loading: false, loadError: true });
     }
   },
@@ -115,7 +117,7 @@ Page({
     const { index } = e.currentTarget.dataset;
     const { skill } = this.data;
     if (!skill) return;
-    const images = (skill as any).images || [];
+    const images = skill.images || [];
     if (!images.length) return;
     wx.previewImage({
       urls: images,
@@ -130,11 +132,19 @@ Page({
       wx.showToast({ title: '不能购买自己的服务', icon: 'error' });
       return;
     }
+    if (this.data.availableSlots.length === 0) {
+      wx.showToast({ title: '暂无可预约时间', icon: 'none' });
+      return;
+    }
     this.setData({ showOrderDialog: true, orderRemark: '' });
   },
 
   onCloseOrderDialog() {
     this.setData({ showOrderDialog: false });
+  },
+
+  onSlotTap(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ selectedSlotId: Number(e.currentTarget.dataset.id) });
   },
 
   onRemarkInput(e: WechatMiniprogram.Input) {
@@ -150,25 +160,30 @@ Page({
     }
 
     this.setData({ ordering: true });
+    let timeoutId = 0;
     try {
       const params: CreateFromShelfParams = {
         shelfId: skillId,
+        timeSlotId: this.data.selectedSlotId || undefined,
         remark: this.data.orderRemark || undefined,
       };
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject({ code: -1, msg: '下单超时' }), 5000);
+        timeoutId = setTimeout(() => reject({ code: -1, msg: '下单超时' }), 5000) as unknown as number;
       });
       await Promise.race([orderService.createFromShelf(params), timeoutPromise]);
       wx.showToast({ title: '下单成功', icon: 'success' });
       this.setData({ showOrderDialog: false, hasOrdered: true });
       this.loadDetail();
       (this as any)._navTimer = setTimeout(() => {
-        wx.navigateTo({ url: '/subpackages/user/order-list/order-list' });
+        const pages = getCurrentPages();
+        if (pages.length > 1) wx.navigateBack();
+        else wx.switchTab({ url: '/pages/index/index' });
       }, 1200) as unknown as number;
     } catch (err) {
       console.error('下单失败:', err);
       wx.showToast({ title: '下单失败，请重试', icon: 'error' });
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       this.setData({ ordering: false });
     }
   },
@@ -179,7 +194,7 @@ Page({
     const { skill } = this.data;
     if (!skill) return;
     wx.navigateTo({
-      url: `/pages/chat/chat?targetUserId=${skill.userId}&targetNickname=${encodeURIComponent((skill as any).nickname || '')}`,
+      url: `/pages/chat/chat?targetUserId=${skill.userId}&targetNickname=${encodeURIComponent(skill.nickname || '')}`,
     });
   },
 

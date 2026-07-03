@@ -186,7 +186,10 @@ function rawRequest<T = unknown>(options: RequestOptions): Promise<ApiResponse<T
           }
           resolve(body);
         }
-        else reject({ code: res.statusCode, msg: '刷新失败' });
+        else {
+          const body = res.data as { msg?: string };
+          reject({ code: res.statusCode, msg: body?.msg || '刷新失败' });
+        }
       },
       fail(err) { reject({ code: -1, msg: '网络错误', detail: err }); },
     });
@@ -524,6 +527,16 @@ function getMockData<T>(options: RequestOptions): T {
     return {} as unknown as T;
   }
 
+  // ── 关闭需求 PUT /v1/demands/:id/close ──
+  if (method === 'PUT' && url.match(/\/demands\/\d+\/close$/)) {
+    const id = Number(url.match(/\/demands\/(\d+)\/close$/)?.[1]);
+    const demand = mockDemandStore.find((d) => d.id === id);
+    if (!demand) throw { code: 404, msg: '需求不存在' };
+    demand.status = 0; demand.statusDesc = '已关闭';
+    console.log('[Mock] 需求已关闭:', id);
+    return {} as unknown as T;
+  }
+
   // ── 从货架创建订单 POST /v1/orders/from-shelf ──
   if (isPost && url.includes('/orders/from-shelf')) {
     const params = (data || {}) as Record<string, unknown>;
@@ -551,6 +564,37 @@ function getMockData<T>(options: RequestOptions): T {
     });
     shelf.orderCount = (Number(shelf.orderCount) || 0) + 1;
     console.log('[Mock] 新订单已创建:', orderNo, 'buyerCode=', buyerCode, 'sellerCode=', sellerCode);
+    return { orderId, orderNo, buyerCode, sellerCode } as unknown as T;
+  }
+
+  // ── 从需求创建订单 POST /v1/orders/from-demand ──
+  if (isPost && url.includes('/orders/from-demand')) {
+    const params = (data || {}) as Record<string, unknown>;
+    const demandId = Number(params.demandId);
+    const demand = mockDemandStore.find((d) => d.id === demandId);
+    if (!demand) throw { code: 400, msg: '需求不存在' };
+    if (demand.userId === MOCK_ME.id) throw { code: 400, msg: '不能接自己的求助' };
+    if (demand.status !== 1) throw { code: 400, msg: '该需求不可接单' };
+
+    const orderId = nextId();
+    const orderNo = 'DB' + Date.now();
+    const buyerCode = 'B' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    const sellerCode = 'S' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    demand.status = 2; demand.statusDesc = '进行中';
+    mockOrderStore.unshift({
+      id: orderId, orderNo, shelfTitle: demand.title,
+      pointAmount: demand.pointReward, status: 3, statusName: '服务中',
+      buyerId: demand.userId, buyerNickname: demand.nickname, buyerAvatar: '',
+      sellerId: MOCK_ME.id, sellerNickname: MOCK_ME.nickname, sellerAvatar: '',
+      counterpartNickname: demand.nickname, counterpartAvatar: '',
+      skillTagName: demand.skillTagName || demand.tagName, demandId,
+      buyerCode, sellerCode,
+      buyerVerified: true, sellerVerified: true,
+      buyerConfirmed: false, sellerConfirmed: false,
+      remark: params.remark || '来自求助看板',
+      createTime: nowStr(),
+    });
+    console.log('[Mock] 从需求创建订单:', orderNo, 'id=', orderId);
     return { orderId, orderNo, buyerCode, sellerCode } as unknown as T;
   }
 
@@ -684,9 +728,28 @@ function getMockData<T>(options: RequestOptions): T {
       // 取消/退款时退还积分
       return {} as unknown as T;
     }
+    if (url.includes('/points/sign-in')) {
+      // 签到 / 签到状态
+      if (isPost) return { success: true, reward: 5 } as unknown as T;
+      return { signedIn: false, reward: 5 } as unknown as T;
+    }
+    if (url.includes('/points/guarantee-pool')) {
+      return { amount: 100, totalGuarantee: 1000 } as unknown as T;
+    }
     return {
       available: 500, frozen: 50, total: 550, balance: 500,
       totalEarned: 1200, totalSpent: 700,
+    } as unknown as T;
+  }
+
+  // ── 通知 ──
+  if (url.includes('/notifications')) {
+    if (isPost && url.includes('/notifications/read')) {
+      return {} as unknown as T;
+    }
+    return {
+      list: [{ id: 1, title: '系统通知', content: '欢迎来到搭把手', isRead: 0, createTime: nowStr() }],
+      total: 1, pageNum: 1, pageSize: 10,
     } as unknown as T;
   }
 
@@ -715,8 +778,20 @@ function getMockData<T>(options: RequestOptions): T {
     return { id: msgId } as unknown as T;
   }
 
+  // ── 标记已读 PUT /v1/chat/messages/read ──
+  if (method === 'PUT' && url.match(/\/chat\/messages\/read$/)) {
+    const params = (data || {}) as Record<string, unknown>;
+    const targetUserId = Number(params.targetUserId) || 0;
+    mockMessageStore.forEach((m) => {
+      if (m.senderId === targetUserId && m.receiverId === MOCK_ME.id) {
+        m.isRead = 1;
+      }
+    });
+    return {} as unknown as T;
+  }
+
   // ── 消息列表 GET /v1/chat/messages ──
-  if (isGet && url.includes('/chat/messages')) {
+  if (isGet && url.includes('/chat/messages') && !url.includes('/read')) {
     const params = (data || {}) as Record<string, unknown>;
     const targetUserId = Number(params.targetUserId) || Number(params.sessionId) || 0;
     const myId = MOCK_ME.id;
@@ -753,7 +828,7 @@ function getMockData<T>(options: RequestOptions): T {
       return [{ orderId: 1, orderTitle: 'Python 编程辅导', targetUser: { id: 1001, nickname: '张三' } }] as unknown as T;
     }
     return {
-      records: [{ id: 1, orderId: 1, orderTitle: 'Python 编程辅导', rating: 5, content: '非常耐心，讲解清晰！', images: [], isAnonymous: 0, reviewerId: 1003, reviewerNickname: '李四', reviewerAvatar: '', createTime: '2026-06-28 15:00:00' }],
+      list: [{ id: 1, orderId: 1, orderTitle: 'Python 编程辅导', rating: 5, content: '非常耐心，讲解清晰！', images: [], isAnonymous: 0, reviewerId: 1003, reviewerNickname: '李四', reviewerAvatar: '', createTime: '2026-06-28 15:00:00' }],
       total: 1, pageNum, pageSize,
     } as unknown as T;
   }

@@ -154,7 +154,7 @@ function renderCharts() {
     chartInstances.push(chart)
     chart.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      xAxis: { type: 'category', data: chartData.map((d) => d.tagName ?? d.skillTagName) },
+      xAxis: { type: 'category', data: chartData.map((d) => d.skillTagName) },
       yAxis: { type: 'value' },
       series: [{ name: '热度', type: 'bar', data: chartData.map((d) => d.heatScore), itemStyle: { color: '#0f766e', borderRadius: [4, 4, 0, 0] } }],
     })

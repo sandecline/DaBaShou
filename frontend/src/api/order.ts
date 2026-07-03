@@ -29,7 +29,7 @@ export function getOrderDetail(id: number): Promise<OrderDetailVo> {
   return request.get('/v1/orders/' + id)
 }
 
-export function getOrderStatus(id: number): Promise<{ status: number; statusDesc: string }> {
+export function getOrderStatus(id: number): Promise<{ status: number; statusName: string }> {
   return request.get('/v1/orders/' + id + '/status')
 }
 

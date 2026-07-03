@@ -1,14 +1,16 @@
-/**
- * Runtime API configuration for the WeChat miniprogram.
- *
- * 开发阶段默认指向本地后端；部署到生产环境前，请替换为真实 HTTPS 域名。
- */
-export const API_BASE_URL = 'http://127.0.0.1:8080';
+const ENV = 'dev' as const;
 
-export const WS_BASE_URL = 'ws://127.0.0.1:9090/ws/chat';
+const CONFIG = {
+  dev: {
+    API_BASE_URL: 'http://127.0.0.1:9090/api',
+    WS_BASE_URL: 'ws://127.0.0.1:9090/ws/chat',
+  },
+  prod: {
+    API_BASE_URL: '',
+    WS_BASE_URL: '',
+  },
+} as const;
 
-/** TODO: 后端未就绪时启用 Mock 模式 */
-export const USE_MOCK = true;
-
-
-
+export const API_BASE_URL = CONFIG[ENV].API_BASE_URL;
+export const WS_BASE_URL = CONFIG[ENV].WS_BASE_URL;
+export const USE_MOCK = false;

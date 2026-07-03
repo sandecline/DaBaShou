@@ -11,7 +11,7 @@ spring:
 #   autoconfigure:
 #     exclude: []  # 此前错误排除了 Redis 自动配置，现已修复
   datasource:
-    url: jdbc:mysql://localhost:3306/dabashou?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/dabashou?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_general_ci&sessionVariables=character_set_client=utf8mb4,character_set_connection=utf8mb4,character_set_results=utf8mb4&initSQL=SET NAMES utf8mb4
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver

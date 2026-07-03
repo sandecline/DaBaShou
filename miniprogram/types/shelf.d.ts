@@ -1,76 +1,33 @@
-/**
- * 技能货架相关类型定义
- * 对应后端 dabashou-shelf 模块
- * 与 frontend/src/types/shelf.ts 保持一致
- */
-
-/** 时间格子（与后端 TimeSlotVo / TimeSlotDto 对齐） */
-export interface TimeSlot {
-  id?: number;
-  userId?: number;
-  date: string; // YYYY-MM-DD
-  dayOfWeek?: number; // 1=周一 ... 7=周日（后端必填，创建时由服务端推算）
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
-  available?: boolean; // 是否可预约（后端 VO 使用 available，取代旧 status）
-  /** @deprecated 请使用 available */
-  status?: 0 | 1 | 2;
-  createTime?: string;
-  updateTime?: string;
+export interface TimeSlotVo {
+  id: number;
+  date?: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  available: boolean;
 }
 
-/** 技能货架（已上架的服务） */
-export interface SkillShelf {
+export interface ShelfItemVo {
   id: number;
   userId: number;
-  skillTagId: number;
-  /** 服务标题 */
+  nickname: string;
+  avatar: string;
+  trustScore: number;
+  skillTagName: string;
   title: string;
-  /** 服务描述 */
-  description: string;
-  /** 积分价格 */
   pointPrice: number;
-  /** 预计时长（分钟） */
   durationMinutes: number;
-  /** 服务方式 */
-  locationType: 1 | 2 | 3;
-  /** 状态 */
-  status: 0 | 1 | 2;
-  /** 封面图（与前端一致） */
-  coverImage?: string;
-  /** 技能标签名 */
-  tagName?: string;
-  /** 分类名 */
-  categoryName?: string;
-  /** 距离（米） */
-  distance?: number;
-  /** 热度分 */
-  heatScore?: number;
-  /** 用户昵称 */
-  nickname?: string;
-  /** 用户头像 */
-  avatar?: string;
-  /** 用户名称（前端兼容字段） */
-  userName?: string;
-  /** 用户头像（前端兼容字段） */
-  userAvatar?: string;
-  /** 信任分 */
-  trustScore?: number;
+  locationType: number;
+  status: number;
+}
+
+export interface ShelfDetailVo extends ShelfItemVo {
+  description: string;
+  locationTypeDesc: string;
+  statusDesc: string;
   createTime: string;
-  updateTime?: string;
 }
 
-/** 货架详情（扩展） */
-export interface ShelfDetail extends SkillShelf {
-  /** 空闲时段 */
-  timeSlots?: TimeSlot[];
-  /** 服务方式描述 */
-  locationTypeDesc?: string;
-  /** 状态描述 */
-  statusDesc?: string;
-}
-
-/** 技能服务发布/编辑表单 */
 export interface SkillShelfForm {
   skillTagId: number | null;
   title: string;
@@ -78,24 +35,20 @@ export interface SkillShelfForm {
   pointPrice: number;
   durationMinutes: number;
   locationType: 1 | 2 | 3;
-  timeSlots: TimeSlot[];
-  /** 图片（小程序扩展字段，后端兼容） */
-  images?: string[];
 }
 
-/** 货架搜索参数 */
 export interface ShelfSearchParams {
   keyword?: string;
   categoryId?: number;
   skillTagId?: number;
-  locationType?: 1 | 2 | 3;
-  sortBy?: 'default' | 'price-asc' | 'price-desc' | 'newest' | 'heat';
-  longitude?: number;
-  latitude?: number;
+  locationType?: number;
+  sortBy?: string;
   pageNum: number;
   pageSize: number;
 }
 
-/** 货架状态 */
 export type ShelfStatus = 0 | 1 | 2;
-// 0-下架  1-上架  2-审核中
+
+export type { ShelfItemVo as SkillShelf };
+export type { ShelfDetailVo as ShelfDetail };
+export type { TimeSlotVo as TimeSlot };

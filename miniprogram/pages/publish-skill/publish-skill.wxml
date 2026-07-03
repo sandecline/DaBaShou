@@ -3,36 +3,27 @@
   <!-- 分类选择区 -->
   <view class="section card">
     <text class="section-title">服务分类</text>
-    <view class="picker-row">
-      <view class="picker-item">
-        <text class="picker-label">大类</text>
-        <picker
-          mode="selector"
-          range="{{categories}}"
-          range-key="name"
-          value="{{categoryIndex}}"
-          bindchange="onCategoryChange"
-        >
-          <view class="picker-value">
-            <text>{{categories[categoryIndex] ? categories[categoryIndex].name : '请选择'}}</text>
-            <t-icon name="chevron-right" size="32rpx" color="#999" />
-          </view>
-        </picker>
+    <view class="category-grid">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-item {{categoryIndex === index ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="onCategoryTap"
+      >
+        <text class="category-icon">{{item._icon}}</text>
+        <text class="category-name">{{item.name}}</text>
       </view>
-      <view class="picker-item">
-        <text class="picker-label">标签</text>
-        <picker
-          mode="selector"
-          range="{{tags}}"
-          range-key="name"
-          value="{{tagIndex}}"
-          bindchange="onTagChange"
-        >
-          <view class="picker-value">
-            <text>{{tags[tagIndex] ? tags[tagIndex].name : '请选择'}}</text>
-            <t-icon name="chevron-right" size="32rpx" color="#999" />
-          </view>
-        </picker>
+    </view>
+    <view class="tag-row" wx:if="{{tags.length > 0}}">
+      <view
+        wx:for="{{tags}}"
+        wx:key="id"
+        class="tag-item {{tagIndex === index ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="onTagTap"
+      >
+        <text>{{item.name}}</text>
       </view>
     </view>
   </view>

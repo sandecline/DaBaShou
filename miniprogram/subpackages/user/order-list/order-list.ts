@@ -20,9 +20,7 @@ const TAB_FILTER: Record<number, OrderStatus[] | undefined> = {
 const STATUS_THEME_MAP: Record<number, string> = {
   0: 'default',
   1: 'warning',
-  2: 'warning',
   3: 'primary',
-  4: 'primary',
   5: 'success',
   6: 'default',
   7: 'danger',

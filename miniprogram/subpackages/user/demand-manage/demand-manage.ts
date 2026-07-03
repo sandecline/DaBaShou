@@ -7,13 +7,12 @@ import { demandService } from '../../../services/demand';
 import type { Demand } from '../../../types/demand';
 import { ensureLogin } from '../../../utils/auth';
 
-/** 需求状态映射 */
+/** 需求状态映射（与 DemandStatus 类型 0|1|2|3 保持一致） */
 const DEMAND_STATUS_MAP: Record<number, string> = {
-  0: '已取消',
+  0: '已关闭',
   1: '待接单',
-  2: '已接单',
-  3: '进行中',
-  4: '已完成',
+  2: '进行中',
+  3: '已完成',
 };
 
 /** 状态主题色 */
@@ -21,8 +20,7 @@ const DEMAND_STATUS_THEME: Record<number, string> = {
   0: 'default',
   1: 'warning',
   2: 'primary',
-  3: 'primary',
-  4: 'success',
+  3: 'success',
 };
 
 Page({

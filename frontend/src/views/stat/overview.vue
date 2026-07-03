@@ -79,10 +79,16 @@ const barChartRef = ref()
 const pieChartRef = ref()
 
 const userStat = ref<PersonalOverviewVo>({
+  totalOrders: 0,
+  completedOrders: 0,
+  totalIncome: 0,
+  totalExpense: 0,
+  trustScore: 0,
+  skillCount: 0,
+  reviewCount: 0,
   publishedSkills: 0,
   publishedDemands: 0,
   takenOrders: 0,
-  completedOrders: 0,
   averageRating: 0,
   totalPointsEarned: 0,
   totalPointsSpent: 0,
@@ -144,18 +150,11 @@ function initLineChart(data: TrendItem[]) {
     yAxis: { type: 'value' },
     series: [
       {
-        name: '新增订单',
+        name: '订单数',
         type: 'line',
-        data: data.map((d) => d.newOrders ?? d.value ?? 0),
+        data: data.map((d) => d.value),
         smooth: true,
         itemStyle: { color: '#FFC300' },
-      },
-      {
-        name: '完成订单',
-        type: 'line',
-        data: data.map((d) => d.completedOrders ?? 0),
-        smooth: true,
-        itemStyle: { color: '#10b981' },
       },
     ],
   })
@@ -169,7 +168,7 @@ function initBarChart(data: SkillHeatItem[]) {
   const chart = echarts.init(barChartRef.value)
   chart.setOption({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    xAxis: { type: 'category', data: chartData.map((d) => d.tagName ?? d.skillTagName) },
+    xAxis: { type: 'category', data: chartData.map((d) => d.skillTagName) },
     yAxis: { type: 'value' },
     series: [
       {

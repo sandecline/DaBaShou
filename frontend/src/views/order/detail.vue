@@ -37,7 +37,7 @@
             </div>
             <div class="info-row">
               <span class="info-label">服务</span>
-              <span class="info-value">{{ order.title }}</span>
+              <span class="info-value">{{ order.shelfTitle }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">积分金额</span>

@@ -1,123 +1,67 @@
-/**
- * 订单相关类型定义
- * 对应后端 dabashou-order 模块
- * 与 frontend/src/types/order.ts + api.ts 保持一致
- * 状态机见 AGENTS.md 附录 B
- */
-
-/** 订单状态 */
 export type OrderStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-/** 订单列表项（与前端 OrderItemVo 一致） */
-export interface Order {
+export interface OrderItemVo {
   id: number;
   orderNo: string;
-  /** 买家昵称 */
-  buyerId?: number;
-  buyerNickname?: string;
-  buyerName?: string;
-  buyerAvatar?: string;
-  /** 卖家昵称 */
-  sellerId?: number;
-  sellerNickname?: string;
-  sellerName?: string;
-  sellerAvatar?: string;
-  /** 对方头像/昵称（前端兼容字段） */
-  counterpartNickname?: string;
-  counterpartAvatar?: string;
-  /** 服务标题 */
+  buyerId: number;
+  buyerNickname: string;
+  sellerId: number;
+  sellerNickname: string;
   shelfTitle: string;
-  /** 技能标签名 */
-  skillTagName?: string;
-  /** 积分金额 */
+  tagName: string;
   pointAmount: number;
-  /** 订单状态 */
   status: OrderStatus;
-  /** 状态描述 */
-  statusName?: string;
+  statusName: string;
   createTime: string;
 }
 
-/** 订单详情（与前端 OrderDetailVo 一致） */
-export interface OrderDetail extends Order {
-  /** 关联的需求/技能 */
-  demandId?: number;
-  skillShelfId?: number;
-  skillTagId?: number;
-  /** 服务信息 */
-  description?: string;
-  durationMinutes?: number;
-  locationType?: import('./skill').LocationType;
-  /** 核销码（旧字段，兼容） */
-  verifyCode?: string | null;
-  verifyCodeExpire?: string | null;
-  /** 买家启动核销码（status=1时双方可见） */
-  buyerVerifyCode?: string;
-  /** 卖家启动核销码（status=1时双方可见） */
-  sellerVerifyCode?: string;
-  /** 买家确认核销码（status=3时双方可见） */
-  buyerConfirmCode?: string;
-  /** 卖家确认核销码（status=3时双方可见） */
-  sellerConfirmCode?: string;
-  /** 买家是否已输入启动核销码 */
-  buyerVerified?: boolean;
-  /** 卖家是否已输入启动核销码 */
-  sellerVerified?: boolean;
-  /** 买家是否已输入确认核销码 */
-  buyerConfirmed?: boolean;
-  /** 卖家是否已输入确认核销码 */
-  sellerConfirmed?: boolean;
-  /** 退款发起方 */
-  refundRequester?: 'buyer' | 'seller';
-  /** 退款对方是否已同意 */
-  refundAgreed?: boolean;
-  /** 买家验证码（兼容旧字段） */
-  buyerCode?: string;
-  /** 卖家验证码（兼容旧字段） */
-  sellerCode?: string;
-  /** 当前用户角色 */
-  myRole?: 'buyer' | 'seller';
-  /** 当前是否有待处理的退款请求 */
-  refundRequesting?: boolean;
-  /** 时间预约 */
-  timeSlotId?: number;
-  /** 备注 */
-  remark?: string;
-  /** 时间节点 */
-  serviceStartTime?: string | null;
-  serviceEndTime?: string | null;
-  completeTime?: string | null;
-  cancelTime?: string | null;
-  cancelReason?: string | null;
-  /** 操作日志 */
-  statusLogs?: OrderStatusLog[];
-}
-
-/** 订单状态变更日志 */
-export interface OrderStatusLog {
-  fromStatus: OrderStatus;
-  toStatus: OrderStatus;
-  operatorId: number;
+export interface OrderDetailVo {
+  id: number;
+  orderNo: string;
+  buyerId: number;
+  buyerNickname: string;
+  buyerAvatar: string;
+  sellerId: number;
+  sellerNickname: string;
+  sellerAvatar: string;
+  shelfId: number;
+  shelfTitle: string;
+  demandId: number | null;
+  tagName: string;
+  pointAmount: number;
+  status: OrderStatus;
+  statusName: string;
+  buyerVerifyCode: string | null;
+  sellerVerifyCode: string | null;
+  buyerConfirmCode: string | null;
+  sellerConfirmCode: string | null;
+  buyerVerified: boolean;
+  sellerVerified: boolean;
+  buyerConfirmed: boolean;
+  sellerConfirmed: boolean;
+  refundRequester: string | null;
+  refundAgreed: boolean;
+  timeSlotId: number | null;
+  serviceStartTime: string | null;
+  serviceEndTime: string | null;
+  completeTime: string | null;
+  cancelTime: string | null;
+  cancelReason: string | null;
   remark: string;
   createTime: string;
 }
 
-/** 从货架创建订单参数 */
 export interface CreateFromShelfParams {
   shelfId: number;
   timeSlotId?: number;
   remark?: string;
 }
 
-/** 从需求创建订单参数 */
 export interface CreateFromDemandParams {
   demandId: number;
   sellerId?: number;
   remark?: string;
 }
 
-/** 核销码 */
-export interface VerifyCodeVo {
-  verifyCode: string;
-  expireTime: string;
-}
+export type { OrderItemVo as Order };
+export type { OrderDetailVo as OrderDetail };

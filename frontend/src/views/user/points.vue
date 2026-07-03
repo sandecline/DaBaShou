@@ -95,7 +95,7 @@ async function fetchBalance() {
     const result = await getBalance()
     balance.available = result.available
     balance.frozen = result.frozen
-    balance.total = result.balance
+    balance.total = result.total
   } catch {
     // handled
   }

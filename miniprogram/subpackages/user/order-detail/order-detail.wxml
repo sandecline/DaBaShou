@@ -30,43 +30,29 @@
       <text class="code-hint">当前订单与你无关，无法查看核销码或操作</text>
     </view>
 
-    <!-- ====== Status 1: 待核销 — 启动核销码 ====== -->
+    <!-- ====== Status 1: 待核销 — 只展示自己的核销码 ====== -->
     <view wx:elif="{{order.status === 1}}" class="code-section">
-      <view class="section-title">启动服务核销码</view>
-      <view class="code-row">
-        <view class="code-box">
-          <text class="code-label">买家核销码</text>
-          <text class="code-text">{{order.startBuyerCode}}</text>
-        </view>
-        <view class="code-box">
-          <text class="code-label">卖家核销码</text>
-          <text class="code-text">{{order.startSellerCode}}</text>
-        </view>
-      </view>
-      <view class="code-hint">双方均输入对方的核销码后，订单进入服务中状态</view>
-      <view class="verify-status">
-        <text>买家：{{order.buyerVerified ? '已核销' : '待核销'}}</text>
-        <text>卖家：{{order.sellerVerified ? '已核销' : '待核销'}}</text>
+      <view class="section-title">开始核销</view>
+      <view class="code-hint">双方输入对方的核销码后，服务正式开始，积分将被冻结</view>
+      <view class="code-card">
+        <text class="code-label">我的核销码（交给对方）</text>
+        <text class="code-text">{{order.myStartCode}}</text>
+        <t-tag theme="{{order.myStartVerified ? 'success' : 'primary'}}" size="small">
+          {{order.myStartVerified ? '已核销' : '等待对方输入'}}
+        </t-tag>
       </view>
     </view>
 
-    <!-- ====== Status 3: 服务中 — 确认核销码 ====== -->
+    <!-- ====== Status 3: 服务中 — 只展示自己的确认码 ====== -->
     <view wx:elif="{{order.status === 3}}" class="code-section">
-      <view class="section-title">完成服务确认码</view>
-      <view class="code-row">
-        <view class="code-box">
-          <text class="code-label">买家确认码</text>
-          <text class="code-text">{{order.completeBuyerCode}}</text>
-        </view>
-        <view class="code-box">
-          <text class="code-label">卖家确认码</text>
-          <text class="code-text">{{order.completeSellerCode}}</text>
-        </view>
-      </view>
-      <view class="code-hint">双方均输入对方的确认码后，订单完成并结算积分</view>
-      <view class="verify-status">
-        <text>买家：{{order.buyerConfirmed ? '已确认' : '待确认'}}</text>
-        <text>卖家：{{order.sellerConfirmed ? '已确认' : '待确认'}}</text>
+      <view class="section-title">完成确认</view>
+      <view class="code-hint">双方输入对方的确认码后，订单完成，积分将结算给卖家</view>
+      <view class="code-card">
+        <text class="code-label">我的确认码（交给对方）</text>
+        <text class="code-text">{{order.myConfirmCode}}</text>
+        <t-tag theme="{{order.myConfirmed ? 'success' : 'primary'}}" size="small">
+          {{order.myConfirmed ? '已确认' : '等待对方输入'}}
+        </t-tag>
       </view>
     </view>
 
@@ -91,9 +77,6 @@
 
   <!-- 底部操作按钮 -->
   <view wx:if="{{order}}" class="bottom-actions">
-    <!-- Status 1: 买家先支付积分 -->
-    <t-button wx:if="{{order.myRole === 'buyer' && order.status === 1}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onPayOrder">立即支付</t-button>
-
     <!-- Status 1: 输入对方核销码启动服务 -->
     <t-button wx:if="{{order.myRole && order.status === 1}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="输入对方的核销码" data-action="start">核销启动服务</t-button>
 
@@ -115,8 +98,11 @@
     <!-- Status 3: 等待对方同意（己方发起时） -->
     <t-button wx:if="{{order.myRole && order.status === 3 && order.refundRequesting && order.refundRequester === order.myRole}}" theme="light" size="large" block disabled>等待对方同意退款</t-button>
 
-    <!-- Status 1: 卖家可单方面取消 -->
-    <t-button wx:if="{{order.myRole === 'seller' && order.status === 1}}" theme="default" size="large" block loading="{{actionLoading}}" bindtap="onShowCancelDialog">取消订单</t-button>
+    <!-- Status 1: 双方均可取消 -->
+    <t-button wx:if="{{order.myRole && order.status === 1}}" theme="default" size="large" block loading="{{actionLoading}}" bindtap="onShowCancelDialog">取消订单</t-button>
+
+    <!-- Status 7: 发起申诉 -->
+    <t-button wx:if="{{order.myRole && order.status === 7}}" theme="primary" size="large" block bindtap="onGoToAppeal">发起申诉</t-button>
   </view>
 
   <!-- 核销码弹窗 -->

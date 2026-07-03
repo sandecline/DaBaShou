@@ -35,7 +35,7 @@
       <el-table-column label="状态" width="120">
         <template #default="{ row }">
           <el-tag :color="getOrderStatusColor(row.status)" size="small" effect="dark" style="border:none;color:#fff">
-            {{ row.statusDesc || getOrderStatusText(row.status) }}
+            {{ row.statusName || getOrderStatusText(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -75,7 +75,7 @@
         <p><span>买家</span>{{ detail.buyerNickname }}</p>
         <p><span>卖家</span>{{ detail.sellerNickname }}</p>
         <p><span>积分</span>{{ detail.pointAmount }}</p>
-        <p><span>状态</span>{{ detail.statusDesc || getOrderStatusText(detail.status) }}</p>
+        <p><span>状态</span>{{ detail.statusName || getOrderStatusText(detail.status) }}</p>
         <p><span>备注</span>{{ detail.remark || '-' }}</p>
         <p><span>取消原因</span>{{ detail.cancelReason || '-' }}</p>
         <p><span>创建时间</span>{{ formatDateTime(detail.createTime) }}</p>
@@ -154,7 +154,7 @@ async function fetchData() {
 }
 
 function orderTitle(order: OrderAdminVo) {
-  return order.title || order.shelfTitle || order.demandTitle || '未命名交易'
+  return order.shelfTitle || order.demandTitle || '未命名交易'
 }
 
 function search() {

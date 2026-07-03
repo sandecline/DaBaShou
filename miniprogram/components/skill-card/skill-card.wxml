@@ -2,7 +2,7 @@
   <view class="card-left">
     <t-image
       class="skill-image"
-      src="{{skill.coverImage || ''}}"
+      src="{{(skill.images && skill.images[0]) ? skill.images[0] : (skill.coverImage || '')}}"
       mode="aspectFill"
       width="180rpx"
       height="180rpx"

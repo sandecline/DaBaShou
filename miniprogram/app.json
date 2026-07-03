@@ -21,6 +21,7 @@
         "demand-manage/demand-manage",
         "point-detail/point-detail",
         "credit/credit",
+        "credit/appeal/appeal",
         "my-stats/my-stats",
         "profile-edit/profile-edit",
         "settings/settings",

@@ -275,7 +275,7 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
         Integer balanceAfter = jdbcTemplate.queryForObject(
                 "SELECT available FROM dbs_point_account WHERE user_id = ?", Integer.class, userId);
         jdbcTemplate.update(
-                "INSERT INTO dbs_point_transaction (user_id, type, amount, balance_after, description, create_time) VALUES (?, 6, ?, ?, ?, NOW())",
+                "INSERT INTO dbs_point_transaction (user_id, type, amount, balance_after, description, create_time) VALUES (?, 4, ?, ?, ?, NOW())",
                 userId, reward, balanceAfter != null ? balanceAfter : 0, "需求关闭/删除，解冻积分: " + demand.getTitle());
     }
 
@@ -363,5 +363,26 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
         String ph = String.join(", ", Collections.nCopies(tagIds.size(), "?"));
         return jdbcTemplate.queryForList("SELECT id, name FROM dbs_skill_tag WHERE id IN (" + ph + ")", tagIds.toArray())
                 .stream().collect(Collectors.toMap(r -> ((Number) r.get("id")).longValue(), r -> (String) r.get("name"), (a, b) -> a));
+    }
+
+    @Override
+    public List<Map<String, Object>> matchShelves(Long demandId, int limit) {
+        Demand demand = getByIdOrThrow(demandId);
+        Long skillTagId = demand.getSkillTagId();
+        if (skillTagId == null) {
+            return List.of();
+        }
+
+        // 查询匹配技能标签的已上架服务，按匹配度排序
+        String sql = "SELECT s.id AS shelfId, s.user_id AS userId, s.title, s.point_price AS pointPrice, " +
+                "u.nickname, u.avatar, u.trust_score AS trustScore, " +
+                "100 AS matchScore " +
+                "FROM dbs_skill_shelf s " +
+                "JOIN dbs_user u ON u.id = s.user_id " +
+                "WHERE s.skill_tag_id = ? AND s.status = 1 AND s.user_id != ? " +
+                "ORDER BY s.create_time DESC " +
+                "LIMIT ?";
+
+        return jdbcTemplate.queryForList(sql, skillTagId, demand.getUserId(), limit);
     }
 }

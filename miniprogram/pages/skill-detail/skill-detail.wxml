@@ -72,14 +72,13 @@
       </t-cell-group>
 
       <!-- 空闲时间 -->
-      <view wx:if="{{skill.timeSlots && skill.timeSlots.length > 0}}" class="timeslot-section">
+      <view wx:if="{{availableSlots.length > 0}}" class="timeslot-section">
         <text class="section-title">空闲时间</text>
         <view class="timeslot-list">
-          <view wx:for="{{skill.timeSlots}}" wx:key="index" class="timeslot-item">
-            <t-tag variant="light" theme="{{item.status === 2 ? 'default' : 'primary'}}">
+          <view wx:for="{{availableSlots}}" wx:key="id" class="timeslot-item">
+            <t-tag variant="light" theme="primary">
               {{item.date}} {{item.startTime}}-{{item.endTime}}
             </t-tag>
-            <text wx:if="{{item.status === 2}}" class="timeslot-booked">已预约</text>
           </view>
         </view>
       </view>
@@ -91,7 +90,9 @@
 
   <!-- 底部下单栏 -->
   <view class="bottom-bar" wx:if="{{!loading && skill && !isOwner && !hasOrdered}}">
-    <t-button theme="primary" block bindtap="onShowOrderDialog">立即下单</t-button>
+    <t-button theme="primary" block disabled="{{availableSlots.length === 0}}" bindtap="onShowOrderDialog">
+      {{availableSlots.length === 0 ? '暂无可预约时间' : '立即下单'}}
+    </t-button>
   </view>
   <view class="bottom-bar ordered-bar" wx:elif="{{!loading && hasOrdered}}">
     <t-button theme="default" block disabled>已下单</t-button>
@@ -113,6 +114,20 @@
       <view class="dialog-info">
         <text class="dialog-title">{{skill.title}}</text>
         <text class="dialog-price">{{skill.pointPrice}} 积分</text>
+      </view>
+      <view class="dialog-slot-section">
+        <text class="dialog-slot-label">选择时段</text>
+        <scroll-view scroll-y class="dialog-slot-list" style="max-height: 400rpx;">
+          <view
+            wx:for="{{availableSlots}}"
+            wx:key="id"
+            class="dialog-slot-item {{selectedSlotId === item.id ? 'active' : ''}}"
+            data-id="{{item.id}}"
+            bindtap="onSlotTap"
+          >
+            <text>{{item.date}} {{item.startTime}}-{{item.endTime}}</text>
+          </view>
+        </scroll-view>
       </view>
       <view class="dialog-remark">
         <t-textarea placeholder="备注信息（选填）" value="{{orderRemark}}" bind:change="onRemarkInput" maxlength="{{200}}" autosize />

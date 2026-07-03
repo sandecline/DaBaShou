@@ -191,9 +191,9 @@ async function loadCategories() {
 function applyOverview(overview: OverviewStat | null) {
   if (!overview) return
   stats.value = [
-    { label: '技能服务', value: String(overview.totalSkills ?? overview.skillCount ?? overview.publishedSkills ?? 0) },
+    { label: '技能服务', value: String(overview.publishedSkills ?? 0) },
     { label: '完成订单', value: String(overview.completedOrders ?? 0) },
-    { label: '好评率', value: `${Math.round((overview.orderCompletionRate ?? 0) * 100)}%` },
+    { label: '好评率', value: `${Math.round(((overview.averageRating ?? 0) / 5) * 100)}%` },
   ]
 }
 

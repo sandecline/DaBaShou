@@ -16,11 +16,11 @@
             <div class="review-header">
               <div class="reviewer-info">
                 <el-avatar :size="40" :src="activeTab === 'received' ? review.reviewerAvatar : review.reviewerAvatar">
-                  {{ ((activeTab === 'received' ? review.reviewerName : review.revieweeName) || '?').charAt(0) }}
+                  {{ ((activeTab === 'received' ? review.reviewerNickname : review.revieweeNickname) || '?').charAt(0) }}
                 </el-avatar>
                 <div>
                   <div class="reviewer-name">
-                    {{ activeTab === 'received' ? review.reviewerName : review.revieweeName }}
+                    {{ activeTab === 'received' ? review.reviewerNickname : review.revieweeNickname }}
                   </div>
                   <div class="review-time">{{ formatDateTime(review.createTime) }}</div>
                 </div>
@@ -31,7 +31,7 @@
             </div>
             <p class="review-content">{{ review.content || '用户未填写评价内容' }}</p>
             <div class="review-footer">
-              <span class="review-order">订单：{{ review.orderTitle || '#' + review.orderId }}</span>
+              <span class="review-order">订单：#{{ review.orderId }}</span>
             </div>
           </div>
         </div>
