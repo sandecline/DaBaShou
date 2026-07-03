@@ -48,7 +48,7 @@
 ### 13. 文件表 (sys_file)
 - 文件管理
 
-### 14. 通知表 (sys_notification)
+### 14. 通知表 (dbs_notification)
 - 系统通知
 
 ### 15. 日志表 (sys_log)
@@ -59,10 +59,10 @@
 
 ## 信用评价表
 
-### 17. 校园认证表 (user_campus_auth)
+### 17. 校园认证表 (dbs_user_campus_auth)
 - 校园身份认证
 
-### 18. 信任分变动记录表 (user_trust_score_log)
+### 18. 信任分变动记录表 (dbs_user_trust_score_log)
 - 信任分变动历史
 
 ### 19. 违规记录表 (credit_violation)

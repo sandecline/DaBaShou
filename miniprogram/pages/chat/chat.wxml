@@ -6,8 +6,9 @@
     scroll-y
     scroll-into-view="{{scrollIntoId}}"
     scroll-with-animation
-    bindscrolltolower="onScrollToLower"
+    bindscrolltoupper="onScrollToUpper"
     enable-back-to-top="{{false}}"
+    upper-threshold="80"
   >
     <!-- 加载更多 -->
     <view wx:if="{{hasMore}}" class="load-more" bindtap="loadMore">

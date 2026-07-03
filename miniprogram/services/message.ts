@@ -45,7 +45,7 @@ export const messageService = {
 
   /** 标记会话已读（通过对方用户ID） */
   markSessionRead(targetUserId: number) {
-    return api.put<void>(`/v1/chat/messages/read?targetUserId=${targetUserId}`);
+    return api.put<void>('/v1/chat/messages/read', { targetUserId });
   },
 
   /** 发送聊天消息（后端返回 Void，不返回消息 ID） */

@@ -101,7 +101,7 @@ Page({
   onUnload() {
     // 取消 WebSocket 消息监听
     if (this.messageHandler) {
-      off('new_message', this.messageHandler);
+      off('chat', this.messageHandler);
       this.messageHandler = null;
     }
   },
@@ -220,7 +220,7 @@ Page({
       // 直接追加到本地消息列表（不依赖 WS 回显）
       const myUserId = getApp().globalData.userInfo?.id;
       const localMsg: ChatMessage = {
-        id: Date.now(),
+        id: Date.now() + Math.floor(Math.random() * 1000),
         sessionId,
         senderId: myUserId || 0,
         msgType: 1,
@@ -272,7 +272,7 @@ Page({
       // 直接追加图片消息到本地列表
       const myUserId = getApp().globalData.userInfo?.id;
       const localMsg: ChatMessage = {
-        id: Date.now(),
+        id: Date.now() + Math.floor(Math.random() * 1000),
         sessionId: this.data.sessionId,
         senderId: myUserId || 0,
         msgType: 2,
@@ -310,8 +310,8 @@ Page({
 
   // ===== 滚动控制 =====
 
-  onScrollToLower() {
-    // 滚动到底部时加载更多
+  // 滚动到顶部时加载更多历史消息
+  onScrollToUpper() {
     this.loadMore();
   },
 });

@@ -55,14 +55,13 @@ Page({
   // 上拉加载更多
   onReachBottom() {
     if (!this.data.hasMore) return;
-    const nextPage = this.data.pageNum + 1;
-    this.data.pageNum = nextPage; // 直接改 data，不走 setData 渲染
     if (this.data.activeTab === 0) {
       this.loadSkillList(true);
     } else {
       this.loadDemandList(true);
     }
-  },
+  }
+,
 
   // Tab 切换
   onTabChange(e: WechatMiniprogram.CustomEvent) {
@@ -117,7 +116,8 @@ Page({
 
   async loadSkillList(append = false) {
     try {
-      const { activeCategoryId, searchKeyword, pageNum, pageSize } = this.data;
+      const { activeCategoryId, searchKeyword, pageSize } = this.data;
+      const pageNum = append ? this.data.pageNum : 1;
       const res = await shelfService.search({
         categoryId: activeCategoryId || undefined,
         keyword: searchKeyword || undefined,
@@ -127,6 +127,7 @@ Page({
       const newList = append ? [...this.data.skillList, ...res.data.list] : res.data.list;
       this.setData({
         skillList: newList,
+        pageNum: pageNum + 1,
         hasMore: newList.length < res.data.total,
         loading: false,
       });
@@ -138,7 +139,8 @@ Page({
 
   async loadDemandList(append = false) {
     try {
-      const { searchKeyword, pageNum, pageSize } = this.data;
+      const { searchKeyword, pageSize } = this.data;
+      const pageNum = append ? this.data.pageNum : 1;
       const res = await demandService.search({
         keyword: searchKeyword || undefined,
         pageNum,
@@ -147,6 +149,7 @@ Page({
       const newList = append ? [...this.data.demandList, ...res.data.list] : res.data.list;
       this.setData({
         demandList: newList,
+        pageNum: pageNum + 1,
         hasMore: newList.length < res.data.total,
         loading: false,
       });

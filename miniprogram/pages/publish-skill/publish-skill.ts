@@ -358,14 +358,14 @@ Page({
         timeSlots: this.data.timeSlots,
       };
 
-      wx.hideLoading();
-
       if (editMode && editId) {
         await shelfService.update(editId, params as unknown as SkillShelfForm);
+        wx.hideLoading();
         wx.showToast({ title: '保存成功', icon: 'success', duration: 1200 });
         this.navigateBackSafe(1200);
       } else {
         const pubRes = await shelfService.publish(params as unknown as SkillShelfForm);
+        wx.hideLoading();
         wx.showToast({ title: '发布成功', icon: 'success', duration: 1200 });
         (this as any)._navigateTimer = setTimeout(() => {
           wx.redirectTo({ url: `/pages/skill-detail/skill-detail?id=${pubRes.data.id}` });

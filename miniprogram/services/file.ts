@@ -5,10 +5,14 @@
  */
 
 import { BASE_URL } from '../utils/request';
+import { USE_MOCK } from '../config/api';
 
 export const fileService = {
   /** 上传单个文件，返回远程 URL */
   upload(filePath: string, fileName = 'file'): Promise<string> {
+    if (USE_MOCK) {
+      return Promise.resolve(`https://mock.dabashou.example.com/uploads/${Date.now()}_${fileName}.jpg`);
+    }
     const token = wx.getStorageSync('dabashou_token');
     return new Promise((resolve, reject) => {
       wx.uploadFile({

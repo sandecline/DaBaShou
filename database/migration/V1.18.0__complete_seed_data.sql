@@ -48,6 +48,16 @@ DELIMITER ;
 CALL add_column_if_missing('dbs_review', 'hidden', 'tinyint DEFAULT 0 COMMENT ''是否隐藏''');
 CALL add_column_if_missing('credit_violation', 'handle_result', 'varchar(500) DEFAULT NULL COMMENT ''处理结果''');
 CALL add_column_if_missing('dbs_user', 'token_version', 'int NOT NULL DEFAULT 0 COMMENT ''Token版本号''');
+CALL add_column_if_missing('dbs_order', 'buyer_verify_code', 'VARCHAR(6) DEFAULT NULL COMMENT ''开始核销码-买家持有''');
+CALL add_column_if_missing('dbs_order', 'seller_verify_code', 'VARCHAR(6) DEFAULT NULL COMMENT ''开始核销码-卖家持有''');
+CALL add_column_if_missing('dbs_order', 'buyer_confirm_code', 'VARCHAR(6) DEFAULT NULL COMMENT ''完成确认码-买家持有''');
+CALL add_column_if_missing('dbs_order', 'seller_confirm_code', 'VARCHAR(6) DEFAULT NULL COMMENT ''完成确认码-卖家持有''');
+CALL add_column_if_missing('dbs_order', 'buyer_verified', 'TINYINT DEFAULT 0 COMMENT ''买家是否已输入核销码''');
+CALL add_column_if_missing('dbs_order', 'seller_verified', 'TINYINT DEFAULT 0 COMMENT ''卖家是否已输入核销码''');
+CALL add_column_if_missing('dbs_order', 'buyer_confirmed', 'TINYINT DEFAULT 0 COMMENT ''买家是否已输入确认码''');
+CALL add_column_if_missing('dbs_order', 'seller_confirmed', 'TINYINT DEFAULT 0 COMMENT ''卖家是否已输入确认码''');
+CALL add_column_if_missing('dbs_order', 'refund_requester', 'VARCHAR(10) DEFAULT NULL COMMENT ''退款发起方: buyer/seller''');
+CALL add_column_if_missing('dbs_order', 'refund_agreed', 'TINYINT DEFAULT 0 COMMENT ''退款是否已同意''');
 
 -- 清理存储过程
 DROP PROCEDURE IF EXISTS `add_column_if_missing`;
@@ -59,10 +69,9 @@ TRUNCATE TABLE `stat_skill_heat`;
 TRUNCATE TABLE `stat_daily_summary`;
 TRUNCATE TABLE `dbs_time_slot`;
 TRUNCATE TABLE `dbs_point_sign_in`;
-TRUNCATE TABLE `user_trust_score_log`;
-TRUNCATE TABLE `user_campus_auth`;
+TRUNCATE TABLE `dbs_user_trust_score_log`;
+TRUNCATE TABLE `dbs_user_campus_auth`;
 TRUNCATE TABLE `dbs_notification`;
-TRUNCATE TABLE `sys_notification`;
 TRUNCATE TABLE `credit_appeal`;
 TRUNCATE TABLE `credit_violation`;
 TRUNCATE TABLE `dbs_chat_message`;
@@ -413,7 +422,7 @@ INSERT INTO `credit_appeal` (`violation_id`, `appellant_id`, `reason`, `status`,
 
 -- ==================== 17. 校园认证 ====================
 
-INSERT INTO `user_campus_auth` (`user_id`, `auth_type`, `student_no`, `real_name`, `campus`, `college`, `status`, `reviewer_id`, `review_time`, `create_time`) VALUES
+INSERT INTO `dbs_user_campus_auth` (`user_id`, `auth_type`, `student_no`, `real_name`, `campus`, `college`, `status`, `reviewer_id`, `review_time`, `create_time`) VALUES
 (2,  'student', '2022001001', '张三丰', '主校区', '计算机科学与技术学院', 1, 1, CONCAT(CURDATE() - INTERVAL 10 DAY, ' 14:00:00'), CONCAT(CURDATE() - INTERVAL 12 DAY, ' 10:00:00')),
 (3,  'student', '2022002002', '李思思', '东校区', '艺术设计学院',         1, 1, CONCAT(CURDATE() - INTERVAL 9 DAY,  ' 15:00:00'), CONCAT(CURDATE() - INTERVAL 11 DAY, ' 09:00:00')),
 (5,  'student', '2023001005', '陈七七', '主校区', '计算机科学与技术学院', 1, 1, CONCAT(CURDATE() - INTERVAL 8 DAY,  ' 16:00:00'), CONCAT(CURDATE() - INTERVAL 10 DAY, ' 11:00:00')),
@@ -422,7 +431,7 @@ INSERT INTO `user_campus_auth` (`user_id`, `auth_type`, `student_no`, `real_name
 
 -- ==================== 18. 信任分变动记录 ====================
 
-INSERT INTO `user_trust_score_log` (`user_id`, `order_id`, `type`, `score_change`, `score_before`, `score_after`, `reason`, `create_time`) VALUES
+INSERT INTO `dbs_user_trust_score_log` (`user_id`, `order_id`, `type`, `score_change`, `score_before`, `score_after`, `reason`, `create_time`) VALUES
 (2,  1,  'order_complete',   0.3, 4.2, 4.5, '订单DBS20260625001完成',     CONCAT(CURDATE() - INTERVAL 7 DAY, ' 16:00:00')),
 (3,  2,  'order_complete',   0.3, 4.5, 4.8, '订单DBS20260626001完成',     CONCAT(CURDATE() - INTERVAL 6 DAY, ' 15:00:00')),
 (4,  3,  'order_complete',   0.2, 4.0, 4.2, '订单DBS20260627001完成',     CONCAT(CURDATE() - INTERVAL 5 DAY, ' 20:00:00')),

@@ -6,12 +6,14 @@
 import { orderService } from '../../../services/order';
 import type { Order, OrderStatus } from '../../../types/order';
 import { ORDER_STATUS_MAP } from '../../../utils/order-status';
+import { ensureLogin } from '../../../utils/auth';
+import { formatDate } from '../../../utils/date';
 
 /** Tab 对应的状态筛选 */
-const TAB_FILTER: Record<number, OrderStatus | undefined> = {
+const TAB_FILTER: Record<number, OrderStatus[] | undefined> = {
   0: undefined,       // 全部
-  1: 3 as OrderStatus, // 进行中（服务中，状态3）— 待核销(1)也显示在全部里
-  2: 5 as OrderStatus, // 已完成
+  1: [1, 3] as OrderStatus[], // 进行中（待核销 + 服务中）
+  2: [5] as OrderStatus[], // 已完成
 };
 
 /** 状态对应的 t-tag theme（#120 修复：预计算避免 WXML 嵌套三元） */
@@ -44,19 +46,21 @@ Page({
     hasMore: true,
   },
 
-  onLoad() {
+  async onLoad() {
+    const loggedIn = await ensureLogin();
+    if (!loggedIn) return;
     this.loadOrderList();
   },
 
   onShow() {
     // 从详情页返回时刷新列表
-    this.setData({ pageNum: 1, hasMore: true });
+    this.setData({ hasMore: true });
     this.loadOrderList();
   },
 
   // 下拉刷新
   async onPullDownRefresh() {
-    this.setData({ pageNum: 1, hasMore: true });
+    this.setData({ hasMore: true });
     await this.loadOrderList();
     wx.stopPullDownRefresh();
   },
@@ -64,7 +68,6 @@ Page({
   // 上拉加载更多
   onReachBottom() {
     if (!this.data.hasMore) return;
-    this.setData({ pageNum: this.data.pageNum + 1 });
     this.loadOrderList(true);
   },
 
@@ -72,14 +75,14 @@ Page({
   onRoleChange(e: WechatMiniprogram.CustomEvent) {
     const role = e.currentTarget.dataset.role as 'buyer' | 'seller';
     if (role === this.data.activeRole) return;
-    this.setData({ activeRole: role, pageNum: 1, hasMore: true, orderList: [] });
+    this.setData({ activeRole: role, hasMore: true, orderList: [] });
     this.loadOrderList();
   },
 
   // Tab 切换
   onTabChange(e: WechatMiniprogram.CustomEvent) {
     const index = e.detail.value ?? e.detail.index ?? 0;
-    this.setData({ activeTab: index, pageNum: 1, hasMore: true, orderList: [] });
+    this.setData({ activeTab: index, hasMore: true, orderList: [] });
     this.loadOrderList();
   },
 
@@ -102,22 +105,35 @@ Page({
 
   async loadOrderList(append = false) {
     try {
-      const { activeTab, pageNum, pageSize } = this.data;
-      const status = TAB_FILTER[activeTab];
+      const { activeTab, pageSize } = this.data;
+      const statuses = TAB_FILTER[activeTab];
+      // 后端若支持逗号分隔则传字符串，否则传首个状态由前端兜底
+      const status = statuses && statuses.length > 0 ? statuses.join(',') : undefined;
+      const pageNum = append ? this.data.pageNum : 1;
       const res = await orderService.getList({
         role: this.data.activeRole,
         status,
         pageNum,
         pageSize,
       });
-      const rawList = append ? [...this.data.orderList, ...res.data.list] : res.data.list;
+      // 若后端未按数组过滤，前端再过滤一次（Mock 兜底）
+      const filteredList = statuses && statuses.length > 0
+        ? res.data.list.filter((o) => statuses.includes(o.status))
+        : res.data.list;
+      const rawList = append ? [...this.data.orderList, ...filteredList] : filteredList;
       const newList = rawList.map((order, i) => {
         // 仅对新追加的数据计算派生值，已有数据直接保留
         if (append && i < this.data.orderList.length) return order;
-        return { ...order, _statusTheme: STATUS_THEME_MAP[order.status] || 'default', myRole: this.data.activeRole };
+        return {
+          ...order,
+          _statusTheme: STATUS_THEME_MAP[order.status] || 'default',
+          myRole: this.data.activeRole,
+          createTimeFormatted: order.createTime ? formatDate(order.createTime, 'YYYY-MM-DD HH:mm') : '',
+        };
       });
       this.setData({
         orderList: newList,
+        pageNum: pageNum + 1,
         hasMore: newList.length < res.data.total,
         loading: false,
       });

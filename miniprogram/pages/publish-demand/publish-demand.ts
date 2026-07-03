@@ -232,8 +232,10 @@ Page({
       return '请选择截止日期';
     }
     const deadlineDate = new Date(deadline);
-    if (deadlineDate <= new Date()) {
-      return '截止日期必须晚于今天';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (deadlineDate < today) {
+      return '截止日期不能早于今天';
     }
     if (!tags.length || !tags[tagIndex]) {
       return '请选择分类标签';

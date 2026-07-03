@@ -5,6 +5,7 @@
 
 import { demandService } from '../../../services/demand';
 import type { Demand } from '../../../types/demand';
+import { ensureLogin } from '../../../utils/auth';
 
 /** 需求状态映射 */
 const DEMAND_STATUS_MAP: Record<number, string> = {
@@ -43,18 +44,21 @@ Page({
     actionLoading: false,
   },
 
-  onLoad() {
+  async onLoad() {
+    const loggedIn = await ensureLogin();
+    if (!loggedIn) return;
     this.loadMyDemands();
   },
 
   onShow() {
-    this.setData({ pageNum: 1, hasMore: true });
+    // 从详情页返回时刷新列表
+    this.setData({ hasMore: true });
     this.loadMyDemands();
   },
 
+  // 上拉加载更多
   onReachBottom() {
     if (!this.data.hasMore) return;
-    this.setData({ pageNum: this.data.pageNum + 1 });
     this.loadMyDemands(true);
   },
 
@@ -62,11 +66,13 @@ Page({
 
   async loadMyDemands(append = false) {
     try {
-      const { pageNum, pageSize } = this.data;
+      const { pageSize } = this.data;
+      const pageNum = append ? this.data.pageNum : 1;
       const res = await demandService.getMine({ pageNum, pageSize });
       const newList = append ? [...this.data.demandList, ...res.data.list] : res.data.list;
       this.setData({
         demandList: newList,
+        pageNum: pageNum + 1,
         hasMore: newList.length < res.data.total,
         loading: false,
       });
@@ -108,7 +114,7 @@ Page({
     try {
       await demandService.close(cancelTargetId);
       wx.showToast({ title: '已取消', icon: 'success' });
-      this.setData({ showCancelDialog: false, pageNum: 1, hasMore: true });
+      this.setData({ showCancelDialog: false, hasMore: true });
       this.loadMyDemands();
     } catch (err) {
       console.error('取消求助失败:', err);

@@ -111,6 +111,22 @@ export function isLoggedIn(): boolean {
   return !!getToken();
 }
 
+/** 获取当前用户 ID（兼容 globalData / Storage 兜底） */
+export function getCurrentUserId(): number {
+  try {
+    const app = getApp();
+    if (app.globalData?.userInfo?.id) {
+      return app.globalData.userInfo.id as number;
+    }
+    const user = getUserInfo();
+    if (user?.id) return user.id;
+  } catch {
+    // ignore
+  }
+  return 0;
+}
+
+
 // ── 密码登录（与 frontend/src/api/auth.ts login() 一致） ──
 
 export async function login(username: string, password: string): Promise<UserProfile> {

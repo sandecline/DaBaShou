@@ -102,6 +102,8 @@ function request<T = unknown>(options: RequestOptions): Promise<ApiResponse<T>> 
 
 let _refreshRetryCount = 0;
 let _isReLaunching = false; // 防止并发 reLaunch 导致路由冲突
+let _isRefreshing = false; // 防止并发刷新 Token
+let _refreshQueue: Array<{ resolve: (value: ApiResponse<unknown>) => void; reject: (reason?: unknown) => void; options: RequestOptions }> = [];
 
 function safeReLaunch() {
   if (_isReLaunching) return;
@@ -112,15 +114,29 @@ function safeReLaunch() {
 }
 
 async function refreshTokenAndRetry<T>(options: RequestOptions): Promise<ApiResponse<T>> {
+  if (_isRefreshing) {
+    // 已有刷新请求在进行，排队等待结果
+    return new Promise<ApiResponse<T>>((resolve, reject) => {
+      _refreshQueue.push({ resolve: resolve as (value: ApiResponse<unknown>) => void, reject, options });
+    });
+  }
+
+  _isRefreshing = true;
   _refreshRetryCount++;
   if (_refreshRetryCount > MAX_REFRESH_RETRIES) {
     _refreshRetryCount = 0;
+    _isRefreshing = false;
+    _refreshQueue.forEach((q) => { q.reject({ code: 401, msg: '登录已过期，请重新登录' }); });
+    _refreshQueue = [];
     safeReLaunch();
     throw { code: 401, msg: '登录已过期，请重新登录' };
   }
   try {
     const refreshToken = wx.getStorageSync(REFRESH_TOKEN_KEY);
     if (!refreshToken) {
+      _isRefreshing = false;
+      _refreshQueue.forEach((q) => { q.reject({ code: 401, msg: '登录已过期，请重新登录' }); });
+      _refreshQueue = [];
       safeReLaunch();
       throw { code: 401, msg: '登录已过期，请重新登录' };
     }
@@ -132,9 +148,19 @@ async function refreshTokenAndRetry<T>(options: RequestOptions): Promise<ApiResp
     wx.setStorageSync(TOKEN_KEY, res.data.accessToken);
     wx.setStorageSync(REFRESH_TOKEN_KEY, res.data.refreshToken);
     _refreshRetryCount = 0;
+    _isRefreshing = false;
+    // 重试排队请求
+    const queue = _refreshQueue;
+    _refreshQueue = [];
+    queue.forEach((q) => {
+      request<unknown>(q.options).then(q.resolve).catch(q.reject);
+    });
     return request<T>(options);
   } catch (err) {
     _refreshRetryCount = 0;
+    _isRefreshing = false;
+    _refreshQueue.forEach((q) => { q.reject(err); });
+    _refreshQueue = [];
     throw err;
   }
 }
@@ -295,11 +321,14 @@ const mockDemandStore: Record<string, unknown>[] = [
 const mockOrderStore: Record<string, unknown>[] = [
   {
     id: 1, orderNo: 'DB202607010001', shelfTitle: 'Python 编程辅导',
-    pointAmount: 50, status: 3, statusName: '服务中',
+    pointAmount: 50, status: 1, statusName: '待支付',
     buyerId: 1003, buyerNickname: '李四', buyerAvatar: '',
     sellerId: 1001, sellerNickname: '张三', sellerAvatar: '',
     counterpartNickname: '张三', counterpartAvatar: '',
     skillTagName: 'Python', durationMinutes: 60, skillShelfId: 1, remark: '',
+    buyerCode: 'B1234', sellerCode: 'S5678',
+    buyerVerified: false, sellerVerified: false,
+    buyerConfirmed: false, sellerConfirmed: false,
     createTime: daysAgo(2),
   },
 ];
@@ -476,7 +505,10 @@ function getMockData<T>(options: RequestOptions): T {
       sellerId: MOCK_ME.id, sellerNickname: MOCK_ME.nickname, sellerAvatar: '',
       counterpartNickname: demand.nickname, counterpartAvatar: '',
       skillTagName: demand.skillTagName || demand.tagName, demandId: id,
-      buyerCode, sellerCode, remark: '来自求助看板',
+      buyerCode, sellerCode,
+      buyerVerified: true, sellerVerified: true, // 需求揭榜直接进入服务中
+      buyerConfirmed: false, sellerConfirmed: false,
+      remark: '来自求助看板',
       createTime: nowStr(),
     });
     console.log('[Mock] 已接单 + 订单已创建:', orderNo, 'id=', orderId);
@@ -495,7 +527,7 @@ function getMockData<T>(options: RequestOptions): T {
   // ── 从货架创建订单 POST /v1/orders/from-shelf ──
   if (isPost && url.includes('/orders/from-shelf')) {
     const params = (data || {}) as Record<string, unknown>;
-    const shelfId = Number(params.shelfId);
+    const shelfId = Number(params.skillShelfId || params.shelfId);
     const shelf = mockShelfStore.find((s) => s.id === shelfId);
     if (!shelf) throw { code: 400, msg: '技能货架不存在' };
     if (shelf.userId === MOCK_ME.id) throw { code: 400, msg: '不能购买自己的服务' };
@@ -506,12 +538,14 @@ function getMockData<T>(options: RequestOptions): T {
     const sellerCode = 'S' + String(Math.floor(Math.random() * 10000)).padStart(4, '0');
     mockOrderStore.unshift({
       id: orderId, orderNo, shelfTitle: shelf.title,
-      pointAmount: shelf.pointPrice, status: 3, statusName: '服务中',
+      pointAmount: shelf.pointPrice, status: 1, statusName: '待支付',
       buyerId: MOCK_ME.id, buyerNickname: MOCK_ME.nickname, buyerAvatar: '',
       sellerId: shelf.userId, sellerNickname: shelf.nickname, sellerAvatar: '',
       counterpartNickname: shelf.nickname, counterpartAvatar: '',
       skillTagName: shelf.tagName, durationMinutes: shelf.durationMinutes, skillShelfId: shelfId,
       buyerCode, sellerCode,
+      buyerVerified: false, sellerVerified: false,
+      buyerConfirmed: false, sellerConfirmed: false,
       timeSlotId: params.timeSlotId || undefined, remark: params.remark || '',
       createTime: nowStr(),
     });
@@ -524,11 +558,16 @@ function getMockData<T>(options: RequestOptions): T {
   if (isGet && url.match(/\/orders\/?$/) && !url.includes('/orders/')) {
     const params = (data || {}) as Record<string, unknown>;
     const role = params.role as 'buyer' | 'seller' | undefined;
-    const status = Number(params.status);
+    const statusParam = params.status as string | number | undefined;
+    let statusFilter: number[] | undefined;
+    if (statusParam !== undefined && statusParam !== '') {
+      const statusArr = String(statusParam).split(',').map((s) => Number(s.trim())).filter((n) => !Number.isNaN(n));
+      if (statusArr.length > 0) statusFilter = statusArr;
+    }
     let list = [...mockOrderStore];
     if (role === 'buyer') list = list.filter((o) => o.buyerId === MOCK_ME.id);
     else if (role === 'seller') list = list.filter((o) => o.sellerId === MOCK_ME.id);
-    if (status) list = list.filter((o) => o.status === status);
+    if (statusFilter) list = list.filter((o) => statusFilter!.includes(o.status as number));
     const pageNum = Number(params.pageNum) || 1;
     const pageSize = Number(params.pageSize) || 10;
     const start = (pageNum - 1) * pageSize;
@@ -546,57 +585,66 @@ function getMockData<T>(options: RequestOptions): T {
       const o = mockOrderStore.find((x) => x.id === id);
       return { status: o?.status || 0, statusName: o?.statusName || '未知' } as unknown as T;
     }
-    // ── 接单 POST /v1/orders/:id/accept ──
-    if (isPost && url.match(/\/orders\/\d+\/accept$/)) {
-      const id = Number(url.match(/\/orders\/(\d+)\/accept$/)?.[1]);
-      const order = mockOrderStore.find((o) => o.id === id);
-      if (!order || order.status !== 1) throw { code: 400, msg: '订单不可接单' };
-      order.status = 3; order.statusName = '服务中';
-      order.serviceStartTime = nowStr();
-      console.log('[Mock] 订单已接单:', id);
-      return { id, status: 3, statusName: '服务中' } as unknown as T;
-    }
-
-    // ── 完成服务（双向验证）POST /v1/orders/:id/complete ──
-    if (isPost && url.match(/\/orders\/\d+\/complete$/)) {
-      const id = Number(url.match(/\/orders\/(\d+)\/complete$/)?.[1]);
+    // ── 核销（双阶段）POST /v1/orders/:id/verify ──
+    if (isPost && url.match(/\/orders\/\d+\/verify$/)) {
+      const id = Number(url.match(/\/orders\/(\d+)\/verify$/)?.[1]);
       const params = (data || {}) as Record<string, unknown>;
       const order = mockOrderStore.find((o) => o.id === id);
-      if (!order || order.status !== 3) throw { code: 400, msg: '当前状态不可完成' };
-      const role = params.role as 'buyer' | 'seller';
-      const code = params.code as string;
-      // 验证：买家输入卖家码，卖家输入买家码
-      const expected = role === 'buyer' ? order.sellerCode : order.buyerCode;
-      if (code !== expected) throw { code: 400, msg: '验证码错误' };
-      order[role === 'buyer' ? 'buyerVerified' : 'sellerVerified'] = true;
-      if (order.buyerVerified && order.sellerVerified) {
-        order.status = 5; order.statusName = '已完成';
-        order.completeTime = nowStr();
-        console.log('[Mock] 订单已完成（双向验证通过）:', id);
+      if (!order) throw { code: 404, msg: '订单不存在' };
+      const phase = (params.phase || 'start') as 'start' | 'complete';
+      const code = String(params.verifyCode || '');
+      const myRole = order.buyerId === MOCK_ME.id ? 'buyer' : 'seller';
+
+      if (phase === 'start') {
+        // 启动核销：买家输入卖家码，卖家输入买家码
+        if (order.status !== 1) throw { code: 400, msg: '当前状态不可启动核销' };
+        const expected = myRole === 'buyer' ? order.sellerCode : order.buyerCode;
+        if (code !== expected) throw { code: 400, msg: '核销码错误' };
+        order[myRole === 'buyer' ? 'buyerVerified' : 'sellerVerified'] = true;
+        if (order.buyerVerified && order.sellerVerified) {
+          order.status = 3; order.statusName = '服务中';
+          order.serviceStartTime = nowStr();
+          console.log('[Mock] 订单核销完成，进入服务中:', id);
+        }
+      } else {
+        // 确认完成：买家输入卖家码，卖家输入买家码
+        if (order.status !== 3) throw { code: 400, msg: '当前状态不可确认完成' };
+        const expected = myRole === 'buyer' ? order.sellerCode : order.buyerCode;
+        if (code !== expected) throw { code: 400, msg: '确认码错误' };
+        order[myRole === 'buyer' ? 'buyerConfirmed' : 'sellerConfirmed'] = true;
+        if (order.buyerConfirmed && order.sellerConfirmed) {
+          order.status = 5; order.statusName = '已完成';
+          order.completeTime = nowStr();
+          console.log('[Mock] 订单已完成（双方确认通过）:', id);
+        }
       }
-      return { id, status: order.status, statusName: order.statusName } as unknown as T;
+      return { status: order.status, statusName: order.statusName } as unknown as T;
     }
 
-    // ── 退款 POST /v1/orders/:id/refund（含退款申请 + 同意退款） ──
+    // ── 退款 POST /v1/orders/:id/refund ──
     if (isPost && url.match(/\/orders\/\d+\/refund$/)) {
       const id = Number(url.match(/\/orders\/(\d+)\/refund$/)?.[1]);
       const params = (data || {}) as Record<string, unknown>;
       const order = mockOrderStore.find((o) => o.id === id);
       if (!order) throw { code: 404, msg: '订单不存在' };
-      const action = params.action as string; // 'request' = 申请退款, 'approve' = 同意退款
-      if (action === 'approve' || order.refundRequesting) {
-        // 同意退款
+      if (![3, 4].includes(order.status as number)) throw { code: 400, msg: '当前状态不可退款' };
+      const action = params.action as string;
+      const myRole = (order.buyerId === MOCK_ME.id ? 'buyer' : 'seller') as 'buyer' | 'seller';
+
+      if (action === 'approve') {
+        // 同意退款：仅对方可操作，不允许自己同意自己的申请
         if (!order.refundRequesting) throw { code: 400, msg: '无待处理的退款请求' };
+        if (order.refundRequester === myRole) throw { code: 400, msg: '不能同意自己发起的退款' };
         order.status = 6; order.statusName = '已退款';
         order.refundRequesting = false;
-        console.log('[Mock] 退款已同意:', id);
+        console.log('[Mock] 退款已同意:', id, 'by', myRole);
         return { id, status: 6, statusName: '已退款' } as unknown as T;
       }
       // 申请退款
-      if (![3, 4].includes(order.status as number)) throw { code: 400, msg: '当前状态不可退款' };
+      if (order.refundRequesting) throw { code: 400, msg: '已有退款申请待处理' };
       order.refundRequesting = true;
-      order.refundRequester = params.role as 'buyer' | 'seller';
-      console.log('[Mock] 退款申请已提交:', id);
+      order.refundRequester = myRole;
+      console.log('[Mock] 退款申请已提交:', id, 'by', myRole);
       return { id, refundRequesting: true } as unknown as T;
     }
 
@@ -604,19 +652,44 @@ function getMockData<T>(options: RequestOptions): T {
     if (isPost && url.match(/\/orders\/\d+\/cancel$/)) {
       const id = Number(url.match(/\/orders\/(\d+)\/cancel$/)?.[1]);
       const order = mockOrderStore.find((o) => o.id === id);
-      if (order) { order.status = 0; order.statusName = '已取消'; }
+      if (!order) throw { code: 404, msg: '订单不存在' };
+      const myRole = order.buyerId === MOCK_ME.id ? 'buyer' : 'seller';
+      if (myRole !== 'seller') throw { code: 403, msg: '只有卖家可以取消订单' };
+      if (order.status !== 1) throw { code: 400, msg: '当前状态不可取消' };
+      order.status = 0; order.statusName = '已取消';
       return { id, status: 0, statusName: '已取消' } as unknown as T;
     }
+
+    // ── 订单关联评价 ──
+    if (isGet && url.match(/\/orders\/\d+\/review$/)) {
+      // Mock 默认未评价，返回空对象
+      return {} as unknown as T;
+    }
+
     return { id: 1, orderNo: 'DB202607010001', status: 3, statusName: '服务中' } as unknown as T;
   }
 
+
   // ── 积分 ──
-  if (url.includes('/points') || url.includes('/point')) {
+  if (url.includes('/points')) {
+    if (isPost && url.includes('/points/freeze')) {
+      // 创建订单时冻结积分：Mock 直接成功
+      return {} as unknown as T;
+    }
+    if (url.includes('/points/settle')) {
+      // 订单完成时结算积分
+      return {} as unknown as T;
+    }
+    if (url.includes('/points/refund')) {
+      // 取消/退款时退还积分
+      return {} as unknown as T;
+    }
     return {
       available: 500, frozen: 50, total: 550, balance: 500,
       totalEarned: 1200, totalSpent: 700,
     } as unknown as T;
   }
+
 
   // ── 会话列表 ──
   if (url.includes('/chat/sessions') && !url.includes('/read') && !url.match(/\/sessions\/\d+/)) {
@@ -668,10 +741,14 @@ function getMockData<T>(options: RequestOptions): T {
   }
 
   // ── 评价 /v1/reviews/* ──
-  if (url.includes('/reviews/received') || url.includes('/reviews/mine') || url.includes('/reviews/pending')) {
+  if (url.includes('/reviews')) {
     const params = (data || {}) as Record<string, unknown>;
     const pageNum = Number(params.pageNum) || 1;
     const pageSize = Number(params.pageSize) || 10;
+    if (isPost && url.match(/\/reviews\/?$/)) {
+      // 提交评价
+      return { id: nextId() } as unknown as T;
+    }
     if (url.includes('/reviews/pending')) {
       return [{ orderId: 1, orderTitle: 'Python 编程辅导', targetUser: { id: 1001, nickname: '张三' } }] as unknown as T;
     }
@@ -680,6 +757,7 @@ function getMockData<T>(options: RequestOptions): T {
       total: 1, pageNum, pageSize,
     } as unknown as T;
   }
+
 
   // ── 信用 ──
   if (url.includes('/credit')) {

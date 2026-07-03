@@ -10,7 +10,8 @@ import type { Order, OrderDetail } from '../types/order';
 
 export interface OrderSearchParams {
   role?: 'buyer' | 'seller';
-  status?: number;
+  /** 单个状态或逗号分隔的多个状态（如 '1,3'） */
+  status?: number | string;
   pageNum: number;
   pageSize: number;
 }
@@ -63,9 +64,15 @@ export const orderService = {
 
   /** 从需求创建订单 */
   createFromDemand(params: CreateFromDemandParams) {
+    const body: Record<string, unknown> = {
+      demandId: params.demandId,
+      remark: params.remark,
+      idempotentToken: `wx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+    };
+    if (params.sellerId) body.sellerId = params.sellerId;
     return api.post<{ orderId: number; orderNo: string }>(
       '/v1/orders/from-demand',
-      { demandId: params.demandId, remark: params.remark, idempotentToken: `wx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}` } as unknown as Record<string, unknown>
+      body
     );
   },
 
@@ -89,9 +96,11 @@ export const orderService = {
     return api.post<void>(`/v1/orders/${orderId}/dispute`, { reason });
   },
 
-  /** 退款 */
-  refundOrder(orderId: number, reason?: string) {
-    return api.post<void>(`/v1/orders/${orderId}/refund`, { reason });
+  /** 退款（role=操作方角色，approve=true=同意退款，默认=申请退款） */
+  refundOrder(orderId: number, role?: string, approve?: boolean) {
+    const body: Record<string, unknown> = { role };
+    if (approve) body.action = 'approve';
+    return api.post<void>(`/v1/orders/${orderId}/refund`, body);
   },
 
   /** 获取订单关联的评价 */

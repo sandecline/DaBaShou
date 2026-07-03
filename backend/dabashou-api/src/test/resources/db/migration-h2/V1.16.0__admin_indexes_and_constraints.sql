@@ -29,7 +29,7 @@ CREATE INDEX `idx_shelf_tag_status` ON `dbs_skill_shelf` (`skill_tag_id`, `statu
 CREATE INDEX `idx_demand_user_status` ON `dbs_demand` (`user_id`, `status`);
 CREATE INDEX `idx_demand_tag_status` ON `dbs_demand` (`skill_tag_id`, `status`);
 CREATE INDEX `idx_chat_message_session_time` ON `dbs_chat_message` (`session_id`, `create_time`);
-CREATE INDEX `idx_sys_notification_user_read_time` ON `sys_notification` (`user_id`, `is_read`, `create_time`);
+CREATE INDEX `idx_notification_user_read_time` ON `dbs_notification` (`user_id`, `is_read`, `create_time`);
 
 INSERT INTO `sys_config` (`config_key`, `config_value`, `config_name`, `config_type`, `description`)
 VALUES ('site.name', '搭把手', '站点名称', 'business', '前台展示的平台名称'),

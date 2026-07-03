@@ -40,8 +40,8 @@ ALTER TABLE `dbs_demand`
 ALTER TABLE `dbs_chat_message`
     ADD INDEX `idx_chat_message_session_time` (`session_id`, `create_time`);
 
-ALTER TABLE `sys_notification`
-    ADD INDEX `idx_sys_notification_user_read_time` (`user_id`, `is_read`, `create_time`);
+ALTER TABLE `dbs_notification`
+    ADD INDEX `idx_notification_user_read_time` (`user_id`, `is_read`, `create_time`);
 
 -- 7. 管理员账号种子（合并自 database/migration/V1.16.0）
 SET @admin_pwd_hash = '$2b$12$VipmeVvp066DBkrRvDNIgerpnmKqvo.lLzB84IwiIBlEahgG/0sjW';
@@ -80,7 +80,7 @@ VALUES ('site.name', '搭把手', '站点名称', 'business', '前台展示的�
 -- ============================================================================
 -- 回滚脚本
 -- ============================================================================
--- ALTER TABLE `sys_notification` DROP INDEX `idx_sys_notification_user_read_time`;
+-- ALTER TABLE `dbs_notification` DROP INDEX `idx_notification_user_read_time`;
 -- ALTER TABLE `dbs_chat_message` DROP INDEX `idx_chat_message_session_time`;
 -- ALTER TABLE `dbs_demand` DROP INDEX `idx_demand_tag_status`;
 -- ALTER TABLE `dbs_demand` DROP INDEX `idx_demand_user_status`;

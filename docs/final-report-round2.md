@@ -48,7 +48,7 @@
 - `dbs_demand(user_id, status)`
 - `dbs_demand(skill_tag_id, status)`
 - `dbs_chat_message(session_id, create_time)`
-- `sys_notification(user_id, is_read, create_time)`
+- `dbs_notification(user_id, is_read, create_time)`
 - `dbs_review.hidden`
 - `dbs_user.token_version`
 - `sys_role`、`sys_user_role` 初始化与后台配置白名单数据

@@ -159,12 +159,14 @@ Page({
 
   /** 提交保存 */
   async onSubmit() {
-    const { nickname, campus, building, bio, originalProfile, submitting } = this.data;
+    const { avatar, nickname, campus, building, bio, originalProfile, submitting } = this.data;
     if (submitting) return;
+
 
     // 构建更新参数，仅提交有变化的字段
     const params: UpdateProfileParams = {};
 
+    if (avatar !== originalProfile?.avatar) params.avatar = avatar;
     if (nickname !== originalProfile?.nickname) params.nickname = nickname;
     if (campus !== originalProfile?.campus) params.campus = campus;
     if (building !== originalProfile?.building) params.building = building;

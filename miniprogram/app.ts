@@ -9,6 +9,7 @@
 
 import type { IAppOption } from './types/global';
 import { USE_MOCK } from './config/api';
+import { getToken, getUserInfo } from './utils/auth';
 
 App<IAppOption>({
   // ========== 全局数据 ==========
@@ -60,19 +61,15 @@ App<IAppOption>({
    */
   restoreSession() {
     try {
-      const token = wx.getStorageSync('dabashou_token');
-      const userInfo = wx.getStorageSync('dabashou_user');
+      const token = getToken();
+      const userInfo = getUserInfo();
       if (token) {
         this.globalData.token = token;
         this.globalData.isLoggedIn = true;
         console.log('[App] 登录态已恢复');
       }
       if (userInfo) {
-        try {
-          this.globalData.userInfo = typeof userInfo === 'string' ? JSON.parse(userInfo) : userInfo;
-        } catch {
-          this.globalData.userInfo = userInfo;
-        }
+        this.globalData.userInfo = userInfo;
       }
     } catch (err) {
       console.error('[App] 恢复登录态失败:', err);

@@ -118,6 +118,12 @@ Page({
     if (accepting || expired) return;
     if (!demand) return;
 
+    const myId = getApp().globalData.userInfo?.id;
+    if (demand.userId === myId) {
+      wx.showToast({ title: '不能接自己发布的求助', icon: 'error' });
+      return;
+    }
+
     wx.showModal({
       title: '确认接单',
       content: `确定要接下「${demand.title}」吗？接单后将使用 ${demand.pointReward} 积分作为担保。`,
@@ -131,7 +137,7 @@ Page({
           // 局部更新状态，避免全量 setData 导致页面闪烁
           const newStatus = 2;
           this.setData({
-            demand: { ...demand, status: newStatus, statusDesc: '已接单' } as Demand,
+            demand: { ...demand, status: newStatus, statusDesc: '进行中' } as Demand,
             statusTheme: 'primary',
             statusLabel: '进行中',
             accepting: false,

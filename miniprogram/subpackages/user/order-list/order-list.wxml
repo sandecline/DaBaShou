@@ -60,7 +60,7 @@
             data-nickname="{{item.myRole === 'buyer' ? item.sellerNickname : item.buyerNickname}}"
             catch:tap="onChat"
           >私聊</t-button>
-          <text class="order-card__time">{{item.createTime}}</text>
+          <text class="order-card__time">{{item.createTimeFormatted || item.createTime}}</text>
         </view>
       </view>
     </view>
