@@ -22,7 +22,7 @@ export function getMyViolations(params?: PageParams): Promise<PageResult<Violati
   return request.get('/v1/violations/mine', normalizePageParams(params))
 }
 
-export function submitAppeal(data: { violationId: number; reason: string; evidence?: string[] | string }): Promise<number> {
+export function submitAppeal(data: { violationId?: number; orderId?: number; reason: string; evidence?: string[] | string }): Promise<number> {
   return request.post('/v1/appeals', data)
 }
 

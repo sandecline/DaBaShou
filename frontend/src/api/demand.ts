@@ -37,8 +37,6 @@ export function searchDemands(params: {
   return request.get('/v1/demands', normalizePageParams(params))
 }
 
-export const getDemandList = searchDemands
-
 export function getMyDemands(params?: PageParams): Promise<PageResult<DemandItemVo>> {
   return request.get('/v1/demands/mine', normalizePageParams(params))
 }
@@ -46,8 +44,6 @@ export function getMyDemands(params?: PageParams): Promise<PageResult<DemandItem
 export function acceptDemand(id: number, data: { shelfId?: number; remark?: string } = {}): Promise<null> {
   return request.post('/v1/demands/' + id + '/accept', data)
 }
-
-export const bidDemand = acceptDemand
 
 export function matchDemands(id: number, limit?: number): Promise<DemandMatchVo[]> {
   return request.get('/v1/demands/' + id + '/match', { limit })

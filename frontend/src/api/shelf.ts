@@ -40,8 +40,6 @@ export function searchShelves(params: {
   return request.get('/v1/shelves', normalizePageParams(params))
 }
 
-export const getShelfList = searchShelves
-
 export function getMyShelves(params?: PageParams): Promise<PageResult<ShelfItemVo>> {
   return request.get('/v1/shelves/mine', normalizePageParams(params))
 }

@@ -29,10 +29,6 @@ export function getOrderDetail(id: number): Promise<OrderDetailVo> {
   return request.get('/v1/orders/' + id)
 }
 
-export function getOrderStatus(id: number): Promise<{ status: number; statusName: string }> {
-  return request.get('/v1/orders/' + id + '/status')
-}
-
 export function payOrder(id: number): Promise<PayResultVo> {
   return request.post('/v1/orders/' + id + '/pay')
 }
@@ -69,10 +65,6 @@ export function confirmOrder(id: number): Promise<null> {
 
 export function disputeOrder(id: number, reason: string): Promise<null> {
   return request.post('/v1/orders/' + id + '/dispute', { reason })
-}
-
-export function arbitrateOrder(id: number, data: { result: string; reason: string; refundAmount?: number }): Promise<null> {
-  return request.post('/v1/orders/' + id + '/arbitrate', data)
 }
 
 export function refundOrder(id: number, reason: string): Promise<null> {
