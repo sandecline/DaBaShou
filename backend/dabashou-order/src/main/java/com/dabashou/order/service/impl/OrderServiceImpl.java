@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -589,7 +590,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
-    public PageResult<OrderItemVo> listOrders(Long userId, String role, Integer status, int pageNum, int pageSize) {
+    public PageResult<OrderItemVo> listOrders(Long userId, String role, List<Integer> status, int pageNum, int pageSize) {
         Page<Order> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<Order> wrapper = new LambdaQueryWrapper<>();
         if ("buyer".equals(role)) {
@@ -599,8 +600,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         } else {
             wrapper.and(w -> w.eq(Order::getBuyerId, userId).or().eq(Order::getSellerId, userId));
         }
-        if (status != null) {
-            wrapper.eq(Order::getStatus, status);
+        if (status != null && !status.isEmpty()) {
+            wrapper.in(Order::getStatus, status);
         }
         wrapper.orderByDesc(Order::getCreateTime);
         Page<Order> result = page(page, wrapper);

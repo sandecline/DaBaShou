@@ -4,6 +4,7 @@ import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.order.dto.*;
+import java.util.List;
 import com.dabashou.order.service.OrderService;
 import com.dabashou.order.vo.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,11 +41,11 @@ public class OrderController {
         return AjaxResult.ok(orderService.createOrderFromDemand(userId, dto));
     }
 
-    @Operation(summary = "订单列表")
+    @Operation(summary = "订单列表，status支持逗号分隔多值（如 1,3）")
     @GetMapping
     public AjaxResult<PageResult<OrderItemVo>> listOrders(
             @Parameter(description = "角色: buyer/seller") @RequestParam(required = false) String role,
-            @Parameter(description = "状态码") @RequestParam(required = false) Integer status,
+            @Parameter(description = "状态码，支持逗号分隔多值") @RequestParam(required = false) List<Integer> status,
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int pageSize) {
         Long userId = SecurityUtil.requireCurrentUserId();

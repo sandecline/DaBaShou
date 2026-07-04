@@ -5,6 +5,7 @@ import com.dabashou.common.core.PageResult;
 import com.dabashou.order.domain.Order;
 import com.dabashou.order.dto.*;
 import com.dabashou.order.vo.*;
+import java.util.List;
 
 /**
  * 订单服务接口
@@ -24,7 +25,7 @@ public interface OrderService extends IService<Order> {
     /**
      * 订单列表(买家/卖家视角)
      */
-    PageResult<OrderItemVo> listOrders(Long userId, String role, Integer status, int pageNum, int pageSize);
+    PageResult<OrderItemVo> listOrders(Long userId, String role, List<Integer> status, int pageNum, int pageSize);
 
     /**
      * 订单详情
