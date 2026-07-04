@@ -23,13 +23,18 @@ export const demandService = {
     return api.post<{ id: number }>('/v1/demands', params as unknown as Record<string, unknown>);
   },
 
-  /** 接单（揭榜）。后端 POST /v1/demands/{id}/accept，接收 @RequestBody AcceptDto */
+  /** 接单（揭榜）。后端 POST /v1/demands/{id}/accept，返回 AcceptResultVo */
   accept(demandId: number, shelfId: number, idempotentToken: string, remark?: string) {
-    return api.post<{ orderId: number }>(`/v1/demands/${demandId}/accept`, {
+    return api.post<{ demandId: number; shelfId: number; buyerId: number; skillTagId: number; title: string; pointReward: number; idempotentToken: string; remark: string }>(`/v1/demands/${demandId}/accept`, {
       shelfId,
       idempotentToken,
       remark,
     } as unknown as Record<string, unknown>);
+  },
+
+  /** 匹配需求对应的服务货架 GET /v1/demands/{id}/match */
+  match(demandId: number, limit = 10) {
+    return api.get<Array<Record<string, unknown>>>(`/v1/demands/${demandId}/match`, { limit } as unknown as Record<string, unknown>);
   },
 
   /** 关闭/取消需求 */

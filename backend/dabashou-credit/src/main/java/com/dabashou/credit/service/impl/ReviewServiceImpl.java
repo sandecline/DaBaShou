@@ -113,7 +113,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         // 分页查询
-        String listSql = "SELECT * FROM dbs_review WHERE reviewer_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
+        String listSql = "SELECT id, order_id, reviewer_id, reviewee_id, rating, content, images, is_anonymous, create_time FROM dbs_review WHERE reviewer_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
         int offset = (pageNum - 1) * pageSize;
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(listSql, userId, pageSize, offset);
 
@@ -141,7 +141,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         // 分页查询
-        String listSql = "SELECT * FROM dbs_review WHERE reviewee_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
+        String listSql = "SELECT id, order_id, reviewer_id, reviewee_id, rating, content, images, is_anonymous, create_time FROM dbs_review WHERE reviewee_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
         int offset = (pageNum - 1) * pageSize;
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(listSql, userId, pageSize, offset);
 
@@ -171,7 +171,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public ReviewVo getOrderReview(Long userId, Long orderId) {
-        String sql = "SELECT * FROM dbs_review WHERE reviewer_id = ? AND order_id = ?";
+        String sql = "SELECT id, order_id, reviewer_id, reviewee_id, rating, content, images, is_anonymous, create_time FROM dbs_review WHERE reviewer_id = ? AND order_id = ?";
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, userId, orderId);
         if (rows.isEmpty()) {
             return null;

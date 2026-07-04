@@ -373,7 +373,7 @@ public class PointServiceImpl implements PointService {
 
     private int calculateConsecutiveDays(Long userId, LocalDate anchorDate) {
         List<Object> rows = jdbcTemplate.queryForList(
-                "SELECT sign_date FROM dbs_point_sign_in WHERE user_id = ? AND sign_date <= ? ORDER BY sign_date DESC",
+                "SELECT sign_date FROM dbs_point_sign_in WHERE user_id = ? AND sign_date <= ? ORDER BY sign_date DESC LIMIT 366",
                 Object.class, userId, anchorDate);
         int days = 0;
         LocalDate expected = anchorDate;

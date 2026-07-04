@@ -2,6 +2,7 @@ package com.dabashou.order.controller;
 
 import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
+import com.dabashou.common.enums.ErrorCode;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.order.dto.*;
 import java.util.List;
@@ -75,6 +76,9 @@ public class OrderController {
             @RequestParam(value = "idempotentToken", required = false) String paramToken) {
         Long userId = SecurityUtil.requireCurrentUserId();
         String idempotentToken = headerToken != null ? headerToken : paramToken;
+        if (idempotentToken == null || idempotentToken.isBlank()) {
+            return AjaxResult.fail(ErrorCode.BAD_REQUEST, "缺少幂等令牌，请重新提交");
+        }
         return AjaxResult.ok(orderService.payOrder(userId, orderId, idempotentToken));
     }
 

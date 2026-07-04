@@ -22,8 +22,8 @@ export const useUserStore = defineStore('user', () => {
       avatar: result.avatar,
     } as UserProfileVo
     setUserInfo(user.value as any)
-    fetchProfile().catch(() => {
-      // 登录已成功，个人资料补拉失败不阻塞进入页面；后续受保护接口会按401统一处理。
+    fetchProfile().catch((err) => {
+      console.warn('[user] fetchProfile failed after login, non-blocking:', err)
     })
   }
 

@@ -12,15 +12,15 @@
           :rules="rules"
           label-position="top"
         >
-          <el-form-item label="违规记录" prop="violationId">
-            <el-select v-model="form.violationId" placeholder="选择要申诉的违规记录" style="width: 100%">
-              <el-option
-                v-for="v in violations"
-                :key="v.id"
-                :label="`${ViolationTypeMap[v.type]} - ${v.description}`"
-                :value="v.id"
-              />
-            </el-select>
+          <el-form-item label="订单号" prop="orderId">
+            <el-input-number
+              v-model="form.orderId"
+              :controls="false"
+              :disabled="!!routeQueryOrderId"
+              placeholder="输入要申诉的订单ID"
+              style="width: 100%"
+            />
+            <div v-if="routeQueryOrderId" class="form-hint">从争议订单跳转，订单号已自动填入</div>
           </el-form-item>
 
           <el-form-item label="申诉理由" prop="reason">
@@ -57,7 +57,7 @@
       <div class="appeal-list-card">
         <h3>申诉记录</h3>
         <el-table :data="appeals" stripe v-loading="appealLoading" empty-text="暂无申诉记录">
-          <el-table-column prop="violationDesc" label="申诉事项" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="violationType" label="申诉类型" width="120" />
           <el-table-column prop="reason" label="申诉理由" min-width="200" show-overflow-tooltip />
           <el-table-column label="状态" width="100">
             <template #default="{ row }">
@@ -66,7 +66,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="reply" label="处理回复" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="reviewRemark" label="处理回复" min-width="150" show-overflow-tooltip />
           <el-table-column label="提交时间" width="170">
             <template #default="{ row }">{{ formatDateTime(row.createTime) }}</template>
           </el-table-column>
@@ -78,26 +78,28 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getMyViolations, submitAppeal, getMyAppeals } from '@/api/credit'
+import { submitAppeal, getMyAppeals } from '@/api/credit'
 import { formatDateTime } from '@/utils/format'
-import { ViolationTypeMap } from '@/types/api'
-import type { ViolationVo, AppealVo } from '@/types/api'
+import type { AppealVo } from '@/types/api'
+
+const route = useRoute()
+const routeQueryOrderId = route.query.orderId ? Number(route.query.orderId) : null
 
 const formRef = ref()
 const submitting = ref(false)
 const appealLoading = ref(false)
-const violations = ref<ViolationVo[]>([])
 const appeals = ref<AppealVo[]>([])
 
 const form = reactive({
-  violationId: null as number | null,
+  orderId: routeQueryOrderId as number | null,
   reason: '',
   evidence: '',
 })
 
 const rules = {
-  violationId: [{ required: true, message: '请选择要申诉的记录', trigger: 'change' }],
+  orderId: [{ required: true, message: '请输入要申诉的订单ID', trigger: 'blur' }],
   reason: [
     { required: true, message: '请填写申诉理由', trigger: 'blur' },
     { min: 10, message: '申诉理由至少10个字符', trigger: 'blur' },
@@ -118,12 +120,11 @@ async function handleSubmit() {
   submitting.value = true
   try {
     await submitAppeal({
-      violationId: form.violationId!,
+      orderId: form.orderId!,
       reason: form.reason,
-      evidence: form.evidence,
+      evidence: form.evidence ? [form.evidence] : undefined,
     })
     ElMessage.success('申诉已提交，等待审核')
-    form.violationId = null
     form.reason = ''
     form.evidence = ''
     loadAppeals()
@@ -131,15 +132,6 @@ async function handleSubmit() {
     // handled
   } finally {
     submitting.value = false
-  }
-}
-
-async function loadViolations() {
-  try {
-    const result = await getMyViolations({ pageNum: 1, pageSize: 50 })
-    violations.value = result.list.filter((v) => v.status === 0)
-  } catch {
-    // handled
   }
 }
 
@@ -156,7 +148,6 @@ async function loadAppeals() {
 }
 
 onMounted(() => {
-  loadViolations()
   loadAppeals()
 })
 </script>
@@ -181,5 +172,11 @@ onMounted(() => {
     font-size: $font-size-lg;
     font-weight: 600;
   }
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
 }
 </style>

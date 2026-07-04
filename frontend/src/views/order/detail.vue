@@ -26,6 +26,10 @@
                 :closable="false"
                 show-icon
               />
+              <div v-if="order.status === 7 && order.disputeReason" class="dispute-reason-box">
+                <p><strong>争议原因：</strong>{{ order.disputeReason }}</p>
+                <p v-if="order.disputeExplain"><strong>补充说明：</strong>{{ order.disputeExplain }}</p>
+              </div>
             </div>
           </div>
 
@@ -186,16 +190,54 @@
             </template>
 
             <template v-if="order.status === 5">
+              <el-button v-if="!reviewed" type="success" size="large" @click="openReviewDialog">
+                评价{{ otherPartyLabel }}
+              </el-button>
+              <el-button v-else size="large" disabled>已评价</el-button>
               <el-button type="danger" size="large" @click="handleDispute">发起争议</el-button>
             </template>
 
             <template v-if="order.status === 7">
-              <el-button type="primary" size="large" @click="$router.push('/credit/appeal')">
+              <el-button type="primary" size="large" @click="$router.push({ path: '/credit/appeal', query: { orderId: order.id } })">
                 发起申诉
               </el-button>
             </template>
           </div>
         </div>
+
+        <el-dialog v-model="reviewDialogVisible" :title="'评价' + otherPartyLabel" width="420px">
+          <el-form :model="reviewForm" label-position="top">
+            <el-form-item label="评分" required>
+              <el-rate
+                v-model="reviewForm.rating"
+                :max="5"
+                :low-threshold="2"
+                :high-threshold="4"
+                show-text
+                :texts="['极差', '较差', '一般', '满意', '非常满意']"
+              />
+            </el-form-item>
+            <el-form-item label="评价内容">
+              <el-input
+                v-model="reviewForm.content"
+                type="textarea"
+                :rows="3"
+                placeholder="分享你的体验..."
+                maxlength="300"
+                show-word-limit
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-checkbox v-model="reviewForm.isAnonymous">匿名评价</el-checkbox>
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <el-button @click="reviewDialogVisible = false">取消</el-button>
+            <el-button type="primary" :loading="reviewSubmitting" @click="submitReviewForm">
+              {{ reviewSubmitting ? '提交中...' : '提交评价' }}
+            </el-button>
+          </template>
+        </el-dialog>
       </template>
 
       <EmptyState v-else icon="🔍" title="订单不存在" />
@@ -204,10 +246,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getOrderDetail, verifyOrder, cancelOrder, disputeOrder, refundOrder } from '@/api/order'
+import { getOrderDetail, verifyOrder, cancelOrder, disputeOrder, refundOrder, getOrderReview } from '@/api/order'
+import { submitReview } from '@/api/credit'
 import { formatDateTime, getOrderStatusText } from '@/utils/format'
 import { useUserStore } from '@/stores/user'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -223,6 +266,15 @@ const verifyCodeInput = ref('')
 const confirmCodeInput = ref('')
 const verifyLoading = ref(false)
 const myRole = ref<'buyer' | 'seller'>('buyer')
+const reviewed = ref(false)
+const reviewDialogVisible = ref(false)
+const reviewSubmitting = ref(false)
+const reviewForm = reactive({
+  rating: 0,
+  content: '',
+  isAnonymous: false,
+})
+const otherPartyLabel = computed(() => myRole.value === 'buyer' ? '卖家' : '买家')
 
 const myStartCode = computed(() => {
   if (!order.value) return ''
@@ -294,6 +346,9 @@ async function fetchDetail() {
     } else {
       myRole.value = 'seller'
     }
+    if (order.value.status === 5) {
+      loadReviewStatus()
+    }
   } catch {
     order.value = null
   } finally {
@@ -310,7 +365,7 @@ async function handleVerifyStart() {
     verifyCodeInput.value = ''
     fetchDetail()
   } catch (err: any) {
-    ElMessage.error(err?.msg || '核销码错误')
+    // error already shown by interceptor
   } finally {
     verifyLoading.value = false
   }
@@ -325,7 +380,7 @@ async function handleVerifyComplete() {
     confirmCodeInput.value = ''
     fetchDetail()
   } catch (err: any) {
-    ElMessage.error(err?.msg || '确认码错误')
+    // error already shown by interceptor
   } finally {
     verifyLoading.value = false
   }
@@ -379,11 +434,62 @@ async function handleDispute() {
       inputPattern: /\S+/,
       inputErrorMessage: '请输入争议原因',
     })
-    await disputeOrder(order.value.id, reason.trim())
+    let explain: string | undefined
+    try {
+      const { value: explainVal } = await ElMessageBox.prompt('补充说明（可选）', '争议补充说明', {
+        confirmButtonText: '提交',
+        cancelButtonText: '跳过',
+        inputPlaceholder: '补充详细说明或证据描述...',
+      })
+      explain = explainVal?.trim()
+    } catch {
+      // user skipped
+    }
+    await disputeOrder(order.value.id, reason.trim(), explain)
     ElMessage.success('争议已提交，等待管理员仲裁')
     fetchDetail()
   } catch {
     // cancelled
+  }
+}
+
+async function loadReviewStatus() {
+  if (!order.value) return
+  try {
+    await getOrderReview(order.value.id)
+    reviewed.value = true
+  } catch {
+    reviewed.value = false
+  }
+}
+
+function openReviewDialog() {
+  reviewForm.rating = 0
+  reviewForm.content = ''
+  reviewForm.isAnonymous = false
+  reviewDialogVisible.value = true
+}
+
+async function submitReviewForm() {
+  if (!order.value || reviewForm.rating === 0) {
+    ElMessage.warning('请选择评分')
+    return
+  }
+  reviewSubmitting.value = true
+  try {
+    await submitReview({
+      orderId: order.value.id,
+      rating: reviewForm.rating,
+      content: reviewForm.content || undefined,
+      isAnonymous: reviewForm.isAnonymous,
+    })
+    ElMessage.success('评价已提交')
+    reviewDialogVisible.value = false
+    reviewed.value = true
+  } catch {
+    // error already shown by interceptor
+  } finally {
+    reviewSubmitting.value = false
   }
 }
 
@@ -410,6 +516,19 @@ onMounted(fetchDetail)
 
   .abnormal-status {
     margin-top: $spacing-md;
+
+    .dispute-reason-box {
+      margin-top: 8px;
+      padding: 12px 16px;
+      background: #fef0f0;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #c45656;
+
+      p {
+        margin: 4px 0;
+      }
+    }
   }
 }
 

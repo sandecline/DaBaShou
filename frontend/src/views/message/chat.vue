@@ -169,7 +169,7 @@ async function handleSend() {
     inputText.value = ''
     scrollToBottom()
   } catch {
-    ElMessage.error('发送失败')
+    // error already shown by interceptor
   } finally {
     sending.value = false
   }

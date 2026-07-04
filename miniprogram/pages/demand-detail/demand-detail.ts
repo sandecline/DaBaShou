@@ -19,6 +19,10 @@ Page({
     expired: false,
     deadlineCountdown: 0,
     accepting: false,
+    /** 选择服务货架弹窗 */
+    showShelfPicker: false,
+    matchedShelves: [] as Array<{ id: number; title: string; pointPrice: number; nickname: string; matchScore: number }>,
+    selectedShelfId: 0,
     statusTheme: 'default' as string,
     statusLabel: '未知' as string,
     trustTheme: 'default' as string,
@@ -99,40 +103,69 @@ Page({
       return;
     }
 
-    wx.showModal({
-      title: '确认接单',
-      content: `确定要接下「${demand.title}」吗？接单后将使用 ${demand.pointReward} 积分作为担保。`,
-      success: async (res) => {
-        if (!res.confirm) return;
-
-        this.setData({ accepting: true });
-        try {
-          const result = await orderService.createFromDemand({ demandId: this.data.demandId });
-          const orderId = result.data?.orderId;
-          wx.showToast({ title: '接单成功', icon: 'success' });
-          // 更新页面状态
-          const newStatus = 2;
-          this.setData({
-            demand: { ...demand, status: newStatus, statusDesc: '进行中' } as Demand,
-            statusTheme: 'primary',
-            statusLabel: '进行中',
-            accepting: false,
-          });
-          // 跳转订单列表
-          if (orderId) {
-            (this as any)._navTimer = setTimeout(() => {
-              const pages = getCurrentPages();
-              if (pages.length > 1) wx.navigateBack();
-              else wx.switchTab({ url: '/pages/index/index' });
-            }, 1200);
-          }
-        } catch (err) {
-          console.error('接单失败:', err);
-          wx.showToast({ title: '接单失败，请重试', icon: 'error' });
-          this.setData({ accepting: false });
-        }
-      },
+    this.setData({ accepting: true });
+    demandService.match(this.data.demandId, 10).then((matchRes) => {
+      const shelves = (matchRes.data || []) as Array<{ id: number; title: string; pointPrice: number; nickname: string; matchScore: number }>;
+      if (!shelves.length) {
+        wx.showToast({ title: '暂无匹配的服务', icon: 'none' });
+        this.setData({ accepting: false });
+        return;
+      }
+      this.setData({
+        matchedShelves: shelves,
+        selectedShelfId: shelves[0].id,
+        showShelfPicker: true,
+        accepting: false,
+      });
+    }).catch((err) => {
+      console.error('匹配服务失败:', err);
+      wx.showToast({ title: '获取匹配服务失败', icon: 'error' });
+      this.setData({ accepting: false });
     });
+  },
+
+  onShelfSelect(e: WechatMiniprogram.CustomEvent) {
+    this.setData({ selectedShelfId: Number(e.currentTarget.dataset.id) });
+  },
+
+  onConfirmAccept() {
+    const { demandId, selectedShelfId, demand } = this.data;
+    if (!demand) return;
+
+    this.setData({ accepting: true, showShelfPicker: false });
+    const idempotentToken = `wx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+    demandService.accept(demandId, selectedShelfId, idempotentToken).then((acceptRes) => {
+      const acceptData = acceptRes.data;
+      const orderId = orderService.createFromDemand({
+        demandId: acceptData.demandId || demandId,
+        shelfId: acceptData.shelfId || selectedShelfId,
+        remark: acceptData.remark || '',
+      });
+      return orderId;
+    }).then((orderRes) => {
+      const orderId = orderRes.data;
+      wx.showToast({ title: '接单成功', icon: 'success' });
+      this.setData({
+        demand: { ...demand, status: 2, statusDesc: '进行中' } as Demand,
+        statusTheme: 'primary',
+        statusLabel: '进行中',
+        accepting: false,
+      });
+      (this as any)._navTimer = setTimeout(() => {
+        const pages = getCurrentPages();
+        if (pages.length > 1) wx.navigateBack();
+        else wx.switchTab({ url: '/pages/index/index' });
+      }, 1200);
+    }).catch((err) => {
+      console.error('接单失败:', err);
+      wx.showToast({ title: '接单失败，请重试', icon: 'error' });
+      this.setData({ accepting: false });
+    });
+  },
+
+  onCancelAccept() {
+    this.setData({ showShelfPicker: false });
   },
 
   onChat() {

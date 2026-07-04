@@ -71,7 +71,6 @@ async function selectConv(targetUserId: number) {
   }
   try {
     await markChatSessionRead(targetUserId)
-    await messageStore.fetchUnreadCount()
   } catch {
     // request.ts 已统一提示，列表本地状态保持已读体验。
   }

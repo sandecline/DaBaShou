@@ -40,6 +40,10 @@ public class OrderDetailVo {
     private LocalDateTime completeTime;
     private LocalDateTime cancelTime;
     private String cancelReason;
+    private String disputeReason;
+    private String disputeExplain;
+    private Long disputeUserId;
+    private LocalDateTime disputeTime;
     private String remark;
     private LocalDateTime createTime;
 
@@ -109,6 +113,14 @@ public class OrderDetailVo {
     public void setCancelTime(LocalDateTime cancelTime) { this.cancelTime = cancelTime; }
     public String getCancelReason() { return cancelReason; }
     public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+    public String getDisputeReason() { return disputeReason; }
+    public void setDisputeReason(String disputeReason) { this.disputeReason = disputeReason; }
+    public String getDisputeExplain() { return disputeExplain; }
+    public void setDisputeExplain(String disputeExplain) { this.disputeExplain = disputeExplain; }
+    public Long getDisputeUserId() { return disputeUserId; }
+    public void setDisputeUserId(Long disputeUserId) { this.disputeUserId = disputeUserId; }
+    public LocalDateTime getDisputeTime() { return disputeTime; }
+    public void setDisputeTime(LocalDateTime disputeTime) { this.disputeTime = disputeTime; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
     public LocalDateTime getCreateTime() { return createTime; }

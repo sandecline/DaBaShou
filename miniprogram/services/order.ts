@@ -4,14 +4,25 @@ import type { OrderItemVo, OrderDetailVo, CreateFromShelfParams, CreateFromDeman
 
 export interface OrderSearchParams {
   role?: 'buyer' | 'seller';
-  status?: number | string;
+  status?: number | number[];
   pageNum: number;
   pageSize: number;
 }
 
 export const orderService = {
   getList(params: OrderSearchParams) {
-    return api.get<PageResult<OrderItemVo>>('/v1/orders', params as unknown as Record<string, unknown>);
+    const queryParams: Record<string, unknown> = {};
+    if (params.role) queryParams.role = params.role;
+    if (params.pageNum) queryParams.pageNum = params.pageNum;
+    if (params.pageSize) queryParams.pageSize = params.pageSize;
+    if (params.status !== undefined) {
+      if (Array.isArray(params.status)) {
+        queryParams.status = params.status.join(',');
+      } else {
+        queryParams.status = params.status;
+      }
+    }
+    return api.get<PageResult<OrderItemVo>>('/v1/orders', queryParams);
   },
 
   getMyOrders(params: { pageNum: number; pageSize: number }) {
@@ -31,7 +42,7 @@ export const orderService = {
   },
 
   createFromShelf(params: CreateFromShelfParams) {
-    return api.post<{ orderId: number; orderNo: string }>(
+    return api.post<number>(
       '/v1/orders/from-shelf',
       { shelfId: params.shelfId, timeSlotId: params.timeSlotId, remark: params.remark, idempotentToken: `wx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}` } as unknown as Record<string, unknown>
     );
@@ -40,11 +51,11 @@ export const orderService = {
   createFromDemand(params: CreateFromDemandParams) {
     const body: Record<string, unknown> = {
       demandId: params.demandId,
+      shelfId: params.shelfId,
       remark: params.remark,
       idempotentToken: `wx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
     };
-    if (params.sellerId) body.sellerId = params.sellerId;
-    return api.post<{ orderId: number; orderNo: string }>(
+    return api.post<number>(
       '/v1/orders/from-demand',
       body
     );
@@ -56,6 +67,14 @@ export const orderService = {
 
   verify(orderId: number, code: string, phase: 'start' | 'complete' = 'start') {
     return api.post<void>(`/v1/orders/${orderId}/verify`, { code, phase });
+  },
+
+  getVerifyCode(orderId: number) {
+    return api.get<{ verifyCode: string; expireTime: string }>(`/v1/orders/${orderId}/verify-code`);
+  },
+
+  refreshVerifyCode(orderId: number) {
+    return api.put<{ verifyCode: string; expireTime: string }>(`/v1/orders/${orderId}/verify-code`);
   },
 
   disputeOrder(orderId: number, reason?: string) {

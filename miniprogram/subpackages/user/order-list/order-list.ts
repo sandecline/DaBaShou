@@ -105,8 +105,7 @@ Page({
     try {
       const { activeTab, pageSize } = this.data;
       const statuses = TAB_FILTER[activeTab];
-      // 后端若支持逗号分隔则传字符串，否则传首个状态由前端兜底
-      const status = statuses && statuses.length > 0 ? statuses.join(',') : undefined;
+      const status = statuses && statuses.length > 0 ? statuses : undefined;
       const pageNum = append ? this.data.pageNum : 1;
       const res = await orderService.getList({
         role: this.data.activeRole,

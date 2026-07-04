@@ -21,6 +21,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,11 +46,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     private final PointService pointService;
     private final JdbcTemplate jdbcTemplate;
     private final StringRedisTemplate redisTemplate;
+    private final TransactionTemplate transactionTemplate;
 
-    public OrderServiceImpl(PointService pointService, JdbcTemplate jdbcTemplate, StringRedisTemplate redisTemplate) {
+    public OrderServiceImpl(PointService pointService, JdbcTemplate jdbcTemplate, StringRedisTemplate redisTemplate, TransactionTemplate transactionTemplate) {
         this.pointService = pointService;
         this.jdbcTemplate = jdbcTemplate;
         this.redisTemplate = redisTemplate;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Override
@@ -317,6 +320,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      * 双方输入对方的开始核销码，双方都核销后冻结积分、生成确认码、转入服务中
      */
     private void verifyStartPhase(Order order, String code, boolean isBuyer) {
+        // 用乐观锁避免并发双冻结/双结算
+        Order freshOrder = baseMapper.selectById(order.getId());
+        if (freshOrder == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "订单不存在");
+        }
+        order = freshOrder;
+
         if (!Objects.equals(order.getStatus(), OrderStatus.PENDING_PAYMENT.getCode())) {
             throw new BusinessException(ErrorCode.CONFLICT, "订单不在待核销状态");
         }
@@ -366,6 +376,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
      * 双方输入对方的完成确认码，双方都确认后结算积分、完成订单
      */
     private void verifyCompletePhase(Order order, String code, boolean isBuyer) {
+        // 用乐观锁避免并发双结算
+        Order freshOrder = baseMapper.selectById(order.getId());
+        if (freshOrder == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "订单不存在");
+        }
+        order = freshOrder;
+
         if (!Objects.equals(order.getStatus(), OrderStatus.IN_SERVICE.getCode())) {
             throw new BusinessException(ErrorCode.CONFLICT, "订单不在服务中状态");
         }
@@ -439,6 +456,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             throw new BusinessException(ErrorCode.CONFLICT, "当前状态不允许发起争议");
         }
         order.setStatus(OrderStatus.DISPUTING.getCode());
+        order.setDisputeReason(dto.getReason());
+        order.setDisputeExplain(dto.getExplain());
+        order.setDisputeUserId(userId);
+        order.setDisputeTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
         log.info("订单争议: orderId={}, reason={}, byUserId={}", orderId, dto.getReason(), userId);
@@ -466,18 +487,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public int autoConfirmTimeout() {
-        // 查询系统配置的确认超时时间
-        Integer timeoutHours = 72; // 默认72小时
+        Integer timeoutHours = 72;
         try {
             String val = jdbcTemplate.queryForObject(
                     "SELECT config_value FROM sys_config WHERE config_key = 'order.confirm_timeout_hours'", String.class);
             if (val != null) timeoutHours = Integer.parseInt(val);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("读取订单确认超时配置失败，使用默认72小时: {}", e.getMessage());
         }
 
-        // 找到超时的待确认订单
         List<Map<String, Object>> overdue = jdbcTemplate.queryForList(
                 "SELECT id FROM dbs_order WHERE status = 4 AND service_end_time < DATE_SUB(NOW(), INTERVAL ? HOUR)",
                 timeoutHours);
@@ -486,10 +505,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         for (Map<String, Object> row : overdue) {
             Long orderId = ((Number) row.get("id")).longValue();
             try {
-                pointService.settle(orderId);
-                jdbcTemplate.update(
-                        "UPDATE dbs_order SET status = 5, complete_time = NOW(), update_time = NOW(), refund_requester = NULL, refund_agreed = NULL WHERE id = ? AND status = 4",
-                        orderId);
+                transactionTemplate.executeWithoutResult(status -> {
+                    pointService.settle(orderId);
+                    jdbcTemplate.update(
+                            "UPDATE dbs_order SET status = 5, complete_time = NOW(), update_time = NOW(), refund_requester = NULL, refund_agreed = NULL WHERE id = ? AND status = 4",
+                            orderId);
+                });
                 count++;
                 log.info("自动确认完成: orderId={}", orderId);
             } catch (Exception e) {
@@ -563,6 +584,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         vo.setCompleteTime(order.getCompleteTime());
         vo.setCancelTime(order.getCancelTime());
         vo.setCancelReason(order.getCancelReason());
+        vo.setDisputeReason(order.getDisputeReason());
+        vo.setDisputeExplain(order.getDisputeExplain());
+        vo.setDisputeUserId(order.getDisputeUserId());
+        vo.setDisputeTime(order.getDisputeTime());
         vo.setRemark(order.getRemark());
         vo.setCreateTime(order.getCreateTime());
 
@@ -748,6 +773,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         vo.setBuyerNickname(nicknameMap.get(order.getBuyerId()));
         vo.setSellerId(order.getSellerId());
         vo.setSellerNickname(nicknameMap.get(order.getSellerId()));
+        vo.setShelfId(order.getSkillShelfId());
         vo.setShelfTitle(order.getTitle());
         vo.setTagName(tagNameMap.get(order.getSkillTagId()));
         vo.setPointAmount(order.getPointAmount());
@@ -783,8 +809,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(prefix + token, "1",
                     IDEM_TTL_MINUTES, TimeUnit.MINUTES));
         } catch (RedisConnectionFailureException e) {
-            log.warn("Redis不可用，跳过幂等缓存校验: {}", e.getMessage());
-            return true;
+            log.warn("Redis不可用，幂等校验失败，拒绝请求: {}", e.getMessage());
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "系统繁忙，请稍后重试");
         }
     }
 

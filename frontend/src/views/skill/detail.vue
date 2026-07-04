@@ -169,8 +169,8 @@ const ordering = ref(false)
 
 const statusMap: Record<number, string> = { 0: '已下架', 1: '在售', 2: '审核中' }
 const statusClassMap: Record<number, string> = { 0: 'status-down', 1: 'status-on', 2: 'status-review' }
-const statusText = ref('')
-const statusClass = ref('')
+const statusText = computed(() => skill.value ? statusMap[skill.value.status] : '')
+const statusClass = computed(() => skill.value ? statusClassMap[skill.value.status] : '')
 const isOwnSkill = computed(() => !!skill.value && userStore.user?.id === skill.value.userId)
 const hasAvailableSlots = computed(() => availableSlots.value.length > 0)
 
@@ -178,8 +178,6 @@ async function fetchDetail() {
   loading.value = true
   try {
     skill.value = await getShelfDetail(Number(props.id))
-    statusText.value = statusMap[skill.value.status]
-    statusClass.value = statusClassMap[skill.value.status]
     availableSlots.value = (await getTimeSlots(skill.value.id))
       .filter((slot) => slot.available !== false)
       .sort((a, b) => `${a.date ?? ''} ${a.startTime}`.localeCompare(`${b.date ?? ''} ${b.startTime}`))
@@ -254,8 +252,6 @@ async function confirmOrder() {
       timeSlotId: selectedSlotId.value ?? undefined,
     })
     skill.value.status = 0
-    statusText.value = statusMap[0]
-    statusClass.value = statusClassMap[0]
     ElMessage.success('预约成功！请前往订单页支付')
     showOrderDialog.value = false
     router.replace('/order/' + orderId)

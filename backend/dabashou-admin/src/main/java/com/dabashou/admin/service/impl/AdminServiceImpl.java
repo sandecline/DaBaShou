@@ -111,14 +111,22 @@ public class AdminServiceImpl implements AdminService {
     public PageResult<Map<String, Object>> listOrders(String keyword, Integer status, int pageNum, int pageSize) {
         List<Object> args = new ArrayList<>();
         String where = orderWhere(keyword, status, args);
-        long total = count("SELECT COUNT(*) FROM dbs_order o LEFT JOIN dbs_user b ON b.id = o.buyer_id LEFT JOIN dbs_user s ON s.id = o.seller_id " + where, args);
+        long total = count("SELECT COUNT(*) FROM dbs_order o LEFT JOIN dbs_user b ON b.id = o.buyer_id LEFT JOIN dbs_user s ON s.id = o.seller_id LEFT JOIN dbs_skill_shelf sh ON sh.id = o.skill_shelf_id LEFT JOIN dbs_demand d ON d.id = o.demand_id LEFT JOIN dbs_user du ON du.id = o.dispute_user_id " + where, args);
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 SELECT o.id, o.order_no AS orderNo, o.buyer_id AS buyerId, b.nickname AS buyerNickname,
-                       o.seller_id AS sellerId, s.nickname AS sellerNickname, o.title, o.point_amount AS pointAmount,
-                       o.status, o.create_time AS createTime
+                       o.seller_id AS sellerId, s.nickname AS sellerNickname, o.title,
+                       sh.title AS shelfTitle, d.title AS demandTitle,
+                       o.point_amount AS pointAmount, o.status,
+                       o.dispute_reason AS disputeReason, o.dispute_explain AS disputeExplain,
+                       o.dispute_user_id AS disputeUserId, du.nickname AS disputeUserNickname,
+                       o.dispute_time AS disputeTime,
+                       o.create_time AS createTime
                   FROM dbs_order o
                   LEFT JOIN dbs_user b ON b.id = o.buyer_id
                   LEFT JOIN dbs_user s ON s.id = o.seller_id
+                  LEFT JOIN dbs_skill_shelf sh ON sh.id = o.skill_shelf_id
+                  LEFT JOIN dbs_demand d ON d.id = o.demand_id
+                  LEFT JOIN dbs_user du ON du.id = o.dispute_user_id
                 """ + where + " ORDER BY o.create_time DESC LIMIT ? OFFSET ?", withPageArgs(args, pageNum, pageSize));
         rows.forEach(this::addOrderStatusDesc);
         return PageResult.of(total, rows, pageNum, pageSize);
@@ -131,12 +139,16 @@ public class AdminServiceImpl implements AdminService {
                        o.seller_id AS sellerId, s.nickname AS sellerNickname, o.skill_shelf_id AS shelfId,
                        sh.title AS shelfTitle, o.demand_id AS demandId, d.title AS demandTitle,
                        o.title, o.point_amount AS pointAmount, o.status, o.remark,
-                       o.cancel_reason AS cancelReason, o.create_time AS createTime
+                       o.cancel_reason AS cancelReason, o.dispute_reason AS disputeReason,
+                       o.dispute_explain AS disputeExplain, o.dispute_user_id AS disputeUserId,
+                       du.nickname AS disputeUserNickname, o.dispute_time AS disputeTime,
+                       o.create_time AS createTime
                   FROM dbs_order o
                   LEFT JOIN dbs_user b ON b.id = o.buyer_id
                   LEFT JOIN dbs_user s ON s.id = o.seller_id
                   LEFT JOIN dbs_skill_shelf sh ON sh.id = o.skill_shelf_id
                   LEFT JOIN dbs_demand d ON d.id = o.demand_id
+                  LEFT JOIN dbs_user du ON du.id = o.dispute_user_id
                  WHERE o.id = ?
                 """, id);
         addOrderStatusDesc(row);

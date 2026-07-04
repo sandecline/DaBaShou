@@ -78,6 +78,12 @@
         <p><span>状态</span>{{ detail.statusName || getOrderStatusText(detail.status) }}</p>
         <p><span>备注</span>{{ detail.remark || '-' }}</p>
         <p><span>取消原因</span>{{ detail.cancelReason || '-' }}</p>
+        <template v-if="detail.status === 7">
+          <p><span>争议原因</span>{{ detail.disputeReason || '未记录' }}</p>
+          <p><span>补充说明</span>{{ detail.disputeExplain || '未记录' }}</p>
+          <p><span>争议发起人</span>{{ detail.disputeUserNickname || '未记录' }}</p>
+          <p v-if="detail.disputeTime"><span>争议时间</span>{{ formatDateTime(detail.disputeTime) }}</p>
+        </template>
         <p><span>创建时间</span>{{ formatDateTime(detail.createTime) }}</p>
       </div>
     </el-drawer>
@@ -86,6 +92,14 @@
       <el-form label-position="top">
         <el-form-item label="订单">
           <el-input :model-value="arbitrateOrder ? `${arbitrateOrder.orderNo} / ${orderTitle(arbitrateOrder)}` : ''" disabled />
+        </el-form-item>
+        <el-form-item v-if="arbitrateOrder?.status === 7" label="争议信息">
+          <div class="dispute-info-box">
+            <p><span>争议原因</span>{{ arbitrateOrder?.disputeReason || '未记录' }}</p>
+            <p><span>补充说明</span>{{ arbitrateOrder?.disputeExplain || '未记录' }}</p>
+            <p><span>发起人</span>{{ arbitrateOrder?.disputeUserNickname || '未记录' }}</p>
+            <p v-if="arbitrateOrder?.disputeTime"><span>争议时间</span>{{ formatDateTime(arbitrateOrder?.disputeTime) }}</p>
+          </div>
         </el-form-item>
         <el-form-item label="仲裁结果">
           <el-radio-group v-model="arbitrateForm.result">
@@ -154,7 +168,7 @@ async function fetchData() {
 }
 
 function orderTitle(order: OrderAdminVo) {
-  return order.shelfTitle || order.demandTitle || '未命名交易'
+  return order.shelfTitle || order.demandTitle || order.title || '未命名交易'
 }
 
 function search() {
@@ -177,11 +191,18 @@ async function showDetail(order: OrderAdminVo) {
 }
 
 function openArbitrate(order: OrderAdminVo) {
-  arbitrateOrder.value = order
-  arbitrateForm.result = 'complete'
-  arbitrateForm.reason = ''
-  arbitrateForm.refundAmount = undefined
-  arbitrateDialog.value = true
+  arbitrating.value = true
+  getAdminOrderDetail(order.id).then((detail) => {
+    arbitrateOrder.value = detail
+    arbitrateForm.result = 'complete'
+    arbitrateForm.reason = ''
+    arbitrateForm.refundAmount = undefined
+    arbitrateDialog.value = true
+  }).catch(() => {
+    // handled
+  }).finally(() => {
+    arbitrating.value = false
+  })
 }
 
 async function submitArbitrate() {
@@ -233,6 +254,25 @@ onMounted(fetchData)
 
   span {
     color: #94a3b8;
+  }
+}
+
+.dispute-info-box {
+  background: #fef0f0;
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-size: 13px;
+
+  p {
+    display: flex;
+    margin: 4px 0;
+    color: #c45656;
+  }
+
+  span {
+    width: 72px;
+    color: #94a3b8;
+    flex-shrink: 0;
   }
 }
 

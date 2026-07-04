@@ -13,6 +13,7 @@ public class OrderItemVo {
     private String buyerNickname;
     private Long sellerId;
     private String sellerNickname;
+    private Long shelfId;
     private String shelfTitle;
     private String tagName;
     private Integer pointAmount;
@@ -34,6 +35,8 @@ public class OrderItemVo {
     public void setSellerNickname(String sellerNickname) { this.sellerNickname = sellerNickname; }
     public String getShelfTitle() { return shelfTitle; }
     public void setShelfTitle(String shelfTitle) { this.shelfTitle = shelfTitle; }
+    public Long getShelfId() { return shelfId; }
+    public void setShelfId(Long shelfId) { this.shelfId = shelfId; }
     public String getTagName() { return tagName; }
     public void setTagName(String tagName) { this.tagName = tagName; }
     public Integer getPointAmount() { return pointAmount; }

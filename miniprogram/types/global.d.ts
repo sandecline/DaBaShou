@@ -6,10 +6,10 @@ export interface IAppOption {
     token: string;
     isLoggedIn: boolean;
     unreadCount: number;
-    mockMode: boolean;
   };
   restoreSession(): void;
   clearSession(): void;
+  clearMockJunk(): void;
 }
 
 export type TrustLevel = '新人' | '靠谱' | '金牌';

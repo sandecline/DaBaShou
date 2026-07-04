@@ -87,7 +87,7 @@ Page({
       try {
         const orderRes = await orderService.getMyOrders({ pageNum: 1, pageSize: 20 });
         hasOrdered = orderRes.data.list.some(
-          (o) => o.skillShelfId === skill.id && o.status !== 0
+          (o) => o.shelfId === skill.id && o.status !== 0
         );
       } catch (e) {
         console.error('查询订单状态失败:', e);

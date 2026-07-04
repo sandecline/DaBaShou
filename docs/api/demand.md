@@ -100,8 +100,10 @@
 ## 三、揭榜与匹配
 
 ### 3.1 揭榜接单
-- **URL**: `POST /api/v1/demands/{id}/bid`
-- **响应**: `data = null`
+- **URL**: `POST /api/v1/demands/{id}/accept`
+- **请求体**: `AcceptDto { shelfId: Long(必填), idempotentToken: String(必填), remark: String(可选) }`
+- **响应**: `data = AcceptResultVo { demandId, shelfId, buyerId, skillTagId, title, pointReward, idempotentToken, remark }`
+- **说明**: 揭榜为两步流程：先调用本接口获取 AcceptResultVo，再调用 `POST /api/v1/orders/from-demand` 创建订单
 - **错误码**: 409-已揭榜, 409-需求已关闭
 
 ### 3.2 智能匹配推荐

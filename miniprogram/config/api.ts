@@ -6,6 +6,9 @@ const CONFIG = {
     WS_BASE_URL: 'ws://127.0.0.1:9090/ws/chat',
   },
   prod: {
+    // 部署前必须填写：替换为生产环境域名
+    // API_BASE_URL 示例: 'https://dabashou.example.com/api'
+    // WS_BASE_URL 示例: 'wss://dabashou.example.com/ws/chat'
     API_BASE_URL: '',
     WS_BASE_URL: '',
   },

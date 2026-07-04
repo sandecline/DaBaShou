@@ -14,7 +14,7 @@ import java.util.List;
 @Mapper
 public interface TimeSlotMapper extends BaseMapper<TimeSlot> {
 
-    @Select("SELECT * FROM dbs_time_slot WHERE user_id = #{userId} ORDER BY date, start_time")
+    @Select("SELECT id, user_id, date, start_time, end_time, status, create_time, update_time FROM dbs_time_slot WHERE user_id = #{userId} ORDER BY date, start_time")
     List<TimeSlot> selectByUserId(Long userId);
 
     @Delete("DELETE FROM dbs_time_slot WHERE id = #{id} AND user_id = #{userId}")

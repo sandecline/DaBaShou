@@ -238,60 +238,9 @@ async function fetchProfile(): Promise<void> {
   }
 }
 
-// ── Mock 模式快捷登录 ──
-
-// 纯 JS base64 编码（兼容小程序无 btoa）
-function toBase64(str: string): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-  let result = '';
-  for (let i = 0; i < str.length; i += 3) {
-    const a = str.charCodeAt(i);
-    const b = i + 1 < str.length ? str.charCodeAt(i + 1) : 0;
-    const c = i + 2 < str.length ? str.charCodeAt(i + 2) : 0;
-    const triple = (a << 16) | (b << 8) | c;
-    result += chars.charAt((triple >> 18) & 0x3f)
-      + chars.charAt((triple >> 12) & 0x3f)
-      + (i + 1 < str.length ? chars.charAt((triple >> 6) & 0x3f) : '=')
-      + (i + 2 < str.length ? chars.charAt(triple & 0x3f) : '=');
-  }
-  return result;
-}
-
-// 伪 JWT（三段式，exp = 2100年，避免过期检测报错）
-const MOCK_JWT = 'eyJhbGciOiJIUzI1NiJ9.' +
-  toBase64('{"sub":"1001","userId":1001,"exp":4102444800}') +
-  '.mock_signature';
-
-export async function mockLogin(): Promise<UserProfile> {
-  const mockUser: UserProfile = {
-    id: 1001, nickname: '张三', avatar: '',
-    trustLevel: '靠谱', trustScore: 3.5,
-    campus: '清水河校区', building: '七号楼',
-    username: 'zhangsan', phone: '', email: '',
-    bio: '', campusAuthStatus: 0,
-    pointBalance: 500, createTime: '',
-  } as UserProfile;
-  setToken(MOCK_JWT);
-  wx.setStorageSync('refresh_token', 'mock_refresh_jwt_header.payload.sig');
-  setUserInfo(mockUser);
-  const app = getApp();
-  app.globalData.token = MOCK_JWT;
-  app.globalData.userInfo = mockUser;
-  app.globalData.isLoggedIn = true;
-  console.log('[Auth] Mock 登录成功:', mockUser.nickname);
-  return mockUser;
-}
-
 // ── 确保登录（页面级调用） ──
 
 export async function ensureLogin(): Promise<boolean> {
-  if (getApp()?.globalData?.mockMode) {
-    if (!isLoggedIn()) {
-      try { await mockLogin(); } catch { return false; }
-    }
-    return true;
-  }
-
   const app = getApp();
   if (app.globalData.isLoggedIn && app.globalData.token) {
     return true;

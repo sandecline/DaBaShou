@@ -63,8 +63,8 @@ export function confirmOrder(id: number): Promise<null> {
   return request.post('/v1/orders/' + id + '/confirm')
 }
 
-export function disputeOrder(id: number, reason: string): Promise<null> {
-  return request.post('/v1/orders/' + id + '/dispute', { reason })
+export function disputeOrder(id: number, reason: string, explain?: string): Promise<null> {
+  return request.post('/v1/orders/' + id + '/dispute', { reason, explain })
 }
 
 export function refundOrder(id: number, reason: string): Promise<null> {

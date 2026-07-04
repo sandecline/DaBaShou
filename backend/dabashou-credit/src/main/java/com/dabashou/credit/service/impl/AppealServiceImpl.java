@@ -148,7 +148,7 @@ public class AppealServiceImpl implements AppealService {
         }
 
         // 分页查询
-        String listSql = "SELECT * FROM credit_appeal WHERE appellant_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
+        String listSql = "SELECT id, violation_id, order_id, appellant_id, reason, evidence_file_id, status, reviewer_id, review_remark, review_time, create_time, update_time FROM credit_appeal WHERE appellant_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
         int offset = (pageNum - 1) * pageSize;
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(listSql, userId, pageSize, offset);
 

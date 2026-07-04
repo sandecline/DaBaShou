@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -102,12 +103,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @org.springframework.context.annotation.Profile("dev")
     public void sendSmsCode(String phone) {
-        log.info("发送短信验证码(模拟): phone={}", phone);
+        log.info("发送短信验证码(模拟，仅dev环境): phone={}", phone);
     }
 
     @Override
     @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
+    @org.springframework.context.annotation.Profile("dev")
     public LoginVo smsLogin(SmsLoginDto dto) {
         log.info("短信验证码登录(模拟): phone={}, code={}", dto.getPhone(), dto.getCode());
 
@@ -182,6 +185,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateProfile(Long userId, UpdateProfileDto dto) {
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -209,6 +213,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void changePassword(Long userId, ChangePasswordDto dto) {
         User user = userMapper.selectById(userId);
         if (user == null) {
@@ -225,6 +230,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateLocation(Long userId, UpdateLocationDto dto) {
         User user = userMapper.selectById(userId);
         if (user == null) {

@@ -90,7 +90,7 @@ public class ViolationServiceImpl implements ViolationService {
         }
 
         // 分页查询
-        String listSql = "SELECT * FROM credit_violation WHERE user_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
+        String listSql = "SELECT id, user_id, order_id, type, description, penalty_score, reporter_id, status, create_time, update_time FROM credit_violation WHERE user_id = ? ORDER BY create_time DESC LIMIT ? OFFSET ?";
         int offset = (pageNum - 1) * pageSize;
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(listSql, userId, pageSize, offset);
 

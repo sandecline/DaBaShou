@@ -7,6 +7,7 @@ export interface OrderItemVo {
   buyerNickname: string;
   sellerId: number;
   sellerNickname: string;
+  shelfId: number;
   shelfTitle: string;
   tagName: string;
   pointAmount: number;
@@ -31,6 +32,8 @@ export interface OrderDetailVo {
   pointAmount: number;
   status: OrderStatus;
   statusName: string;
+  verifyCode: string | null;
+  verifyCodeExpire: string | null;
   buyerVerifyCode: string | null;
   sellerVerifyCode: string | null;
   buyerConfirmCode: string | null;
@@ -59,7 +62,7 @@ export interface CreateFromShelfParams {
 
 export interface CreateFromDemandParams {
   demandId: number;
-  sellerId?: number;
+  shelfId?: number;
   remark?: string;
 }
 

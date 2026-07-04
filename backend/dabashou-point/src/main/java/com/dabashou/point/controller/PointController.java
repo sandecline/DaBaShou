@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
+import com.dabashou.common.enums.ErrorCode;
 import com.dabashou.common.enums.PointTransType;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.point.domain.PointAccount;
@@ -125,7 +126,7 @@ public class PointController {
                         .eq(PointTransaction::getId, id)
                         .eq(PointTransaction::getUserId, userId));
         if (t == null) {
-            return AjaxResult.fail(404, "流水记录不存在");
+            return AjaxResult.fail(ErrorCode.NOT_FOUND);
         }
 
         PointTransVo vo = new PointTransVo();

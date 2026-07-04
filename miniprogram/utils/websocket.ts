@@ -4,13 +4,9 @@
  * 功能：心跳保活、断线重连、消息分发
  */
 
-// TODO: 替换为真实 WebSocket 地址
-import { USE_MOCK, WS_BASE_URL } from '../config/api';
+import { WS_BASE_URL } from '../config/api';
 
 const WS_URL = WS_BASE_URL;
-
-// 与 request.ts 保持一致：后端未就绪时跳过真实 WS 连接
-const MOCK_MODE = USE_MOCK;
 
 /** 重连配置 */
 const RECONNECT_MAX_RETRIES = 5;
@@ -51,12 +47,6 @@ const state: WsState = {
  * 建立 WebSocket 连接
  */
 export function connect(): void {
-  // Mock 模式：无真实后端，跳过连接（聊天发送走 HTTP mock）
-  if (MOCK_MODE) {
-    console.log('[WS] Mock 模式，跳过连接');
-    return;
-  }
-
   if (state.task && state.connected) {
     console.log('[WS] 已连接，跳过');
     return;
@@ -122,12 +112,6 @@ export function connect(): void {
  * 发送消息（高层接口，断线时暂存到队列）
  */
 export function send(type: string, data: unknown): void {
-  // Mock 模式：直接丢弃（发送已通过 HTTP 完成）
-  if (MOCK_MODE) {
-    console.log('[WS] Mock 模式，跳过发送:', type);
-    return;
-  }
-
   const payload = JSON.stringify({ type, data });
 
   if (state.connected && state.task) {

@@ -9,7 +9,11 @@ export interface ApiResponse<T = any> {
 export interface PageParams {
   pageNum?: number
   pageSize?: number
-  [key: string]: any
+  sortBy?: string
+  keyword?: string
+  status?: number
+  categoryId?: number
+  role?: string
 }
 
 /** 分页结果 */
@@ -296,6 +300,10 @@ export interface OrderDetailVo {
   completeTime: string | null
   cancelTime: string | null
   cancelReason: string | null
+  disputeReason: string | null
+  disputeExplain: string | null
+  disputeUserId: number | null
+  disputeTime: string | null
   remark: string
   createTime: string
 }
@@ -398,7 +406,8 @@ export interface ViolationVo {
 
 export interface AppealVo {
   id: number
-  violationId: number
+  violationId: number | null
+  orderId: number | null
   violationType: string
   reason: string
   evidenceFileId: string | null
@@ -511,6 +520,7 @@ export interface OrderAdminVo {
   buyerNickname: string
   sellerId: number
   sellerNickname: string
+  title: string
   shelfTitle: string
   demandTitle: string
   pointAmount: number
@@ -518,6 +528,11 @@ export interface OrderAdminVo {
   statusName: string
   remark: string
   cancelReason: string
+  disputeReason: string
+  disputeExplain: string
+  disputeUserId: number | null
+  disputeUserNickname: string | null
+  disputeTime: string | null
   createTime: string
 }
 
@@ -589,7 +604,7 @@ export type Appeal = AppealVo
 export type OverviewStat = PersonalOverviewVo
 export type SkillHeatItemItem = SkillHeatItem
 export type PointTransactionType = number
-export type TrustLevel = '新人' | '靠谱' | '金牌' | string
+export type TrustLevel = 'newcomer' | 'reliable' | 'gold'
 
 export const ViolationTypeMap: Record<string, string> = {
   fake_service: '虚假服务',

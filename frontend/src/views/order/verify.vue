@@ -28,8 +28,8 @@
           <VerifyCode
             v-if="order?.verifyCode"
             mode="display"
-            :code="order!.verifyCode!"
-            :expire-at="order!.verifyCodeExpire"
+            :code="order?.verifyCode ?? ''"
+            :expire-at="order?.verifyCodeExpire"
           />
 
           <div v-else class="verify-expired">

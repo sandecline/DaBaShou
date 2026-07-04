@@ -8,7 +8,6 @@
  */
 
 import type { IAppOption } from './types/global';
-import { USE_MOCK } from './config/api';
 import { getToken, getUserInfo } from './utils/auth';
 
 App<IAppOption>({
@@ -18,7 +17,6 @@ App<IAppOption>({
     token: '',
     isLoggedIn: false,
     unreadCount: 0,
-    mockMode: USE_MOCK,
   },
 
   // ========== 生命周期 ==========
@@ -29,6 +27,7 @@ App<IAppOption>({
    */
   onLaunch() {
     console.log('[App] 搭把手小程序启动');
+    this.clearMockJunk();
     this.restoreSession();
   },
 
@@ -87,5 +86,21 @@ App<IAppOption>({
     wx.removeStorageSync('dabashou_token');
     wx.removeStorageSync('dabashou_user');
     wx.removeStorageSync('refresh_token');
+  },
+
+  /**
+   * 清理旧 mock 模式残留数据
+   * mock JWT (exp=2100) 和 mock_refresh_jwt 会干扰真实认证
+   */
+  clearMockJunk() {
+    try {
+      const token = wx.getStorageSync('dabashou_token');
+      if (token && typeof token === 'string' && token.includes('mock_signature')) {
+        console.log('[App] 清理残留 mock JWT');
+        wx.removeStorageSync('dabashou_token');
+        wx.removeStorageSync('refresh_token');
+        wx.removeStorageSync('dabashou_user');
+      }
+    } catch { /* ignore */ }
   },
 });
