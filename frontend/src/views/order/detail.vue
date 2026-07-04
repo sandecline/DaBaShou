@@ -161,8 +161,8 @@
             </div>
           </div>
 
-          <!-- 退款状态 -->
-          <div v-if="order.refundRequester && !order.refundAgreed" class="refund-section">
+          <!-- 退款状态（仅服务中状态才显示退款提示） -->
+          <div v-if="order.status === 3 && order.refundRequester && !order.refundAgreed" class="refund-section">
             <el-divider />
             <el-alert
               :title="refundStatusText"

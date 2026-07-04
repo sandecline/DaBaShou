@@ -71,6 +71,9 @@ out/
 # WorkBuddy
 .workbuddy/
 
+# Redis
+dump.rdb
+
 # Temp
 *.tmp
 *.temp

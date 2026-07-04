@@ -227,6 +227,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setCancelReason(dto.getReason());
         order.setCancelTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
+        order.setRefundRequester(null);
+        order.setRefundAgreed(null);
         updateById(order);
         log.info("订单取消: orderId={}, reason={}", orderId, dto.getReason());
     }
@@ -395,6 +397,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             pointService.settle(order.getId());
             order.setStatus(OrderStatus.COMPLETED.getCode());
             order.setCompleteTime(now);
+            order.setRefundRequester(null);
+            order.setRefundAgreed(null);
             log.info("订单双方确认完成: orderId={}", order.getId());
         } else {
             log.info("订单单方确认: orderId={}, isBuyer={}", order.getId(), isBuyer);
@@ -417,6 +421,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         order.setStatus(OrderStatus.COMPLETED.getCode());
         order.setCompleteTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
+        order.setRefundRequester(null);
+        order.setRefundAgreed(null);
         updateById(order);
         log.info("订单确认完成: orderId={}", orderId);
     }
@@ -451,6 +457,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             pointService.settle(orderId);
             order.setStatus(OrderStatus.COMPLETED.getCode());
         }
+        order.setRefundRequester(null);
+        order.setRefundAgreed(null);
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
         log.info("订单仲裁: orderId={}, result={}", orderId, dto.getResult());
@@ -479,7 +487,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             try {
                 pointService.settle(orderId);
                 jdbcTemplate.update(
-                        "UPDATE dbs_order SET status = 5, complete_time = NOW(), update_time = NOW() WHERE id = ? AND status = 4",
+                        "UPDATE dbs_order SET status = 5, complete_time = NOW(), update_time = NOW(), refund_requester = NULL, refund_agreed = NULL WHERE id = ? AND status = 4",
                         orderId);
                 count++;
                 log.info("自动确认完成: orderId={}", orderId);

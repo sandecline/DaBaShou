@@ -62,8 +62,8 @@
       <text class="code-hint">订单存在争议，平台客服正在介入处理，请保持沟通渠道畅通</text>
     </view>
 
-    <!-- 退款提示 -->
-    <view wx:if="{{order.refundRequesting}}" class="refund-banner">
+    <!-- 退款提示（仅服务中状态才显示） -->
+    <view wx:if="{{order.status === 3 && order.refundRequesting}}" class="refund-banner">
       <t-icon name="error-circle" size="40rpx" color="#FF6E14" />
       <text>{{order.refundRequester === order.myRole ? '你' : (order.refundRequester === 'buyer' ? '买家' : '卖家')}}已发起退款申请</text>
     </view>
