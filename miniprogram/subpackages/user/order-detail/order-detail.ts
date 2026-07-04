@@ -226,7 +226,7 @@ Page({
   },
 
   onGoToAppeal() {
-    wx.navigateTo({ url: `/subpackages/user/credit/appeal/appeal` });
+    wx.navigateTo({ url: `/subpackages/user/credit/appeal/appeal?orderId=${this.data.orderId}` });
   },
 
   // =====================================================================

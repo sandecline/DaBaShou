@@ -1,13 +1,63 @@
 <view class="appeal-page">
-  <!-- 发起申诉 -->
-  <view class="form-card">
+  <!-- ================================================================ -->
+  <!--                     发起申诉 — 模式A：违规记录申诉                 -->
+  <!-- ================================================================ -->
+  <view wx:if="{{appealMode === 'violation'}}" class="form-card">
     <view class="card-title">发起申诉</view>
 
-    <view class="form-item">
-      <text class="form-label">违规记录</text>
-      <picker mode="selector" range="{{violationLabels}}" value="{{violationPickerIndex}}" bindchange="onViolationPickerChange">
-        <view class="picker-value">{{violationPickerIndex >= 0 ? violationLabels[violationPickerIndex] : '选择要申诉的违规记录'}}</view>
-      </picker>
+    <!-- 违规记录说明 -->
+    <view class="violation-explain">
+      <t-icon name="help-circle" size="32rpx" color="#0052d9" />
+      <text class="violation-explain-text">违规记录由平台在处理用户举报后生成。如果你认为处理结果有误，可选择对应记录提交申诉，管理员审核后将决定是否撤销扣分。</text>
+    </view>
+
+    <!-- 违规记录加载中 -->
+    <view wx:if="{{violationsLoading}}" class="loading-wrap">
+      <t-loading theme="circular" size="40rpx" text="加载违规记录..." />
+    </view>
+
+    <!-- 违规记录为空 -->
+    <view wx:elif="{{violationsLoaded && violations.length === 0}}" class="empty-violations-card">
+      <t-icon name="info-circle" size="48rpx" color="#bbb" />
+      <text class="empty-violations-title">暂无违规记录</text>
+      <text class="empty-violations-desc">当你的账号被其他用户举报并经平台核实后，系统会生成违规记录并扣减信用分。如果你认为处理结果有误，届时可在此页面选择对应记录进行申诉。</text>
+    </view>
+
+    <!-- 违规记录存在 — 申诉表单 -->
+    <block wx:elif="{{violations.length > 0}}">
+      <view class="form-item">
+        <text class="form-label">选择违规记录</text>
+        <picker mode="selector" range="{{violationLabels}}" value="{{violationPickerIndex}}" bindchange="onViolationPickerChange">
+          <view class="picker-value {{violationPickerIndex < 0 ? 'picker-placeholder' : ''}}">{{violationPickerIndex >= 0 ? violationLabels[violationPickerIndex] : '选择要申诉的违规记录'}}</view>
+        </picker>
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">申诉理由</text>
+        <textarea class="form-textarea" placeholder="请详细说明申诉理由（至少10字）" value="{{reason}}" bindinput="onReasonInput" maxlength="500" />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">补充说明（选填）</text>
+        <textarea class="form-textarea" placeholder="可以提供相关证据或说明" value="{{evidence}}" bindinput="onEvidenceInput" maxlength="500" />
+      </view>
+
+      <t-button theme="primary" size="large" block loading="{{submitting}}" bindtap="onSubmitAppeal">
+        {{submitting ? '提交中...' : '提交申诉'}}
+      </t-button>
+    </block>
+  </view>
+
+  <!-- ================================================================ -->
+  <!--                     发起申诉 — 模式B：订单申诉                     -->
+  <!-- ================================================================ -->
+  <view wx:if="{{appealMode === 'order'}}" class="form-card">
+    <view class="card-title">订单申诉</view>
+
+    <!-- 订单申诉提示 -->
+    <view class="order-appeal-banner">
+      <t-icon name="error-circle" size="32rpx" color="#d46b08" />
+      <text class="order-appeal-banner-text">你正在针对订单 #{{orderId}} 的争议处理结果进行申诉。请详细描述争议情况和申诉理由，管理员审核后会给出处理结果。</text>
     </view>
 
     <view class="form-item">
@@ -25,7 +75,9 @@
     </t-button>
   </view>
 
-  <!-- 申诉记录 -->
+  <!-- ================================================================ -->
+  <!--                       申诉记录（共用）                            -->
+  <!-- ================================================================ -->
   <view class="list-card">
     <view class="card-title">申诉记录</view>
 

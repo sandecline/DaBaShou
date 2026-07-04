@@ -50,4 +50,16 @@ export const creditService = {
   getMyAppeals(params: { pageNum: number; pageSize: number }) {
     return api.get<PageResult<AppealVo>>('/v1/appeals/mine', params as unknown as Record<string, unknown>);
   },
+
+  /**
+   * 订单申诉 — 复用 POST /v1/appeals 接口
+   * 只传 orderId，后端通过 orderId 识别为订单申诉
+   */
+  submitOrderAppeal(params: { orderId: number; reason: string; evidence?: string[] }) {
+    return api.post<{ id: number }>('/v1/appeals', {
+      orderId: params.orderId,
+      reason: params.reason,
+      evidence: params.evidence,
+    } as unknown as Record<string, unknown>);
+  },
 };

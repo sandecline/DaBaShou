@@ -94,3 +94,67 @@
   justify-content: center;
   padding: 32rpx 0;
 }
+
+/* ===== 违规记录说明卡片（模式A）===== */
+.violation-explain {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  background: #f0f5ff;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.violation-explain-text {
+  font-size: 24rpx;
+  color: #0052d9;
+  line-height: 1.6;
+  flex: 1;
+}
+
+/* ===== 空违规记录状态（模式A）===== */
+.empty-violations-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx 32rpx;
+  text-align: center;
+}
+
+.empty-violations-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #999;
+  margin-top: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.empty-violations-desc {
+  font-size: 24rpx;
+  color: #bbb;
+  line-height: 1.8;
+}
+
+/* ===== 订单申诉提示 Banner（模式B）===== */
+.order-appeal-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  padding: 16rpx 20rpx;
+  background: #fff7e6;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.order-appeal-banner-text {
+  font-size: 24rpx;
+  color: #d46b08;
+  line-height: 1.6;
+  flex: 1;
+}
+
+/* ===== Picker 未选择态 ===== */
+.picker-placeholder {
+  color: #ccc;
+}

@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,6 +39,63 @@ public class AppealServiceImpl implements AppealService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long submit(Long userId, AppealDto dto) {
+        // ===== 分支1: 订单申诉（orderId 非空，violationId 可为空）=====
+        if (dto.getOrderId() != null) {
+            return submitOrderAppeal(userId, dto);
+        }
+
+        // ===== 分支2: 违规申诉（violationId 非空）=====
+        if (dto.getViolationId() != null) {
+            return submitViolationAppeal(userId, dto);
+        }
+
+        throw new BusinessException(ErrorCode.BAD_REQUEST, "请提供违规记录ID或订单ID");
+    }
+
+    /**
+     * 订单申诉 — 直接针对订单发起申诉，无需违规记录
+     */
+    private Long submitOrderAppeal(Long userId, AppealDto dto) {
+        // 校验订单存在且用户为订单参与者
+        String orderSql = "SELECT id FROM dbs_order WHERE id = ? AND (buyer_id = ? OR seller_id = ?)";
+        List<Map<String, Object>> orderRows = jdbcTemplate.queryForList(
+                orderSql, dto.getOrderId(), userId, userId);
+        if (orderRows.isEmpty()) {
+            throw new BusinessException(ErrorCode.NOT_FOUND, "订单不存在或无权申诉");
+        }
+
+        // 校验是否已针对该订单申诉过（防重复）
+        String checkSql = "SELECT COUNT(1) FROM credit_appeal WHERE order_id = ? AND appellant_id = ?";
+        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, dto.getOrderId(), userId);
+        if (count != null && count > 0) {
+            throw new BusinessException(ErrorCode.CONFLICT, "该订单已申诉，请勿重复提交");
+        }
+
+        // 插入申诉 — violation_id 为 NULL，evidence_file_id 暂不支持文件上传
+        String insertSql = "INSERT INTO credit_appeal (violation_id, order_id, appellant_id, reason, evidence_file_id, status, create_time, update_time) VALUES (NULL, ?, ?, ?, NULL, 0, ?, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, dto.getOrderId());
+            ps.setLong(2, userId);
+            ps.setString(3, dto.getReason());
+            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            ps.setTimestamp(4, now);
+            ps.setTimestamp(5, now);
+            return ps;
+        }, keyHolder);
+
+        Number key = keyHolder.getKey();
+        if (key == null) {
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "申诉提交失败");
+        }
+        return key.longValue();
+    }
+
+    /**
+     * 违规申诉 — 原有逻辑，对已有的违规记录发起申诉
+     */
+    private Long submitViolationAppeal(Long userId, AppealDto dto) {
         // 校验违规记录存在
         String violationSql = "SELECT user_id FROM credit_violation WHERE id = ?";
         List<Map<String, Object>> violationRows = jdbcTemplate.queryForList(violationSql, dto.getViolationId());
@@ -59,26 +117,17 @@ public class AppealServiceImpl implements AppealService {
             throw new BusinessException(ErrorCode.CONFLICT, "该违规记录已申诉，请勿重复提交");
         }
 
-        // 处理证据
-        final String evidenceFileId;
-        if (dto.getEvidence() != null && dto.getEvidence().length > 0) {
-            evidenceFileId = String.join(",", dto.getEvidence());
-        } else {
-            evidenceFileId = null;
-        }
-
-        // 插入申诉，status = 0（待审核）
-        String insertSql = "INSERT INTO credit_appeal (violation_id, appellant_id, reason, evidence_file_id, status, create_time, update_time) VALUES (?, ?, ?, ?, 0, ?, ?)";
+        // 插入申诉，status = 0（待审核），evidence_file_id 暂不支持文件上传
+        String insertSql = "INSERT INTO credit_appeal (violation_id, appellant_id, reason, evidence_file_id, status, create_time, update_time) VALUES (?, ?, ?, NULL, 0, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
             ps.setLong(1, dto.getViolationId());
             ps.setLong(2, userId);
             ps.setString(3, dto.getReason());
-            ps.setString(4, evidenceFileId);
             Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            ps.setTimestamp(4, now);
             ps.setTimestamp(5, now);
-            ps.setTimestamp(6, now);
             return ps;
         }, keyHolder);
 
@@ -103,8 +152,9 @@ public class AppealServiceImpl implements AppealService {
         int offset = (pageNum - 1) * pageSize;
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(listSql, userId, pageSize, offset);
 
-        // 收集违规ID，批量查询违规类型
+        // 收集违规ID（跳过 NULL），批量查询违规类型
         List<Long> violationIds = rows.stream()
+                .filter(r -> r.get("violation_id") != null)
                 .map(r -> ((Number) r.get("violation_id")).longValue())
                 .distinct()
                 .collect(Collectors.toList());
@@ -114,7 +164,17 @@ public class AppealServiceImpl implements AppealService {
         List<AppealVo> vos = rows.stream().map(r -> {
             AppealVo vo = new AppealVo();
             vo.setId(((Number) r.get("id")).longValue());
-            vo.setViolationId(((Number) r.get("violation_id")).longValue());
+
+            // violation_id 可能为 NULL（订单申诉）
+            if (r.get("violation_id") != null) {
+                vo.setViolationId(((Number) r.get("violation_id")).longValue());
+            }
+
+            // order_id 可能为 NULL（违规申诉）
+            if (r.get("order_id") != null) {
+                vo.setOrderId(((Number) r.get("order_id")).longValue());
+            }
+
             vo.setReason((String) r.get("reason"));
             vo.setEvidenceFileId((String) r.get("evidence_file_id"));
             vo.setStatus(((Number) r.get("status")).intValue());
@@ -135,9 +195,12 @@ public class AppealServiceImpl implements AppealService {
                 vo.setCreateTime(((Timestamp) createTime).toLocalDateTime());
             }
 
-            // 关联违规类型
-            Long violationId = ((Number) r.get("violation_id")).longValue();
-            vo.setViolationType(violationTypeMap.get(violationId));
+            // 关联违规类型 — 订单申诉无违规记录，回退显示
+            if (vo.getViolationId() != null) {
+                vo.setViolationType(violationTypeMap.getOrDefault(vo.getViolationId(), "未知"));
+            } else {
+                vo.setViolationType("订单申诉");
+            }
 
             return vo;
         }).collect(Collectors.toList());
