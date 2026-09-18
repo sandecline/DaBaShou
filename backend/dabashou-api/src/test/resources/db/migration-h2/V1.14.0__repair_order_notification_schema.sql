@@ -3,12 +3,6 @@
 -- 描述: 修复订单、通知、积分和用户扩展表结构（H2 简化版）
 -- ============================================================================
 
-ALTER TABLE `dbs_order`
-    ADD COLUMN `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-未删除 1-已删除';
-
-ALTER TABLE `dbs_order`
-    ADD COLUMN `remark` VARCHAR(500) NULL COMMENT '备注';
-
 CREATE INDEX `idx_buyer_status` ON `dbs_order` (`buyer_id`, `status`);
 CREATE INDEX `idx_seller_status` ON `dbs_order` (`seller_id`, `status`);
 

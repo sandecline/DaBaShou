@@ -98,7 +98,7 @@ function Start-Backend {
     )
     $proc = Start-Process -FilePath "java" `
         -ArgumentList $backendArgs `
-        -NoNewWindow -PassThru `
+        -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput "$LogDir\backend.log" `
         -RedirectStandardError "$LogDir\backend-error.log"
     $proc.Id | Out-File "$LogDir\backend.pid"
@@ -116,7 +116,7 @@ function Start-Frontend {
     $proc = Start-Process -FilePath "npm.cmd" `
         -ArgumentList "run", "dev", "--", "--port", "5173", "--host" `
         -WorkingDirectory "$ProjectRoot\frontend" `
-        -NoNewWindow -PassThru `
+        -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput "$LogDir\frontend.log" `
         -RedirectStandardError "$LogDir\frontend-error.log"
     $proc.Id | Out-File "$LogDir\frontend.pid"
@@ -136,8 +136,8 @@ function Stop-ByPidFile($pf) {
 $G = @(
     @{ N="MySQL"; P=3306; D=@(); S={}; T={}; H="tcp:3306"; L="$LogDir\mysql.log"; E=$true },
     @{ N="Redis"; P=6379; D=@("MySQL"); S={ Start-Redis }; T={ Get-Process redis-server -EA 0 | Stop-Process -Force }; H="tcp:6379"; L="$LogDir\redis.log"; E=$true },
-    @{ N="Backend"; P=9090; D=@("MySQL","Redis"); S={ Start-Backend }; T={ Stop-ByPidFile "$LogDir\backend.pid"; Get-Process java -EA 0 | Where-Object { $_.Id -ne $PID } | Stop-Process -Force }; H="http:localhost:9090/doc.html"; L="$LogDir\backend.log"; E=$true },
-    @{ N="Frontend"; P=5173; D=@("Backend"); S={ Start-Frontend }; T={ Stop-ByPidFile "$LogDir\frontend.pid"; Get-Process node -EA 0 | Where-Object { $_.CommandLine -like "*vite*" } | Stop-Process -Force }; H="http:localhost:5173"; L="$LogDir\frontend.log"; E=$true }
+    @{ N="Backend"; P=9090; D=@("MySQL","Redis"); S={ Start-Backend }; T={ Stop-ByPidFile "$LogDir\backend.pid" }; H="http:localhost:9090/doc.html"; L="$LogDir\backend.log"; E=$true },
+    @{ N="Frontend"; P=5173; D=@("Backend"); S={ Start-Frontend }; T={ Stop-ByPidFile "$LogDir\frontend.pid" }; H="http:localhost:5173"; L="$LogDir\frontend.log"; E=$true }
 )
 
 # ======================== Utils ==============================

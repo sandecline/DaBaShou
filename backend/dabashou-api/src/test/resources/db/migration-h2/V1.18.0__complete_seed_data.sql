@@ -5,6 +5,18 @@
 --       使用 DATEADD 替代 MySQL INTERVAL 语法
 -- ============================================================================
 
+-- 与同版本 MySQL 迁移保持一致，种子订单写入前先补齐核销和退款字段。
+ALTER TABLE `dbs_order` ADD COLUMN `buyer_verify_code` VARCHAR(6) DEFAULT NULL COMMENT '开始核销码-买家持有';
+ALTER TABLE `dbs_order` ADD COLUMN `seller_verify_code` VARCHAR(6) DEFAULT NULL COMMENT '开始核销码-卖家持有';
+ALTER TABLE `dbs_order` ADD COLUMN `buyer_confirm_code` VARCHAR(6) DEFAULT NULL COMMENT '完成确认码-买家持有';
+ALTER TABLE `dbs_order` ADD COLUMN `seller_confirm_code` VARCHAR(6) DEFAULT NULL COMMENT '完成确认码-卖家持有';
+ALTER TABLE `dbs_order` ADD COLUMN `buyer_verified` TINYINT DEFAULT 0 COMMENT '买家是否已输入核销码';
+ALTER TABLE `dbs_order` ADD COLUMN `seller_verified` TINYINT DEFAULT 0 COMMENT '卖家是否已输入核销码';
+ALTER TABLE `dbs_order` ADD COLUMN `buyer_confirmed` TINYINT DEFAULT 0 COMMENT '买家是否已输入确认码';
+ALTER TABLE `dbs_order` ADD COLUMN `seller_confirmed` TINYINT DEFAULT 0 COMMENT '卖家是否已输入确认码';
+ALTER TABLE `dbs_order` ADD COLUMN `refund_requester` VARCHAR(10) DEFAULT NULL COMMENT '退款发起方: buyer/seller';
+ALTER TABLE `dbs_order` ADD COLUMN `refund_agreed` TINYINT DEFAULT 0 COMMENT '退款是否已同意';
+
 -- ==================== 1. 清理所有种子数据 ====================
 
 DELETE FROM `sys_log`;
@@ -196,7 +208,7 @@ INSERT INTO `dbs_order` (`id`, `order_no`, `buyer_id`, `seller_id`, `demand_id`,
 (13, 'DBS20260630006', 21, 17, NULL, 9,  1,  '大学物理答疑',     130, 1, 'C3D4E5', 'F6G7H8', NULL, NULL, 1, 0, 0, 0, NULL, 0, NULL,              DATEADD('DAY', -1, CURRENT_TIMESTAMP), DATEADD('DAY', -1, CURRENT_TIMESTAMP)),
 (14, 'DBS20260625002', 2,  3,  NULL, 4,  14, 'PPT美化',          100, 0, 'I9J0K1', 'L2M3N4', NULL, NULL, 0, 0, 0, 0, NULL, 0, '临时有事取消',     DATEADD('DAY', -7, CURRENT_TIMESTAMP), DATEADD('DAY', -7, CURRENT_TIMESTAMP)),
 (15, 'DBS20260629003', 4,  2,  NULL, 2,  18, '前端页面开发',     200, 7, 'O5P6Q7', 'R8S9T0', 'U1V2W3', 'X4Y5Z6', 1, 1, 1, 1, NULL, 0, '效果不满意',       DATEADD('DAY', -3, CURRENT_TIMESTAMP), DATEADD('DAY', -2, CURRENT_TIMESTAMP)),
-(16, 'DBS20260630007', 23, 14, NULL, 21, 18, 'React前端开发',    220, 3, 'A7B8C9', 'D0E1F2', 'G3H4I5', 'J6K7L8', 1, 1, 0, 0, 'buyer', 0, NULL, DATEADD('DAY', -2, CURRENT_TIMESTAMP), DATEADD('DAY', -1, CURRENT_TIMESTAMP));
+(16, 'DBS20260630007', 23, 14, NULL, 17, 18, 'React前端开发',    220, 3, 'A7B8C9', 'D0E1F2', 'G3H4I5', 'J6K7L8', 1, 1, 0, 0, 'buyer', 0, NULL, DATEADD('DAY', -2, CURRENT_TIMESTAMP), DATEADD('DAY', -1, CURRENT_TIMESTAMP));
 
 -- ==================== 9. 积分账户 ====================
 

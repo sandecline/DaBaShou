@@ -20,9 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 订单全链路集成测试
- * 测试: 创建货架→创建需求→创建订单→支付(冻结积分)→开始服务→核销→确认(结算积分)
+ * 测试: 创建货架→创建需求→创建订单→双方核销→确认(结算积分)
  *
- * 依赖: 真实 MySQL + Flyway 迁移脚本 + 种子数据
+ * 依赖: H2 测试库 + Flyway 测试迁移脚本 + 种子数据
  */
 @SpringBootTest(classes = DabashouApplication.class)
 @AutoConfigureMockMvc
@@ -157,37 +157,37 @@ class OrderIntegrationTest {
 
     @Test
     @Order(6)
-    @DisplayName("5. 支付订单（应冻结积分）")
+    @DisplayName("6. 旧支付接口不允许绕过双方核销")
     void payOrder() throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/v1/orders/" + orderId + "/pay")
+        mockMvc.perform(post("/api/v1/orders/" + orderId + "/pay")
                         .header("Authorization", "Bearer " + accessToken)
                         .param("idempotentToken", "pay-test-" + System.currentTimeMillis()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.verifyCode").isNotEmpty())
-                .andReturn();
-
-        System.out.println("Payment response: " + result.getResponse().getContentAsString());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(409));
     }
 
     @Test
     @Order(7)
-    @DisplayName("6. 验证状态机 — 非法流转应返回 409")
+    @DisplayName("7. 未开始服务时完成核销应返回 409")
     void rejectInvalidTransition() throws Exception {
-        // 尝试跳过服务直接确认（状态2→5非法）
-        mockMvc.perform(post("/api/v1/orders/" + orderId + "/confirm")
-                .header("Authorization", "Bearer " + accessToken))
+        // 待核销状态不能直接执行完成阶段。
+        mockMvc.perform(post("/api/v1/orders/" + orderId + "/verify")
+                .header("Authorization", "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"phase\":\"complete\",\"code\":\"ABC123\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value(409));
     }
 
     @Test
     @Order(8)
-    @DisplayName("7. 验证权限 — 非卖家不能开始服务")
-    void rejectNonSellerStartService() throws Exception {
-        // zhangsan 是买家，不是卖家
-        mockMvc.perform(put("/api/v1/orders/" + orderId + "/start")
-                .header("Authorization", "Bearer " + accessToken))
+    @DisplayName("8. 验证权限 — 非订单参与者不能核销")
+    void rejectNonParticipantVerify() throws Exception {
+        String outsiderToken = loginForToken("chenqi", "123456");
+        mockMvc.perform(post("/api/v1/orders/" + orderId + "/verify")
+                .header("Authorization", "Bearer " + outsiderToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"phase\":\"start\",\"code\":\"ABC123\"}"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403));
     }
