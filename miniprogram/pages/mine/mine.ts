@@ -4,7 +4,6 @@
  */
 
 import { userService } from '../../services/user';
-import { silentLogin } from '../../utils/auth';
 import type { UserProfile } from '../../types/user';
 
 interface MenuItem {
@@ -12,6 +11,13 @@ interface MenuItem {
   icon: string;
   url: string;
 }
+
+/** 信任分等级颜色映射（模块级常量，避免每次setData重建） */
+const TRUST_COLOR_MAP: Record<string, string> = {
+  '金牌': 'primary',
+  '靠谱': 'success',
+  '新人': 'warning',
+};
 
 Page({
   data: {
@@ -39,9 +45,9 @@ Page({
           url: '/subpackages/user/shelf-manage/shelf-manage',
         },
         {
-          title: '积分中心',
-          icon: 'wallet',
-          url: '/subpackages/user/point-detail/point-detail',
+          title: '我的求助',
+          icon: 'help-circle',
+          url: '/subpackages/user/demand-manage/demand-manage',
         },
         {
           title: '信用评价',
@@ -59,9 +65,9 @@ Page({
           url: '/subpackages/user/profile-edit/profile-edit',
         },
         {
-          title: '关于搭把手',
-          icon: 'info-circle',
-          url: '/subpackages/user/about/about',
+          title: '积分中心',
+          icon: 'wallet',
+          url: '/subpackages/user/point-detail/point-detail',
         },
         {
           title: '设置',
@@ -100,7 +106,7 @@ Page({
       const data = res.data || res;
       const app = getApp();
       app.globalData.userInfo = data;
-      wx.setStorageSync('user_info', data);
+      wx.setStorageSync('dabashou_user', JSON.stringify(data));
       this.setUserData(data);
     } catch (err) {
       console.error('[Mine] 获取用户信息失败:', err);
@@ -109,16 +115,10 @@ Page({
 
   /** 设置用户数据并确定信任分标签颜色 */
   setUserData(user: UserProfile) {
-    const colorMap: Record<string, string> = {
-      '金牌': 'primary',
-      '靠谱': 'success',
-      '新人': 'warning',
-    };
-
     this.setData({
       userInfo: { ...user, avatar: user.avatar || '' },
       isLoggedIn: true,
-      trustLevelColor: colorMap[user.trustLevel] || 'warning',
+      trustLevelColor: TRUST_COLOR_MAP[user.trustLevel] || 'warning',
     });
   },
 
@@ -135,25 +135,9 @@ Page({
     });
   },
 
-  /** 点击登录按钮 — 调起微信静默登录 */
-  async onLogin() {
-    try {
-      wx.showLoading({ title: '登录中...', mask: true });
-      await silentLogin();
-      wx.hideLoading();
-
-      const app = getApp();
-      const user = app.globalData.userInfo;
-      if (user) {
-        this.setUserData(user);
-      }
-
-      wx.showToast({ title: '登录成功', icon: 'success' });
-    } catch (err) {
-      wx.hideLoading();
-      console.error('[Mine] 登录失败:', err);
-      wx.showToast({ title: '登录失败，请重试', icon: 'none' });
-    }
+  /** 点击登录按钮 — 跳转登录页 */
+  onLogin() {
+    wx.navigateTo({ url: '/pages/login/login' });
   },
 
   onShareAppMessage() {

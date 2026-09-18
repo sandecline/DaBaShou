@@ -74,19 +74,18 @@ Page({
         });
       }
 
-      // 暂只加载收到的评价（发出的评价接口与收到的相同，由后端根据 token 区分）
-      const res = await creditService.getUserReviews(userId, {
-        pageNum: newPageNum,
-        pageSize,
-      });
+      // 根据当前 Tab 调用不同接口
+      const res = await (activeTab === 'given'
+        ? creditService.getSentReviews({ pageNum: newPageNum, pageSize })
+        : creditService.getReceivedReviews({ pageNum: newPageNum, pageSize }));
 
       const result = (res.data || res) as PageResult<Review>;
-      const list = result.records || [];
+      const list = result.list || [];
 
       this.setData({
         reviewList: reset ? list : [...this.data.reviewList, ...list],
-        pageNum: newPageNum,
-        hasMore: list.length >= pageSize,
+        pageNum: newPageNum + 1,
+        hasMore: list.length === pageSize,
         empty: reset && list.length === 0,
         loading: false,
         loadingMore: false,

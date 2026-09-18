@@ -1,138 +1,144 @@
 <template>
   <div class="home-page">
-    <!-- 顶部 Banner 轮播 / 通知 -->
-    <section class="home-banner gradient-primary">
-      <div class="banner-content">
-        <div class="banner-text">
-          <h2 class="banner-title">搭把手，让互助更简单</h2>
-          <p class="banner-subtitle">校园技能互助，有求必应 🤝</p>
-        </div>
-        <div class="banner-illustration">
-          <span class="illustration-icon">🤝</span>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">校园互助服务台</span>
+        <h1>把身边同学的技能，变成马上可用的帮助</h1>
+        <p>找辅导、约维修、接设计、发求助。用积分结算，用信用记录沉淀靠谱关系。</p>
+        <div class="hero-actions">
+          <el-button type="primary" size="large" @click="$router.push('/skill')">找技能</el-button>
+          <el-button size="large" @click="$router.push('/demand/publish')">发布求助</el-button>
         </div>
       </div>
-    </section>
 
-    <!-- 八大分类入口（闲鱼风格圆形图标网格） -->
-    <section class="category-section">
-      <div class="category-grid">
-        <div
-          v-for="cat in categories"
-          :key="cat.key"
-          class="category-item"
-          @click="$router.push(cat.route)"
-        >
-          <div class="category-icon" :class="cat.bgClass">
-            <span>{{ cat.icon }}</span>
+      <div class="hero-panel">
+        <div class="panel-header">
+          <span>今日看板</span>
+          <el-tag type="success" effect="light">实时</el-tag>
+        </div>
+        <div class="panel-grid">
+          <div v-for="item in stats" :key="item.label" class="panel-stat">
+            <strong>{{ item.value }}</strong>
+            <span>{{ item.label }}</span>
           </div>
-          <span class="category-label">{{ cat.name }}</span>
+        </div>
+        <div class="panel-task">
+          <div>
+            <span class="task-label">推荐流程</span>
+            <strong>发布需求后，系统会优先匹配高信任分同学</strong>
+          </div>
+          <el-icon><Connection /></el-icon>
         </div>
       </div>
     </section>
 
-    <!-- 通知横幅 -->
-    <div class="notice-bar" v-if="noticeText" @click="$router.push('/demand')">
-      <span class="notice-icon">📢</span>
+    <section v-if="isAdmin" class="admin-entry">
+      <div>
+        <strong>管理员控制台</strong>
+        <span>处理认证审核、订单仲裁、信用申诉和平台统计</span>
+      </div>
+      <el-button type="primary" @click="$router.push('/admin')">进入管理后台</el-button>
+    </section>
+
+    <section class="quick-section">
+      <button
+        v-for="cat in categories"
+        :key="cat.key"
+        class="quick-item"
+        type="button"
+        @click="$router.push(cat.route)"
+      >
+        <span class="quick-icon" :class="cat.bgClass">
+          <el-icon><component :is="cat.icon" /></el-icon>
+        </span>
+        <span>{{ cat.name }}</span>
+      </button>
+    </section>
+
+    <div v-if="noticeText" class="notice-bar" @click="$router.push('/demand')">
+      <el-icon><Bell /></el-icon>
       <span class="notice-text text-ellipsis">{{ noticeText }}</span>
-      <span class="notice-arrow">›</span>
+      <el-icon><ArrowRight /></el-icon>
     </div>
 
-    <!-- 统计数字条 -->
-    <section class="stats-bar">
-      <div class="stat-item">
-        <span class="stat-num">{{ stats[0].value }}</span>
-        <span class="stat-desc">{{ stats[0].label }}</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-num">{{ stats[1].value }}</span>
-        <span class="stat-desc">{{ stats[1].label }}</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat-item">
-        <span class="stat-num">{{ stats[2].value }}</span>
-        <span class="stat-desc">{{ stats[2].label }}</span>
-      </div>
-    </section>
-
     <div class="page-container">
-      <!-- 热门技能 -->
       <section class="section">
         <div class="section-header">
-          <h2 class="section-title">🔥 热门技能</h2>
-          <router-link to="/skill" class="see-all">全部 ›</router-link>
+          <div>
+            <h2 class="section-title">热门技能</h2>
+            <p>同学们最近更常预约的服务</p>
+          </div>
+          <router-link to="/skill" class="see-all">全部技能</router-link>
         </div>
         <LoadingSpinner v-if="skillLoading" text="加载中..." />
         <div v-else-if="hotSkills.length > 0" class="card-grid">
           <SkillCard v-for="skill in hotSkills" :key="skill.id" :skill="skill" />
         </div>
-        <EmptyState v-else icon="💡" title="还没有技能服务" action-text="发布第一个技能" @action="$router.push('/skill/publish')" />
+        <EmptyState
+          v-else
+          icon="技能"
+          title="还没有技能服务"
+          action-text="发布第一个技能"
+          @action="$router.push('/skill/publish')"
+        />
       </section>
 
-      <!-- 最新求助 -->
       <section class="section">
         <div class="section-header">
-          <h2 class="section-title">📋 最新求助</h2>
-          <router-link to="/demand" class="see-all">全部 ›</router-link>
+          <div>
+            <h2 class="section-title">最新求助</h2>
+            <p>正在等待响应的校园需求</p>
+          </div>
+          <router-link to="/demand" class="see-all">全部求助</router-link>
         </div>
         <LoadingSpinner v-if="demandLoading" text="加载中..." />
         <div v-else-if="latestDemands.length > 0" class="card-grid">
           <DemandCard v-for="demand in latestDemands" :key="demand.id" :demand="demand" />
         </div>
-        <EmptyState v-else icon="📝" title="暂无求助需求" action-text="发布第一个需求" @action="$router.push('/demand/publish')" />
+        <EmptyState
+          v-else
+          icon="求助"
+          title="暂无求助需求"
+          action-text="发布第一个需求"
+          @action="$router.push('/demand/publish')"
+        />
       </section>
-
-      <!-- 底部品牌语 -->
-      <div class="home-footer">
-        <p>— 技能换时间 · 时间换服务 —</p>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { searchShelves } from '@/api/shelf'
 import { searchDemands } from '@/api/demand'
 import { getPersonalOverview } from '@/api/stat'
 import { getCategoryTree } from '@/api/skill'
-import { getUserInfo, isLoggedIn } from '@/utils/auth'
+import { getUserInfo, isAdminSession, isLoggedIn } from '@/utils/auth'
+import { useUserStore } from '@/stores/user'
 import SkillCard from '@/components/common/SkillCard.vue'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import type { SkillShelf, Demand, OverviewStat, SkillCategory, ShelfItemVo, DemandItemVo } from '@/types/api'
+import type { OverviewStat, SkillCategory, ShelfItemVo, DemandItemVo } from '@/types/api'
 
 const hotSkills = ref<ShelfItemVo[]>([])
 const latestDemands = ref<DemandItemVo[]>([])
 const skillLoading = ref(true)
 const demandLoading = ref(true)
 const noticeText = ref('')
+const userStore = useUserStore()
+const isAdmin = computed(() => isAdminSession(userStore.token))
 
-const categories = ref<Array<{ key: string; name: string; icon: string; route: string; bgClass: string }>>([])
+const fallbackCategories = [
+  { key: 'study', name: '学业辅导', icon: 'Reading', route: '/skill?keyword=辅导', bgClass: 'bg-blue' },
+  { key: 'repair', name: '维修帮忙', icon: 'Tools', route: '/skill?keyword=维修', bgClass: 'bg-orange' },
+  { key: 'design', name: '设计美工', icon: 'Brush', route: '/skill?keyword=设计', bgClass: 'bg-purple' },
+  { key: 'tech', name: '技术支持', icon: 'Monitor', route: '/skill?keyword=技术', bgClass: 'bg-teal' },
+  { key: 'sport', name: '运动陪练', icon: 'Trophy', route: '/skill?keyword=运动', bgClass: 'bg-green' },
+  { key: 'life', name: '生活服务', icon: 'House', route: '/skill?keyword=生活', bgClass: 'bg-amber' },
+]
 
-async function loadCategories() {
-  try {
-    const cats = await getCategoryTree()
-    const iconMap: Record<string, string> = {
-      '学业辅导': '📚', '维修帮忙': '🔧', '设计美工': '🎨',
-      '技术支持': '💻', '运动陪练': '⚽', '音乐艺术': '🎵',
-      '生活服务': '🏠',
-    }
-    const bgMap: Record<string, string> = {
-      '学业辅导': 'bg-blue', '维修帮忙': 'bg-orange', '设计美工': 'bg-purple',
-      '技术支持': 'bg-teal', '运动陪练': 'bg-green', '音乐艺术': 'bg-pink',
-      '生活服务': 'bg-amber',
-    }
-    categories.value = cats.filter(c => c.status === 1).map(c => ({
-      key: String(c.id),
-      name: c.name,
-      icon: iconMap[c.name] || '✨',
-      route: `/skill?categoryId=${c.id}`,
-      bgClass: bgMap[c.name] || 'bg-gray',
-    }))
-  } catch { /* ignore */ }
-}
+const categories = ref<Array<{ key: string; name: string; icon: string; route: string; bgClass: string }>>(fallbackCategories)
 
 const stats = ref([
   { label: '技能服务', value: '0' },
@@ -149,32 +155,66 @@ function isNotMine(item: { userId?: number }): boolean {
   return !userId || item.userId !== userId
 }
 
+function categoryIcon(category: SkillCategory): string {
+  const name = category.name
+  if (name.includes('学')) return 'Reading'
+  if (name.includes('修')) return 'Tools'
+  if (name.includes('设计') || name.includes('美')) return 'Brush'
+  if (name.includes('技术')) return 'Monitor'
+  if (name.includes('运动')) return 'Trophy'
+  if (name.includes('音乐') || name.includes('艺术')) return 'Headset'
+  return 'House'
+}
+
+function categoryClass(index: number): string {
+  return ['bg-blue', 'bg-orange', 'bg-purple', 'bg-teal', 'bg-green', 'bg-pink', 'bg-amber'][index % 7]
+}
+
+async function loadCategories() {
+  try {
+    const cats = await getCategoryTree()
+    const activeCats = cats.filter(c => c.status !== 0).slice(0, 8)
+    if (activeCats.length) {
+      categories.value = activeCats.map((c, index) => ({
+        key: String(c.id),
+        name: c.name,
+        icon: categoryIcon(c),
+        route: `/skill?categoryId=${c.id}`,
+        bgClass: categoryClass(index),
+      }))
+    }
+  } catch {
+    categories.value = fallbackCategories
+  }
+}
+
+function applyOverview(overview: OverviewStat | null) {
+  if (!overview) return
+  stats.value = [
+    { label: '技能服务', value: String(overview.publishedSkills ?? 0) },
+    { label: '完成订单', value: String(overview.completedOrders ?? 0) },
+    { label: '好评率', value: `${Math.round(((overview.averageRating ?? 0) / 5) * 100)}%` },
+  ]
+}
+
 onMounted(async () => {
   loadCategories()
   try {
     const [skillResult, demandResult, overview] = await Promise.all([
-      searchShelves({ page: 1, size: 8, sort: 'heat' }).catch(() => ({ records: [] as ShelfItemVo[], total: 0, page: 1, size: 8 })),
-      searchDemands({ page: 1, size: 8 }).catch(() => ({ records: [] as DemandItemVo[], total: 0, page: 1, size: 8 })),
+      searchShelves({ pageNum: 1, pageSize: 8, sortBy: 'heat' }).catch(() => ({ records: [] as ShelfItemVo[], total: 0 })),
+      searchDemands({ pageNum: 1, pageSize: 8 }).catch(() => ({ records: [] as DemandItemVo[], total: 0 })),
       isLoggedIn() ? getPersonalOverview().catch(() => null as OverviewStat | null) : Promise.resolve(null),
     ])
 
     hotSkills.value = pageItems<ShelfItemVo>(skillResult).filter(isNotMine)
     latestDemands.value = pageItems<DemandItemVo>(demandResult).filter(isNotMine)
+    applyOverview(overview)
 
-    if (overview) {
-      stats.value = [
-        { label: '技能服务', value: String(overview.totalSkills) },
-        { label: '完成订单', value: String(overview.completedOrders) },
-        { label: '好评率', value: `${Math.round((overview.orderCompletionRate ?? 0) * 100)}%` },
-      ]
-    }
-
-    // 模拟通知
     if (latestDemands.value.length > 0) {
       const urgent = latestDemands.value.find(d => d.isUrgent)
       noticeText.value = urgent
-        ? `🔥 紧急求助：${urgent.title} - 悬赏${urgent.pointReward}积分`
-        : `📋 有 ${demandResult.total || latestDemands.value.length} 个新求助等你来接！`
+        ? `急单求助：${urgent.title}，悬赏 ${urgent.pointReward} 积分`
+        : `有 ${demandResult.total || latestDemands.value.length} 个新求助正在等待响应`
     }
   } finally {
     skillLoading.value = false
@@ -184,244 +224,302 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-// ========== Banner ==========
-.home-banner {
-  padding: 16px $spacing-md;
-  color: #FFFFFF;
+.home-page {
+  padding-top: $spacing-lg;
+}
 
-  .banner-content {
+.admin-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: min(100% - 32px, $max-width);
+  margin: 18px auto 0;
+  padding: 16px 18px;
+  border: 1px solid rgba(15, 118, 110, 0.22);
+  border-radius: $radius-lg;
+  background: #ecfdf5;
+
+  div {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 3px;
   }
 
-  .banner-text {
-    .banner-title {
-      font-size: 20px;
-      font-weight: 800;
-      margin: 0 0 4px;
-      letter-spacing: 0.5px;
-    }
-
-    .banner-subtitle {
-      font-size: 13px;
-      opacity: 0.85;
-      margin: 0;
-    }
+  strong {
+    color: #134e4a;
+    font-size: 16px;
   }
 
-  .banner-illustration {
-    .illustration-icon {
-      font-size: 48px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
-    }
+  span {
+    color: #475569;
+    font-size: 13px;
   }
 }
 
-// ========== 分类图标网格 ==========
-.category-section {
-  background: #FFFFFF;
-  padding: 16px $spacing-sm 12px;
-}
-
-.category-grid {
+.hero {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px 4px;
-  max-width: $max-width;
-  margin: 0 auto;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: $spacing-xl;
+  align-items: stretch;
+  width: min(100% - 32px, $max-width);
+  margin: 0 auto $spacing-lg;
+  padding: $spacing-xl;
+  border: 1px solid rgba(203, 213, 225, 0.75);
+  border-radius: $radius-xl;
+  background:
+    linear-gradient(135deg, rgba(35, 100, 232, 0.1), rgba(16, 185, 129, 0.08)),
+    #ffffff;
+  box-shadow: $shadow-md;
 }
 
-.category-item {
+.hero-copy {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: transform 0.15s;
+  justify-content: center;
+  min-height: 270px;
+}
 
-  &:active {
-    transform: scale(0.92);
+.eyebrow {
+  width: fit-content;
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  border: 1px solid rgba(35, 100, 232, 0.18);
+  border-radius: $radius-round;
+  background: rgba(35, 100, 232, 0.08);
+  color: $color-primary;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+h1 {
+  max-width: 760px;
+  color: $color-text-primary;
+  font-size: clamp(34px, 5vw, 58px);
+  line-height: 1.04;
+  letter-spacing: 0;
+  font-weight: 850;
+}
+
+.hero-copy p {
+  max-width: 640px;
+  margin-top: 18px;
+  color: $color-text-secondary;
+  font-size: 16px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.hero-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 270px;
+  padding: $spacing-lg;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.panel-header,
+.panel-task {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-header {
+  color: $color-text-primary;
+  font-weight: 800;
+}
+
+.panel-grid {
+  display: grid;
+  gap: 12px;
+  margin: $spacing-lg 0;
+}
+
+.panel-stat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 13px 0;
+  border-bottom: 1px solid $color-border-light;
+
+  strong {
+    color: $color-primary;
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  span {
+    color: $color-text-secondary;
+    font-weight: 650;
   }
 }
 
-.category-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+.panel-task {
+  gap: 14px;
+  padding: 14px;
+  border-radius: $radius-md;
+  background: $color-surface-muted;
+
+  .task-label {
+    display: block;
+    margin-bottom: 4px;
+    color: $color-text-placeholder;
+    font-size: 12px;
+    font-weight: 750;
+  }
+
+  strong {
+    color: $color-text-regular;
+    font-size: 14px;
+  }
+
+  .el-icon {
+    flex-shrink: 0;
+    color: $color-success;
+    font-size: 28px;
+  }
+}
+
+.quick-section {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  width: min(100% - 32px, $max-width);
+  margin: 0 auto $spacing-md;
+}
+
+.quick-item {
+  appearance: none;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: #ffffff;
+  color: $color-text-regular;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 24px;
+  gap: 10px;
+  min-height: 76px;
+  padding: 12px;
+  text-align: left;
+  font-weight: 750;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
 
-  &.bg-blue   { background: #E3F2FD; }
-  &.bg-orange { background: #FFF3E0; }
-  &.bg-purple { background: #F3E5F5; }
-  &.bg-teal   { background: #E0F2F1; }
-  &.bg-green  { background: #E8F5E9; }
-  &.bg-pink   { background: #FCE4EC; }
-  &.bg-amber  { background: #FFF8E1; }
-  &.bg-gray   { background: #F5F5F5; }
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(35, 100, 232, 0.28);
+    box-shadow: $shadow-md;
+  }
 }
 
-.category-label {
-  font-size: 11px;
-  color: $color-text-regular;
-  font-weight: 500;
+.quick-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: $radius-md;
+  font-size: 19px;
+
+  &.bg-blue { background: #dbeafe; color: #1d4ed8; }
+  &.bg-orange { background: #ffedd5; color: #c2410c; }
+  &.bg-purple { background: #ede9fe; color: #6d28d9; }
+  &.bg-teal { background: #ccfbf1; color: #0f766e; }
+  &.bg-green { background: #dcfce7; color: #15803d; }
+  &.bg-pink { background: #fce7f3; color: #be185d; }
+  &.bg-amber { background: #fef3c7; color: #b45309; }
 }
 
-// ========== 通知横幅 ==========
 .notice-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px $spacing-md;
-  padding: 10px 14px;
-  background: #FFFFFF;
-  border-radius: $radius-sm;
+  gap: 10px;
+  width: min(100% - 32px, $max-width);
+  margin: $spacing-md auto 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(249, 115, 22, 0.18);
+  border-radius: $radius-md;
+  background: #fff7ed;
+  color: #9a3412;
   cursor: pointer;
-  box-shadow: $shadow-sm;
-
-  .notice-icon {
-    font-size: 15px;
-    flex-shrink: 0;
-  }
 
   .notice-text {
     flex: 1;
-    font-size: 12px;
-    color: $color-text-regular;
-  }
-
-  .notice-arrow {
-    font-size: 18px;
-    color: $color-text-placeholder;
-    flex-shrink: 0;
+    font-weight: 650;
   }
 }
 
-// ========== 统计条 ==========
-.stats-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  margin: 12px $spacing-md;
-  padding: 14px 8px;
-  background: #FFFFFF;
-  border-radius: $radius-sm;
-  box-shadow: $shadow-sm;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-
-  .stat-num {
-    font-size: 18px;
-    font-weight: 800;
-    color: $color-primary-dark;
-  }
-
-  .stat-desc {
-    font-size: 10px;
-    color: $color-text-secondary;
-  }
-}
-
-.stat-divider {
-  width: 1px;
-  height: 24px;
-  background: $color-border;
-}
-
-// ========== 板块 ==========
 .section {
-  margin-bottom: $spacing-lg;
+  margin-bottom: $spacing-2xl;
 }
 
 .section-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: $spacing-sm;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
 
-  .section-title {
-    font-size: $font-size-lg;
-    font-weight: 700;
-    color: $color-text-primary;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    &::before {
-      content: '';
-      width: 3px;
-      height: 16px;
-      background: $color-primary;
-      border-radius: 2px;
-    }
-  }
-
-  .see-all {
-    font-size: $font-size-sm;
+  p {
+    margin-top: 6px;
     color: $color-text-secondary;
-    text-decoration: none;
-
-    &:hover {
-      color: $color-primary-dark;
-    }
   }
 }
 
-// ========== 底部品牌语 ==========
-.home-footer {
-  text-align: center;
-  padding: $spacing-lg 0;
-  color: $color-text-placeholder;
-  font-size: $font-size-sm;
+.see-all {
+  color: $color-primary;
+  font-weight: 750;
 }
 
-// ========== 响应式 ==========
-@media (min-width: 769px) {
-  .home-banner {
-    .banner-content {
-      max-width: $max-width;
-      margin: 0 auto;
-    }
+@media (max-width: 980px) {
+  .hero {
+    grid-template-columns: 1fr;
   }
 
-  .category-grid {
-    grid-template-columns: repeat(8, 1fr);
-    max-width: $max-width;
+  .quick-section {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .home-page {
+    padding-top: 12px;
   }
 
-  .stats-bar,
+  .hero,
+  .quick-section,
   .notice-bar {
-    max-width: $max-width;
-    margin: 12px auto;
-  }
-}
-
-@media (max-width: 480px) {
-  .category-icon {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
+    width: min(100% - 24px, $max-width);
   }
 
-  .home-banner {
-    padding: 12px $spacing-md;
-
-    .banner-title {
-      font-size: 17px;
-    }
+  .hero {
+    padding: $spacing-lg;
   }
 
-  .stats-bar {
-    margin: 8px 12px;
-    padding: 12px 4px;
+  .hero-copy {
+    min-height: auto;
+  }
+
+  h1 {
+    font-size: 34px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .quick-section {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quick-item {
+    min-height: 68px;
   }
 }
 </style>

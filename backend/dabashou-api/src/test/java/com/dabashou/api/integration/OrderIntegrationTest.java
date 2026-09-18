@@ -37,6 +37,7 @@ class OrderIntegrationTest {
     private ObjectMapper objectMapper;
 
     private static String accessToken;
+    private static String sellerToken;
     private static Long shelfId;
     private static Long demandId;
     private static Long orderId;
@@ -114,6 +115,26 @@ class OrderIntegrationTest {
     @Test
     @Order(4)
     @DisplayName("4. 创建订单（从货架购买）")
+    void createOrderFromDemandWithoutShelf() throws Exception {
+        if (sellerToken == null) {
+            sellerToken = loginForToken("lisi", "123456");
+        }
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("demandId", demandId);
+        body.put("idempotentToken", "demand-no-shelf-" + System.currentTimeMillis());
+
+        mockMvc.perform(post("/api/v1/orders/from-demand")
+                        .header("Authorization", "Bearer " + sellerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200));
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("5. 从货架创建订单")
     void createOrderFromShelf() throws Exception {
         Map<String, Object> body = new HashMap<>();
         // 购买种子数据中李四发布的货架，避免买家购买自己刚发布的服务。
@@ -135,7 +156,7 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @Order(5)
+    @Order(6)
     @DisplayName("5. 支付订单（应冻结积分）")
     void payOrder() throws Exception {
         MvcResult result = mockMvc.perform(post("/api/v1/orders/" + orderId + "/pay")
@@ -150,7 +171,7 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     @DisplayName("6. 验证状态机 — 非法流转应返回 409")
     void rejectInvalidTransition() throws Exception {
         // 尝试跳过服务直接确认（状态2→5非法）
@@ -161,7 +182,7 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @Order(7)
+    @Order(8)
     @DisplayName("7. 验证权限 — 非卖家不能开始服务")
     void rejectNonSellerStartService() throws Exception {
         // zhangsan 是买家，不是卖家
@@ -172,7 +193,7 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     @DisplayName("8. 验证订单不存在返回404")
     void rejectNonExistentOrder() throws Exception {
         mockMvc.perform(get("/api/v1/orders/99999/detail")
@@ -182,7 +203,7 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @Order(9)
+    @Order(10)
     @DisplayName("9. 同一个需求只能被接单创建一次订单")
     void rejectRepeatedDemandOrderCreation() throws Exception {
         Map<String, Object> body = new HashMap<>();
@@ -207,7 +228,7 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @Order(10)
+    @Order(11)
     @DisplayName("10. 同一个服务只能被接取创建一次订单")
     void rejectRepeatedShelfOrderCreation() throws Exception {
         Map<String, Object> body = new HashMap<>();
@@ -223,7 +244,7 @@ class OrderIntegrationTest {
     }
 
     @Test
-    @Order(11)
+    @Order(12)
     @DisplayName("11. 技能详情空闲时间返回具体日期")
     void shelfTimeSlotsReturnConcreteDate() throws Exception {
         mockMvc.perform(get("/api/v1/shelves/3/timeslots")
@@ -233,5 +254,20 @@ class OrderIntegrationTest {
                 .andExpect(jsonPath("$.data[0].date").isNotEmpty())
                 .andExpect(jsonPath("$.data[0].startTime").isNotEmpty())
                 .andExpect(jsonPath("$.data[0].endTime").isNotEmpty());
+    }
+
+    private String loginForToken(String username, String password) throws Exception {
+        Map<String, String> body = Map.of("username", username, "password", password);
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(body)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andReturn();
+
+        Map<String, Object> response = objectMapper.readValue(
+                result.getResponse().getContentAsString(), Map.class);
+        Map<String, Object> data = (Map<String, Object>) response.get("data");
+        return (String) data.get("accessToken");
     }
 }

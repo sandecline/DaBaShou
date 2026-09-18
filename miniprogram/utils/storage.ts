@@ -5,9 +5,9 @@
 
 /** 存储键名常量 */
 export const STORAGE_KEYS = {
-  ACCESS_TOKEN: 'access_token',
+  ACCESS_TOKEN: 'dabashou_token',
   REFRESH_TOKEN: 'refresh_token',
-  USER_INFO: 'user_info',
+  USER_INFO: 'dabashou_user',
   USER_SETTINGS: 'user_settings',
   DRAFT_PUBLISH: 'draft_publish',
   SEARCH_HISTORY: 'search_history',

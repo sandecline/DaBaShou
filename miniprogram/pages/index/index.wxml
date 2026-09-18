@@ -72,10 +72,10 @@
   </block>
 
   <!-- 加载更多 -->
-  <view wx:if="{{hasMore && !loading}}" class="load-more">
+  <view wx:if="{{(activeTab === 0 ? skillHasMore : demandHasMore) && !loading}}" class="load-more">
     上拉加载更多
   </view>
-  <view wx:elif="{{!hasMore && !loading}}" class="load-end">
+  <view wx:elif="{{!(activeTab === 0 ? skillHasMore : demandHasMore) && !loading}}" class="load-end">
     — 已经到底了 —
   </view>
 </view>

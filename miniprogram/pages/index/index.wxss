@@ -5,10 +5,10 @@
   background-color: var(--bg-page);
 }
 
-/* 搜索栏 — 闲鱼亮黄底 */
+/* 搜索栏 — 蓝色顶栏 */
 .search-bar {
   padding: var(--spacing-sm) var(--spacing-md);
-  background-color: var(--color-accent);
+  background-color: #0052d9;
 }
 
 /* 分类标签 */

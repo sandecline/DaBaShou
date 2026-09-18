@@ -19,7 +19,13 @@
   "totalExpense": 500,
   "trustScore": 4.5,
   "skillCount": 5,
-  "reviewCount": 30
+  "reviewCount": 30,
+  "publishedSkills": 6,
+  "publishedDemands": 4,
+  "takenOrders": 20,
+  "averageRating": 4.8,
+  "totalPointsEarned": 2000,
+  "totalPointsSpent": 500
 }
 ```
 

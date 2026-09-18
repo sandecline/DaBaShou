@@ -14,7 +14,6 @@ export function createOrderFromShelf(data: { skillShelfId?: number; shelfId?: nu
 export function createOrderFromDemand(data: { demandId: number; sellerId?: number; shelfId?: number; remark?: string }): Promise<number> {
   return request.post('/v1/orders/from-demand', {
     ...data,
-    shelfId: data.shelfId ?? 0,
     idempotentToken: crypto.randomUUID(),
   })
 }
@@ -28,10 +27,6 @@ export const getMyTakenOrders = (params?: PageParams): Promise<PageResult<OrderI
 
 export function getOrderDetail(id: number): Promise<OrderDetailVo> {
   return request.get('/v1/orders/' + id)
-}
-
-export function getOrderStatus(id: number): Promise<{ status: number; statusDesc: string }> {
-  return request.get('/v1/orders/' + id + '/status')
 }
 
 export function payOrder(id: number): Promise<PayResultVo> {
@@ -54,20 +49,22 @@ export function refreshVerifyCode(id: number): Promise<VerifyCodeVo> {
   return request.put('/v1/orders/' + id + '/verify-code')
 }
 
-export function verifyOrder(id: number, verifyCode: string): Promise<null> {
-  return request.post('/v1/orders/' + id + '/verify', { verifyCode })
+/**
+ * 核销订单 — 双方核销码驱动
+ * @param id 订单ID
+ * @param code 核销码
+ * @param phase start=开始核销(1→3), complete=完成确认(3→5)
+ */
+export function verifyOrder(id: number, code: string, phase: 'start' | 'complete'): Promise<null> {
+  return request.post('/v1/orders/' + id + '/verify', { code, phase })
 }
 
 export function confirmOrder(id: number): Promise<null> {
   return request.post('/v1/orders/' + id + '/confirm')
 }
 
-export function disputeOrder(id: number, reason: string): Promise<null> {
-  return request.post('/v1/orders/' + id + '/dispute', { reason })
-}
-
-export function arbitrateOrder(id: number, data: { result: string; reason: string; refundAmount?: number }): Promise<null> {
-  return request.post('/v1/orders/' + id + '/arbitrate', data)
+export function disputeOrder(id: number, reason: string, explain?: string): Promise<null> {
+  return request.post('/v1/orders/' + id + '/dispute', { reason, explain })
 }
 
 export function refundOrder(id: number, reason: string): Promise<null> {

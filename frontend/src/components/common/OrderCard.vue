@@ -15,21 +15,25 @@
       </el-tag>
     </div>
 
-    <h3 class="order-title text-ellipsis">{{ order.title }}</h3>
+    <h3 class="order-title text-ellipsis">{{ orderTitle }}</h3>
+
+    <div class="order-content">
+      <el-tag v-if="orderTagName" size="small" type="info">{{ orderTagName }}</el-tag>
+    </div>
 
     <div class="order-users">
       <div class="user-side">
-        <el-avatar :size="24" :src="order.buyerAvatar">
-          {{ (order.buyerName || '买').charAt(0) }}
+        <el-avatar :size="24">
+          {{ (order.buyerNickname || '买').charAt(0) }}
         </el-avatar>
-        <span>{{ order.buyerName || '买家' }}</span>
+        <span>{{ order.buyerNickname || '买家' }}</span>
       </div>
       <el-icon><Right /></el-icon>
       <div class="user-side">
-        <el-avatar :size="24" :src="order.sellerAvatar">
-          {{ (order.sellerName || '卖').charAt(0) }}
+        <el-avatar :size="24">
+          {{ (order.sellerNickname || '卖').charAt(0) }}
         </el-avatar>
-        <span>{{ order.sellerName || '卖家' }}</span>
+        <span>{{ order.sellerNickname || '卖家' }}</span>
       </div>
     </div>
 
@@ -41,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { Order } from '@/types'
 import { getOrderStatusText, getOrderStatusColor, formatDateTime } from '@/utils/format'
@@ -50,6 +55,8 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const orderTitle = computed(() => props.order.shelfTitle || '未命名交易')
+const orderTagName = computed(() => props.order.tagName)
 
 function goDetail() {
   router.push(`/order/${props.order.id}`)
@@ -93,6 +100,19 @@ function goDetail() {
   font-weight: 600;
   color: $color-text-primary;
   margin: 0;
+}
+
+.order-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+
+  .order-remark {
+    min-width: 0;
+    color: $color-text-secondary;
+    font-size: $font-size-xs;
+  }
 }
 
 .order-users {

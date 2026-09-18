@@ -72,6 +72,16 @@ public class ChatController {
     }
 
     /**
+     * 按对方用户ID标记会话为已读
+     */
+    @PutMapping("/messages/read")
+    public AjaxResult<Void> markMessagesRead(@RequestParam Long targetUserId) {
+        Long userId = SecurityUtil.requireCurrentUserId();
+        chatService.markSessionReadByTargetUserId(userId, targetUserId);
+        return AjaxResult.ok();
+    }
+
+    /**
      * 发送消息（REST接口）
      */
     @PostMapping("/send")

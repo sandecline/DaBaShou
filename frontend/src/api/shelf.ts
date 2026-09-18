@@ -35,12 +35,10 @@ export function getShelfDetail(id: number): Promise<ShelfDetailVo> {
 export function searchShelves(params: {
   keyword?: string; categoryId?: number; skillTagId?: number;
   locationType?: number; sortBy?: string; longitude?: number;
-  latitude?: number; pageNum?: number; pageSize?: number; page?: number; size?: number; sort?: string
+  latitude?: number; pageNum?: number; pageSize?: number
 }): Promise<PageResult<ShelfItemVo>> {
   return request.get('/v1/shelves', normalizePageParams(params))
 }
-
-export const getShelfList = searchShelves
 
 export function getMyShelves(params?: PageParams): Promise<PageResult<ShelfItemVo>> {
   return request.get('/v1/shelves/mine', normalizePageParams(params))

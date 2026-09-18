@@ -5,9 +5,9 @@
   background-color: var(--bg-page);
 }
 
-/* ===== 顶部橙色 Header ===== */
+/* ===== 顶部蓝色 Header ===== */
 .mine-header {
-  background: linear-gradient(135deg, #FF6E14 0%, #FF8A4C 100%);
+  background: linear-gradient(135deg, #0052d9 0%, #2979FF 100%);
   padding: var(--spacing-xl) var(--spacing-lg);
   margin-bottom: var(--spacing-sm);
   border-radius: 0 0 28rpx 28rpx;

@@ -20,7 +20,11 @@
             class="search-input"
             @keyup.enter="search"
             @clear="search"
-          />
+          >
+            <template #append>
+              <el-button @click="search">搜索</el-button>
+            </template>
+          </el-input>
         </div>
       </div>
 
@@ -77,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { searchShelves } from '@/api/shelf'
 import { getCategoryTree } from '@/api/skill'
@@ -108,11 +112,11 @@ async function fetchData() {
   loading.value = true
   try {
     const result = await searchShelves({
-      page: page.value,
-      size: size.value,
+      pageNum: page.value,
+      pageSize: size.value,
       keyword: keyword.value || undefined,
       categoryId: selectedCategory.value || undefined,
-      sort: sortBy.value,
+      sortBy: sortBy.value,
     })
     list.value = result.list.filter(isNotMine)
     total.value = result.total
@@ -142,6 +146,14 @@ onMounted(async () => {
   }
   fetchData()
 })
+
+watch(
+  () => route.query.keyword,
+  (value) => {
+    keyword.value = (value as string) || ''
+    search()
+  },
+)
 </script>
 
 <style scoped lang="scss">

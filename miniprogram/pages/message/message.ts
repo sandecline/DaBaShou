@@ -3,7 +3,11 @@
  */
 
 import { messageService } from '../../services/message';
+import { ensureLogin } from '../../utils/auth';
 import type { ChatSession } from '../../types/message';
+
+let _lastLoadTime = 0;
+const LOAD_DEBOUNCE = 3000;
 
 Page({
   data: {
@@ -11,11 +15,19 @@ Page({
     loading: true,
   },
 
-  onLoad() {
+  async onLoad() {
+    _lastLoadTime = Date.now();
+    if (!(await ensureLogin())) {
+      this.setData({ loading: false });
+      return;
+    }
     this.loadSessions();
   },
 
-  onShow() {
+  async onShow() {
+    if (Date.now() - _lastLoadTime < LOAD_DEBOUNCE) return;
+    _lastLoadTime = Date.now();
+    if (!(await ensureLogin())) return;
     this.loadSessions();
   },
 
@@ -26,15 +38,13 @@ Page({
   async loadSessions() {
     try {
       const res = await messageService.getSessions();
-      // 后端可能返回数组,也可能返回 { list, total } 等分页结构;统一兜底为数组
-      const sessions = Array.isArray(res.data)
-        ? res.data
-        : Array.isArray((res.data as { list?: ChatSession[] })?.list)
-          ? (res.data as { list: ChatSession[] }).list
-          : [];
-      this.setData({ sessions, loading: false });
+      // 后端返回 PageResult<ChatSession>（分页结构），取 list 数组
+      const list: ChatSession[] = Array.isArray(res.data)
+        ? res.data as ChatSession[]
+        : (res.data as { list?: ChatSession[] })?.list || [];
+      this.setData({ sessions: list, loading: false });
       // 更新全局未读数
-      const total = sessions.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
+      const total = list.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
       getApp().globalData.unreadCount = total;
     } catch (err) {
       console.error('加载会话列表失败:', err);
@@ -44,7 +54,12 @@ Page({
 
   goChat(e: WechatMiniprogram.TouchEvent) {
     const { id } = e.currentTarget.dataset;
-    wx.navigateTo({ url: `/pages/chat/chat?sessionId=${id}` });
+    const session = this.data.sessions.find((s) => s.id === id);
+    let url = `/pages/chat/chat?sessionId=${id}`;
+    if (session) {
+      url += `&targetUserId=${session.otherUserId}&targetNickname=${encodeURIComponent(session.otherNickname || '')}`;
+    }
+    wx.navigateTo({ url });
   },
 
   onDelete(e: WechatMiniprogram.TouchEvent) {
@@ -52,18 +67,12 @@ Page({
     wx.showModal({
       title: '删除会话',
       content: '确定删除此会话？',
-      success: async (res) => {
+      success: (res) => {
         if (res.confirm) {
-          try {
-            // #51 修复：调用真实的删除 API
-            await messageService.deleteSession(sessionId);
-            wx.showToast({ title: '已删除', icon: 'success' });
-            // 从本地列表移除并刷新
-            this.loadSessions();
-          } catch (err) {
-            console.error('删除会话失败:', err);
-            wx.showToast({ title: '删除失败', icon: 'error' });
-          }
+          // 后端无删除会话接口，仅从本地列表移除
+          const sessions = this.data.sessions.filter((s) => s.id !== sessionId);
+          this.setData({ sessions });
+          wx.showToast({ title: '已删除', icon: 'success' });
         }
       },
     });

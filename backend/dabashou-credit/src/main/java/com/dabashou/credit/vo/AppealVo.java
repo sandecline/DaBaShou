@@ -9,6 +9,7 @@ public class AppealVo {
 
     private Long id;
     private Long violationId;
+    private Long orderId;
     private String violationType;
     private String reason;
     private String evidenceFileId;
@@ -22,6 +23,8 @@ public class AppealVo {
     public void setId(Long id) { this.id = id; }
     public Long getViolationId() { return violationId; }
     public void setViolationId(Long violationId) { this.violationId = violationId; }
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
     public String getViolationType() { return violationType; }
     public void setViolationType(String violationType) { this.violationType = violationType; }
     public String getReason() { return reason; }

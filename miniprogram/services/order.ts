@@ -1,120 +1,90 @@
-/**
- * 订单服务
- * 对应后端 dabashou-order 模块
- * 与 frontend/src/api/order.ts 对齐
- */
-
 import { api } from '../utils/request';
 import type { PageResult } from '../types/api-response';
-import type { Order, OrderDetail } from '../types/order';
+import type { OrderItemVo, OrderDetailVo, CreateFromShelfParams, CreateFromDemandParams } from '../types/order';
 
 export interface OrderSearchParams {
   role?: 'buyer' | 'seller';
-  status?: number;
+  status?: number | number[];
   pageNum: number;
   pageSize: number;
 }
 
-export interface CreateFromShelfParams {
-  shelfId: number;
-  timeSlotId?: number;
-  remark?: string;
-}
-
-export interface CreateFromDemandParams {
-  demandId: number;
-  sellerId?: number;
-  remark?: string;
-}
-
 export const orderService = {
-  /** 获取订单列表 */
   getList(params: OrderSearchParams) {
-    return api.get<PageResult<Order>>('/v1/order', params as unknown as Record<string, unknown>);
+    const queryParams: Record<string, unknown> = {};
+    if (params.role) queryParams.role = params.role;
+    if (params.pageNum) queryParams.pageNum = params.pageNum;
+    if (params.pageSize) queryParams.pageSize = params.pageSize;
+    if (params.status !== undefined) {
+      if (Array.isArray(params.status)) {
+        queryParams.status = params.status.join(',');
+      } else {
+        queryParams.status = params.status;
+      }
+    }
+    return api.get<PageResult<OrderItemVo>>('/v1/orders', queryParams);
   },
 
-  /** 获取我的订单（买家视角） */
   getMyOrders(params: { pageNum: number; pageSize: number }) {
-    return api.get<PageResult<Order>>('/v1/order', { ...params, role: 'buyer' } as unknown as Record<string, unknown>);
+    return api.get<PageResult<OrderItemVo>>('/v1/orders', { ...params, role: 'buyer' } as unknown as Record<string, unknown>);
   },
 
-  /** 获取我接的订单（卖家视角） */
   getMyTakenOrders(params: { pageNum: number; pageSize: number }) {
-    return api.get<PageResult<Order>>('/v1/order', { ...params, role: 'seller' } as unknown as Record<string, unknown>);
+    return api.get<PageResult<OrderItemVo>>('/v1/orders', { ...params, role: 'seller' } as unknown as Record<string, unknown>);
   },
 
-  /** 获取订单详情（含核销码） */
   getDetail(orderId: number) {
-    return api.get<OrderDetail>(`/v1/order/${orderId}`);
+    return api.get<OrderDetailVo>(`/v1/orders/${orderId}`);
   },
 
-  /** 获取订单状态 */
   getOrderStatus(orderId: number) {
-    return api.get<{ status: number; statusDesc: string }>(`/v1/order/${orderId}/status`);
+    return api.get<{ status: number; statusName: string }>(`/v1/orders/${orderId}/status`);
   },
 
-  /** 从货架创建订单 */
   createFromShelf(params: CreateFromShelfParams) {
-    return api.post<{ orderId: number; orderNo: string }>(
-      '/v1/order/from-shelf',
-      params as unknown as Record<string, unknown>
+    return api.post<number>(
+      '/v1/orders/from-shelf',
+      { shelfId: params.shelfId, timeSlotId: params.timeSlotId, remark: params.remark, idempotentToken: `wx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}` } as unknown as Record<string, unknown>
     );
   },
 
-  /** 从需求创建订单 */
   createFromDemand(params: CreateFromDemandParams) {
-    return api.post<{ orderId: number; orderNo: string }>(
-      '/v1/order/from-demand',
-      params as unknown as Record<string, unknown>
+    const body: Record<string, unknown> = {
+      demandId: params.demandId,
+      shelfId: params.shelfId,
+      remark: params.remark,
+      idempotentToken: `wx_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+    };
+    return api.post<number>(
+      '/v1/orders/from-demand',
+      body
     );
   },
 
-  /** 支付订单 */
-  payOrder(orderId: number) {
-    return api.post<void>(`/v1/order/${orderId}/pay`);
-  },
-
-  /** 取消订单 */
   cancel(orderId: number, reason?: string) {
-    return api.post<void>(`/v1/order/${orderId}/cancel`, { reason });
+    return api.post<void>(`/v1/orders/${orderId}/cancel`, { reason });
   },
 
-  /** 开始服务 */
-  startService(orderId: number) {
-    return api.post<void>(`/v1/order/${orderId}/start`);
+  verify(orderId: number, code: string, phase: 'start' | 'complete' = 'start') {
+    return api.post<void>(`/v1/orders/${orderId}/verify`, { code, phase });
   },
 
-  /** 获取核销码 */
   getVerifyCode(orderId: number) {
-    return api.get<{ verifyCode: string; expireTime: string }>(`/v1/order/${orderId}/verify-code`);
+    return api.get<{ verifyCode: string; expireTime: string }>(`/v1/orders/${orderId}/verify-code`);
   },
 
-  /** 刷新核销码 */
   refreshVerifyCode(orderId: number) {
-    return api.put<{ verifyCode: string; expireTime: string }>(`/v1/order/${orderId}/verify-code`);
+    return api.put<{ verifyCode: string; expireTime: string }>(`/v1/orders/${orderId}/verify-code`);
   },
 
-  /** 核销（卖家输入核销码完成服务） */
-  verify(orderId: number, verifyCode: string) {
-    return api.post<void>(`/v1/order/${orderId}/verify`, { verifyCode });
-  },
-
-  /** 确认完成（买家确认服务完成） */
-  confirmOrder(orderId: number) {
-    return api.post<void>(`/v1/order/${orderId}/confirm`);
-  },
-
-  /** 发起争议 */
   disputeOrder(orderId: number, reason?: string) {
-    return api.post<void>(`/v1/order/${orderId}/dispute`, { reason });
+    return api.post<void>(`/v1/orders/${orderId}/dispute`, { reason });
   },
 
-  /** 退款 */
-  refundOrder(orderId: number, reason?: string) {
-    return api.post<void>(`/v1/order/${orderId}/refund`, { reason });
+  refundOrder(orderId: number, reason: string) {
+    return api.post<void>(`/v1/orders/${orderId}/refund`, { reason });
   },
 
-  /** 获取订单关联的评价 */
   getOrderReview(orderId: number) {
     return api.get<Record<string, unknown>>(`/v1/orders/${orderId}/review`);
   },

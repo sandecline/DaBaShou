@@ -16,7 +16,7 @@
 
 ## 技术栈
 
-- **后端**: Spring Boot 4.x, Java  21, MyBatis-Plus, Redis, WebSocket
+- **后端**: Spring Boot 3.x, Java  21, MyBatis-Plus, Redis, WebSocket
 - **前端**: Vue 3, Element Plus, Vite, TypeScript, Pinia
 - **数据库**: MySQL 8.0
 - **缓存**: Redis
@@ -152,13 +152,13 @@ DaBaShou/
 - `sys_role` - 角色表
 - `sys_permission` - 权限表
 - `sys_file` - 文件表
-- `sys_notification` - 通知表
+- `dbs_notification` - 通知表
 - `sys_log` - 日志表
 - `sys_config` - 系统配置表
 
 ### 信用评价表
-- `user_campus_auth` - 校园认证表
-- `user_trust_score_log` - 信任分变动记录表
+- `dbs_user_campus_auth` - 校园认证表
+- `dbs_user_trust_score_log` - 信任分变动记录表
 - `credit_violation` - 违规记录表
 - `credit_appeal` - 申诉记录表
 

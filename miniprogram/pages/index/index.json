@@ -9,6 +9,8 @@
     "demand-card": "../../components/demand-card/demand-card"
   },
   "navigationBarTitleText": "搭把手",
+  "navigationBarBackgroundColor": "#0052d9",
+  "navigationBarTextStyle": "white",
   "enablePullDownRefresh": true,
   "backgroundColor": "#f5f5f5"
 }

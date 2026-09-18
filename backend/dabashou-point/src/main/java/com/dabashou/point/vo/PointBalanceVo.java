@@ -8,6 +8,8 @@ public class PointBalanceVo {
     private Integer available;
     private Integer frozen;
     private Integer total;
+    private Integer totalEarned;
+    private Integer totalSpent;
 
     public PointBalanceVo() {
     }
@@ -24,4 +26,8 @@ public class PointBalanceVo {
     public void setFrozen(Integer frozen) { this.frozen = frozen; }
     public Integer getTotal() { return total; }
     public void setTotal(Integer total) { this.total = total; }
+    public Integer getTotalEarned() { return totalEarned; }
+    public void setTotalEarned(Integer totalEarned) { this.totalEarned = totalEarned; }
+    public Integer getTotalSpent() { return totalSpent; }
+    public void setTotalSpent(Integer totalSpent) { this.totalSpent = totalSpent; }
 }

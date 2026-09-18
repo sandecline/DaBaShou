@@ -37,7 +37,7 @@
 | proficiency | TINYINT 1-了解 2-熟悉 3-精通 4-专家 |
 | description | VARCHAR(500) |
 
-### user_campus_auth — 校园认证表
+### dbs_user_campus_auth — 校园认证表
 | 字段 | 说明 |
 |---|---|
 | auth_type | 认证类型 |
@@ -205,24 +205,23 @@
 
 ## 八、统计模块
 
-### dbs_stat_daily — 每日统计表
+### stat_daily_summary — 每日统计汇总表
 | date | new_user_count | active_user_count | new_order_count | completed_order_count | point_inflow | point_outflow |
 
-### dbs_stat_skill_heat — 技能热度表
+### stat_skill_heat — 技能热度表
 | skill_tag_id | shelf_count | demand_count | order_count | heat_score | stat_date |
 
 ## 九、系统表
 
 | 表名 | 说明 |
 |---|---|
-| sys_user | 系统用户 |
 | sys_role | 角色 |
+| sys_permission | 权限 |
 | sys_user_role | 用户-角色关联 |
-| sys_menu | 菜单 |
-| sys_role_menu | 角色-菜单关联 |
-| sys_dict_type | 字典类型 |
-| sys_dict_data | 字典数据 |
+| sys_role_permission | 角色-权限关联 |
 | sys_file | 文件管理 |
+| sys_config | 系统配置 |
+| sys_log | 操作日志 |
 
 ## 命名规范
 - 表名: dbs_前缀 或 credit_前缀（小写下划线）

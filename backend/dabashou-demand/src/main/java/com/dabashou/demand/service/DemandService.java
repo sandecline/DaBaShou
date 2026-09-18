@@ -56,4 +56,9 @@ public interface DemandService extends IService<Demand> {
      * 揭榜接单 — 返回接单结果信息，前端续调订单模块完成订单创建
      */
     AcceptResultVo accept(Long userId, Long demandId, AcceptDto dto);
+
+    /**
+     * 匹配可接单的服务货架
+     */
+    java.util.List<java.util.Map<String, Object>> matchShelves(Long demandId, int limit);
 }

@@ -16,11 +16,11 @@
             <div class="review-header">
               <div class="reviewer-info">
                 <el-avatar :size="40" :src="activeTab === 'received' ? review.reviewerAvatar : review.reviewerAvatar">
-                  {{ ((activeTab === 'received' ? review.reviewerName : review.revieweeName) || '?').charAt(0) }}
+                  {{ ((activeTab === 'received' ? review.reviewerNickname : review.revieweeNickname) || '?').charAt(0) }}
                 </el-avatar>
                 <div>
                   <div class="reviewer-name">
-                    {{ activeTab === 'received' ? review.reviewerName : review.revieweeName }}
+                    {{ activeTab === 'received' ? review.reviewerNickname : review.revieweeNickname }}
                   </div>
                   <div class="review-time">{{ formatDateTime(review.createTime) }}</div>
                 </div>
@@ -31,7 +31,7 @@
             </div>
             <p class="review-content">{{ review.content || '用户未填写评价内容' }}</p>
             <div class="review-footer">
-              <span class="review-order">订单：{{ review.orderTitle || '#' + review.orderId }}</span>
+              <span class="review-order">订单：#{{ review.orderId }}</span>
             </div>
           </div>
         </div>
@@ -54,7 +54,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getMySentReviews } from '@/api/credit'
+import { getMySentReviews, getMyReceivedReviews } from '@/api/credit'
 import { formatDateTime } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -70,10 +70,10 @@ const activeTab = ref<'received' | 'sent'>('received')
 async function fetchData() {
   loading.value = true
   try {
-    const result = await getMySentReviews({
-      page: page.value,
-      size: size.value,
-      type: activeTab.value,
+    const apiFn = activeTab.value === 'received' ? getMyReceivedReviews : getMySentReviews
+    const result = await apiFn({
+      pageNum: page.value,
+      pageSize: size.value,
     })
     reviews.value = result.list
     total.value = result.total

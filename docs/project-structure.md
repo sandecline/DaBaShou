@@ -480,8 +480,8 @@ DaBaShou/
 
 #### 用户相关
 - `dbs_user` - 用户表
-- `user_campus_auth` - 校园认证表
-- `user_trust_score_log` - 信任分变动记录表
+- `dbs_user_campus_auth` - 校园认证表
+- `dbs_user_trust_score_log` - 信任分变动记录表
 
 #### 技能相关
 - `dbs_skill_category` - 技能分类表
@@ -514,7 +514,7 @@ DaBaShou/
 
 #### 系统相关
 - `sys_file` - 文件表
-- `sys_notification` - 通知表
+- `dbs_notification` - 通知表
 - `sys_log` - 日志表
 - `sys_config` - 系统配置表
 

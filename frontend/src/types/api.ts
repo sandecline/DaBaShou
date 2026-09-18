@@ -9,7 +9,11 @@ export interface ApiResponse<T = any> {
 export interface PageParams {
   pageNum?: number
   pageSize?: number
-  [key: string]: any
+  sortBy?: string
+  keyword?: string
+  status?: number
+  categoryId?: number
+  role?: string
 }
 
 /** 分页结果 */
@@ -191,6 +195,10 @@ export interface DemandItemVo {
 
 export interface DemandDetailVo extends DemandItemVo {
   description: string
+  longitude: number
+  latitude: number
+  campus: string
+  building: string
 }
 
 export interface DemandMatchVo {
@@ -210,10 +218,10 @@ export type OrderStatus = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 export const OrderStatusMap: Record<OrderStatus, string> = {
   0: '已取消',
-  1: '待支付',
-  2: '已支付（担保中）',
+  1: '待核销',
+  2: '已支付（担保中）',  // 兼容旧流程
   3: '服务中',
-  4: '待确认',
+  4: '待确认',           // 兼容旧流程
   5: '已完成',
   6: '已退款',
   7: '争议中',
@@ -233,21 +241,15 @@ export const OrderStatusColor: Record<OrderStatus, string> = {
 export interface OrderItemVo {
   id: number
   orderNo: string
-  buyerId?: number
-  buyerNickname?: string
-  sellerId?: number
-  sellerNickname?: string
-  title: string
-  skillTagName?: string
+  buyerId: number
+  buyerNickname: string
+  sellerId: number
+  sellerNickname: string
+  shelfTitle: string
+  tagName: string
   pointAmount: number
   status: OrderStatus | number
-  statusDesc: string
-  counterpartNickname?: string
-  counterpartAvatar?: string
-  buyerName?: string
-  buyerAvatar?: string
-  sellerName?: string
-  sellerAvatar?: string
+  statusName: string
   createTime: string
 }
 
@@ -269,20 +271,39 @@ export interface OrderDetailVo {
   orderNo: string
   buyerId: number
   buyerNickname: string
+  buyerAvatar: string
   sellerId: number
   sellerNickname: string
-  title: string
-  skillTagName: string
+  sellerAvatar: string
+  shelfId: number
+  shelfTitle: string
+  demandId: number | null
+  tagName: string
   pointAmount: number
   status: OrderStatus
-  statusDesc: string
+  statusName: string
   verifyCode: string | null
   verifyCodeExpire: string | null
+  buyerVerifyCode: string | null
+  sellerVerifyCode: string | null
+  buyerConfirmCode: string | null
+  sellerConfirmCode: string | null
+  buyerVerified: boolean
+  sellerVerified: boolean
+  buyerConfirmed: boolean
+  sellerConfirmed: boolean
+  refundRequester: string | null
+  refundAgreed: boolean
+  timeSlotId: number | null
   serviceStartTime: string | null
   serviceEndTime: string | null
   completeTime: string | null
   cancelTime: string | null
   cancelReason: string | null
+  disputeReason: string | null
+  disputeExplain: string | null
+  disputeUserId: number | null
+  disputeTime: string | null
   remark: string
   createTime: string
 }
@@ -293,9 +314,10 @@ export interface VerifyCodeVo {
 }
 
 export interface PayResultVo {
-  status: number
+  orderId: number
+  orderNo: string
+  pointAmount: number
   verifyCode: string
-  verifyCodeExpire: string
 }
 
 // ---- 积分 ----
@@ -304,7 +326,6 @@ export interface PointBalanceVo {
   available: number
   frozen: number
   total: number
-  balance: number
 }
 
 export interface PointTransVo {
@@ -357,44 +378,43 @@ export interface GuaranteePoolVo {
 export interface ReviewVo {
   id: number
   orderId: number
-  orderTitle?: string
-  rating: number
-  content: string
-  images: string[]
-  isAnonymous: boolean
   reviewerId: number
-  revieweeId?: number
-  reviewerName?: string
-  revieweeName?: string
   reviewerNickname: string
   reviewerAvatar: string
+  revieweeId: number
+  revieweeNickname: string
+  revieweeAvatar: string
+  rating: number
+  content: string
+  images: string
+  isAnonymous: number
   createTime: string
 }
 
 export interface ViolationVo {
   id: number
-  targetUserId: number
-  targetNickname: string
+  userId: number
   orderId: number | null
-  type: number
-  typeDesc: string
-  reason: string
-  description?: string
-  evidence: string[]
+  type: string
+  description: string
+  penaltyScore: number
+  reporterId: number
+  reporterNickname: string
   status: number
-  statusDesc: string
-  handleResult: string | null
   createTime: string
 }
 
 export interface AppealVo {
   id: number
-  violationId: number
+  violationId: number | null
+  orderId: number | null
+  violationType: string
   reason: string
-  evidence: string[]
+  evidenceFileId: string | null
   status: number
   statusDesc: string
   reviewRemark: string | null
+  reviewTime: string | null
   createTime: string
 }
 
@@ -437,35 +457,29 @@ export interface ChatMessageVo {
 // ---- 统计 ----
 
 export interface PersonalOverviewVo {
-  totalOrders?: number
+  totalOrders: number
   completedOrders: number
-  totalIncome?: number
-  totalExpense?: number
-  trustScore?: number
-  skillCount?: number
-  reviewCount?: number
-  publishedSkills?: number
-  publishedDemands?: number
+  totalIncome: number
+  totalExpense: number
+  trustScore: number
+  skillCount: number
+  reviewCount: number
+  publishedSkills: number
+  publishedDemands: number
   takenOrders: number
-  averageRating?: number
-  totalSkills?: number
-  orderCompletionRate?: number
-  totalPointsEarned?: number
-  totalPointsSpent?: number
+  averageRating: number
+  totalPointsEarned: number
+  totalPointsSpent: number
 }
 
 export interface TrendItem {
   date: string
   value: number
-  newUsers?: number
-  newOrders?: number
-  completedOrders?: number
 }
 
 export interface SkillHeatItem {
   skillTagId: number
   skillTagName: string
-  tagName?: string
   shelfCount: number
   demandCount: number
   orderCount: number
@@ -486,12 +500,17 @@ export interface UserAdminVo {
   nickname: string
   avatar: string
   phone: string
+  email?: string
   pointBalance: number
   trustScore: number
   campus: string
+  building?: string
+  bio?: string
   status: number
+  roles?: string
+  campusAuthStatus?: number | null
   createTime: string
-  lastLoginTime: string
+  lastLoginTime?: string | null
 }
 
 export interface OrderAdminVo {
@@ -502,30 +521,40 @@ export interface OrderAdminVo {
   sellerId: number
   sellerNickname: string
   title: string
+  shelfTitle: string
+  demandTitle: string
   pointAmount: number
   status: number
-  statusDesc: string
+  statusName: string
+  remark: string
+  cancelReason: string
+  disputeReason: string
+  disputeExplain: string
+  disputeUserId: number | null
+  disputeUserNickname: string | null
+  disputeTime: string | null
   createTime: string
 }
 
 export interface AdminOverviewVo {
   totalUsers: number
   totalOrders: number
-  completedOrders?: number
+  completedOrders: number
   totalShelves: number
-  totalSkills?: number
+  totalSkills: number
   totalDemands: number
   todayNewUsers: number
   todayNewOrders: number
-  orderCompletionRate?: number
-  totalPointsInCirculation?: number
+  orderCompletionRate: number
+  totalPointsInCirculation: number
+  pendingAppeals: number
+  disputingOrders: number
+  pendingCampusAuths: number
+  pendingViolations: number
 }
 
 export interface DailyTrendItem {
   date: string
-  newUsers?: number
-  newOrders?: number
-  completedOrders?: number
   newUserCount: number
   activeUserCount: number
   newOrderCount: number
@@ -536,8 +565,7 @@ export interface DailyTrendItem {
 
 export interface UserActiveItem {
   date: string
-  activeUsers: number
-  newUsers: number
+  value: number
 }
 
 export interface TrustDistributionItem {
@@ -576,13 +604,13 @@ export type Appeal = AppealVo
 export type OverviewStat = PersonalOverviewVo
 export type SkillHeatItemItem = SkillHeatItem
 export type PointTransactionType = number
-export type TrustLevel = '新人' | '靠谱' | '金牌' | string
+export type TrustLevel = 'newcomer' | 'reliable' | 'gold'
 
-export const ViolationTypeMap: Record<number, string> = {
-  1: '虚假服务',
-  2: '态度恶劣',
-  3: '违规交易',
-  4: '其他',
+export const ViolationTypeMap: Record<string, string> = {
+  fake_service: '虚假服务',
+  bad_attitude: '态度恶劣',
+  illegal_trade: '违规交易',
+  other: '其他',
 }
 
 export type ViolationType = keyof typeof ViolationTypeMap

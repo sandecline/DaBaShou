@@ -28,7 +28,7 @@
     <view class="login-card">
       <t-icon name="user-circle" size="96rpx" color="#ffffff" />
       <text class="login-tip">登录后查看更多内容</text>
-      <button class="login-btn" bindtap="onLogin">微信一键登录</button>
+      <button class="login-btn" bindtap="onLogin">账号登录</button>
     </view>
   </view>
 

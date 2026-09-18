@@ -5,7 +5,6 @@
 
 import { pointService } from '../../../services/point';
 import type { PointAccount, PointTransaction } from '../../../types/point';
-import { POINT_TRANSACTION_TYPE_MAP } from '../../../types/point';
 import type { PageResult } from '../../../types/api-response';
 
 /** 筛选 Tab */
@@ -14,6 +13,14 @@ type FilterTab = 'all' | 'income' | 'expense';
 interface FilterTabItem {
   label: string;
   value: FilterTab;
+}
+
+/** 收入类型集合 */
+const INCOME_TYPES = [1, 4, 5, 7];
+
+/** 判断是否为收入类型 */
+function isIncomeType(type: number): boolean {
+  return INCOME_TYPES.includes(type);
 }
 
 Page({
@@ -49,7 +56,7 @@ Page({
   /** 加载积分账户信息 */
   async loadAccount() {
     try {
-      const res = await pointService.getAccount();
+      const res = await pointService.getBalance();
       const data = res.data || res;
       this.setData({ account: data as PointAccount });
     } catch (err) {
@@ -70,30 +77,35 @@ Page({
         loadingMore: !reset && pageNum > 1,
       });
 
-      const params: { pageNum: number; pageSize: number; type?: number } = {
+      const params: { pageNum: number; pageSize: number; type?: string } = {
         pageNum: newPageNum,
         pageSize,
       };
 
-      // 根据筛选 Tab 设置 type 参数
-      // 1-收入, 2-支出, 3-冻结, 4-解冻, 5-系统奖励, 6-系统扣除
       if (activeTab === 'income') {
-        // 收入和系统奖励归为收入类
-        // 匹配 1(收入)+5(系统奖励)
-        params.type = 1;
+        params.type = '1,5,7';
       } else if (activeTab === 'expense') {
-        // 支出和系统扣除归为支出类
-        params.type = 2;
+        params.type = '2,6';
       }
 
       const res = await pointService.getTransactions(params);
       const result = (res.data || res) as PageResult<PointTransaction>;
-      const list = result.records || [];
+      const rawList = result.list || [];
+      const list = rawList.map((t) => {
+        const isIncome = isIncomeType(t.type);
+        return {
+          ...t,
+          _isIncome: isIncome,
+          _iconClass: isIncome ? 'icon-income' : 'icon-expense',
+          _amountClass: isIncome ? 'amount-income' : 'amount-expense',
+          _prefix: isIncome ? '+' : '-',
+        };
+      });
 
       this.setData({
         transactions: reset ? list : [...this.data.transactions, ...list],
-        pageNum: newPageNum,
-        hasMore: list.length >= pageSize,
+        pageNum: newPageNum + 1,
+        hasMore: list.length === pageSize,
         empty: reset && list.length === 0,
         loading: false,
         loadingMore: false,
@@ -128,15 +140,5 @@ Page({
     this.loadTransactions(true).finally(() => {
       wx.stopPullDownRefresh();
     });
-  },
-
-  /** 获取交易类型描述 */
-  getTypeLabel(type: number): string {
-    return POINT_TRANSACTION_TYPE_MAP[type as keyof typeof POINT_TRANSACTION_TYPE_MAP] || '未知';
-  },
-
-  /** 判断是否为收入类型 */
-  isIncomeType(type: number): boolean {
-    return [1, 4, 5].includes(type);
   },
 });

@@ -1,7 +1,6 @@
 <template>
-  <div class="skill-card card-hover" @click="goDetail">
-    <!-- 技能图片区域 -->
-    <div class="card-image">
+  <article class="skill-card card-hover" @click="goDetail">
+    <div class="card-media">
       <img
         v-if="skill.coverImage"
         :src="skill.coverImage"
@@ -9,44 +8,41 @@
         class="cover-img"
       />
       <div v-else class="cover-placeholder" :class="placeholderClass">
-        <span class="placeholder-emoji">{{ categoryEmoji }}</span>
+        <el-icon><component :is="categoryIcon" /></el-icon>
       </div>
 
-      <!-- 标签叠加层 -->
-      <div class="image-tags">
-        <span v-if="skill.locationType === 2" class="tag tag-offline">线下</span>
-        <span v-else-if="skill.locationType === 1" class="tag tag-online">线上</span>
-        <span class="tag tag-trust" v-if="(skill.trustScore ?? 0) >= 4">金牌</span>
+      <div class="media-tags">
+        <span class="tag">{{ locationText }}</span>
+        <span v-if="(skill.trustScore ?? 0) >= 4" class="tag tag-trust">金牌</span>
       </div>
     </div>
 
-    <!-- 卡片信息 -->
     <div class="card-body">
-      <!-- 标题 -->
-      <h3 class="card-title text-ellipsis-2">{{ skill.title }}</h3>
-
-      <!-- 底部：价格 + 用户 -->
-      <div class="card-footer">
-        <div class="price-row">
-          <span class="price-value">{{ skill.pointPrice }}</span>
-          <span class="price-unit">积分</span>
-          <span v-if="skill.durationMinutes" class="duration">/ {{ skill.durationMinutes }}分钟</span>
-        </div>
-
-        <div class="user-row">
-          <el-avatar :size="18" :src="skill.userAvatar" class="user-avatar">
-            {{ (skill.userName || '?').charAt(0) }}
-          </el-avatar>
-          <span class="user-name text-ellipsis">{{ skill.userName || '匿名' }}</span>
-        </div>
+      <div class="title-row">
+        <h3 class="card-title text-ellipsis-2">{{ skill.title }}</h3>
+        <span v-if="skill.distance != null" class="distance">{{ formatDistance(skill.distance) }}</span>
       </div>
 
-      <!-- 距离标签 -->
-      <div class="card-meta" v-if="skill.distance != null">
-        <span class="meta-tag">{{ formatDistance(skill.distance) }}</span>
+      <div class="meta-row">
+        <span>{{ skill.tagName || skill.skillTagName || '技能服务' }}</span>
+        <span v-if="skill.durationMinutes">{{ skill.durationMinutes }} 分钟</span>
+      </div>
+
+      <div class="footer-row">
+        <div class="user-row">
+          <el-avatar :size="24" :src="skill.userAvatar || skill.avatar">
+            {{ displayName.charAt(0) }}
+          </el-avatar>
+          <span class="user-name text-ellipsis">{{ displayName }}</span>
+        </div>
+
+        <div class="price-row">
+          <strong>{{ skill.pointPrice }}</strong>
+          <span>积分</span>
+        </div>
       </div>
     </div>
-  </div>
+  </article>
 </template>
 
 <script setup lang="ts">
@@ -61,25 +57,32 @@ const props = defineProps<{
 
 const router = useRouter()
 
-const categoryEmojiMap: Record<string, string> = {
-  '学业辅导': '📚', '维修帮忙': '🔧', '设计美工': '🎨',
-  '技术支持': '💻', '运动陪练': '⚽', '音乐艺术': '🎵',
-  '生活服务': '🏠', '其他': '✨',
-}
+const displayName = computed(() => props.skill.userName || props.skill.nickname || '匿名同学')
 
-const categoryEmoji = computed(() => {
-  const tagName = props.skill.tagName ?? ''
-  return categoryEmojiMap[tagName] || '💡'
+const locationText = computed(() => {
+  if (props.skill.locationType === 2) return '线下'
+  if (props.skill.locationType === 1) return '线上'
+  return '不限'
+})
+
+const categoryIcon = computed(() => {
+  const name = props.skill.tagName || props.skill.skillTagName || ''
+  if (name.includes('学')) return 'Reading'
+  if (name.includes('修')) return 'Tools'
+  if (name.includes('设计') || name.includes('美')) return 'Brush'
+  if (name.includes('技术')) return 'Monitor'
+  if (name.includes('运动')) return 'Trophy'
+  return 'Briefcase'
 })
 
 const placeholderClass = computed(() => {
-  const map: Record<string, string> = {
-    '学业辅导': 'bg-blue', '维修帮忙': 'bg-orange', '设计美工': 'bg-purple',
-    '技术支持': 'bg-teal', '运动陪练': 'bg-green', '音乐艺术': 'bg-pink',
-    '生活服务': 'bg-amber',
-  }
-  const tagName = props.skill.tagName ?? ''
-  return map[tagName] || 'bg-gray'
+  const name = props.skill.tagName || props.skill.skillTagName || ''
+  if (name.includes('学')) return 'bg-blue'
+  if (name.includes('修')) return 'bg-orange'
+  if (name.includes('设计') || name.includes('美')) return 'bg-purple'
+  if (name.includes('技术')) return 'bg-teal'
+  if (name.includes('运动')) return 'bg-green'
+  return 'bg-gray'
 })
 
 function goDetail() {
@@ -89,160 +92,144 @@ function goDetail() {
 
 <style scoped lang="scss">
 .skill-card {
-  background: #FFFFFF;
+  overflow: hidden;
+  border: 1px solid $color-border;
   border-radius: $radius-md;
-  overflow: hidden;
+  background: #ffffff;
   cursor: pointer;
-  box-shadow: $shadow-sm;
 }
 
-// ========== 图片区域 ==========
-.card-image {
+.card-media {
   position: relative;
-  width: 100%;
-  padding-top: 75%; // 4:3 比例
-  background: $color-bg;
+  aspect-ratio: 16 / 10;
+  background: $color-surface-muted;
   overflow: hidden;
-
-  .cover-img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .cover-placeholder {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .placeholder-emoji {
-      font-size: 36px;
-      opacity: 0.8;
-    }
-
-    &.bg-blue   { background: #E3F2FD; }
-    &.bg-orange { background: #FFF3E0; }
-    &.bg-purple { background: #F3E5F5; }
-    &.bg-teal   { background: #E0F2F1; }
-    &.bg-green  { background: #E8F5E9; }
-    &.bg-pink   { background: #FCE4EC; }
-    &.bg-amber  { background: #FFF8E1; }
-    &.bg-gray   { background: #F5F5F5; }
-  }
 }
 
-.image-tags {
+.cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 42px;
+
+  &.bg-blue { background: #dbeafe; color: #1d4ed8; }
+  &.bg-orange { background: #ffedd5; color: #c2410c; }
+  &.bg-purple { background: #ede9fe; color: #6d28d9; }
+  &.bg-teal { background: #ccfbf1; color: #0f766e; }
+  &.bg-green { background: #dcfce7; color: #15803d; }
+  &.bg-gray { background: #f1f5f9; color: #64748b; }
+}
+
+.media-tags {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 10px;
+  left: 10px;
   display: flex;
-  gap: 4px;
-
-  .tag {
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
-
-    &-offline {
-      background: rgba(255, 107, 0, 0.85);
-      color: #FFFFFF;
-    }
-
-    &-online {
-      background: rgba(66, 165, 245, 0.85);
-      color: #FFFFFF;
-    }
-
-    &-trust {
-      background: rgba(255, 195, 0, 0.9);
-      color: #333333;
-    }
-  }
+  gap: 6px;
 }
 
-// ========== 信息区域 ==========
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: $radius-round;
+  background: rgba(15, 23, 42, 0.74);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 750;
+  backdrop-filter: blur(8px);
+}
+
+.tag-trust {
+  background: rgba(245, 158, 11, 0.92);
+}
+
 .card-body {
-  padding: 8px 10px 10px;
-  position: relative;
+  padding: 14px;
+}
+
+.title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .card-title {
-  font-size: 13px;
-  font-weight: 600;
+  flex: 1;
+  min-height: 42px;
+  margin: 0;
   color: $color-text-primary;
+  font-size: 15px;
+  font-weight: 760;
   line-height: 1.4;
-  margin: 0 0 8px;
-  min-height: 36px;
 }
 
-.card-footer {
+.distance {
+  flex-shrink: 0;
+  color: $color-text-placeholder;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.meta-row {
   display: flex;
-  align-items: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  color: $color-text-secondary;
+  font-size: 12px;
+
+  span {
+    min-width: 0;
+    padding: 4px 8px;
+    border-radius: $radius-round;
+    background: $color-surface-muted;
+  }
+}
+
+.footer-row {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-}
-
-.price-row {
-  display: flex;
-  align-items: baseline;
-  gap: 1px;
-
-  .price-value {
-    font-size: 17px;
-    font-weight: 800;
-    color: #FF6B00;
-    line-height: 1;
-  }
-
-  .price-unit {
-    font-size: 10px;
-    color: $color-text-secondary;
-    margin-left: 1px;
-  }
-
-  .duration {
-    font-size: 10px;
-    color: $color-text-placeholder;
-    margin-left: 2px;
-  }
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .user-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  max-width: 80px;
-
-  .user-avatar {
-    flex-shrink: 0;
-  }
-
-  .user-name {
-    font-size: 10px;
-    color: $color-text-secondary;
-    max-width: 50px;
-  }
+  gap: 7px;
+  min-width: 0;
 }
 
-.card-meta {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
+.user-name {
+  color: $color-text-secondary;
+  font-size: 13px;
+  font-weight: 650;
+}
 
-  .meta-tag {
-    font-size: 10px;
-    color: $color-text-placeholder;
-    background: $color-bg;
-    padding: 1px 6px;
-    border-radius: 4px;
+.price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  flex-shrink: 0;
+  color: $color-accent;
+
+  strong {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: 700;
   }
 }
 </style>

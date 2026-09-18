@@ -28,8 +28,8 @@
           <VerifyCode
             v-if="order?.verifyCode"
             mode="display"
-            :code="order!.verifyCode!"
-            :expire-at="order!.verifyCodeExpire"
+            :code="order?.verifyCode ?? ''"
+            :expire-at="order?.verifyCodeExpire"
           />
 
           <div v-else class="verify-expired">
@@ -73,10 +73,10 @@ async function handleVerify(code: string) {
     if (order.value?.status === 4) {
       // 待确认 -> 确认完成
       await confirmOrder(Number(props.id))
-      ElMessage.success('确认完成！积分已结算 🎉')
+      ElMessage.success('确认完成！积分已结算给卖家 🎉')
     } else {
-      await verifyOrder(Number(props.id), code)
-      ElMessage.success('核销成功！积分已结算 🎉')
+      await verifyOrder(Number(props.id), code, 'start')
+      ElMessage.success('核销成功！等待买家确认后积分将结算')
     }
     router.push('/order')
   } catch (err: any) {

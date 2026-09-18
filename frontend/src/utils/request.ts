@@ -49,7 +49,7 @@ instance.interceptors.response.use(
 
     if (code === 200) {
       if (data && typeof data === 'object' && !Array.isArray(data)) {
-        const pageData = data as Record<string, any>
+        const pageData = data as Record<string, unknown>
         if (Array.isArray(pageData.list) && !Array.isArray(pageData.records)) {
           pageData.records = pageData.list
         }
@@ -57,7 +57,7 @@ instance.interceptors.response.use(
           pageData.list = pageData.records
         }
       }
-      return data as any
+      return data
     }
 
     // token过期
@@ -86,21 +86,21 @@ instance.interceptors.response.use(
     } else {
       ElMessage.error(msg || '网络异常，请检查网络连接')
     }
-    return Promise.reject(error)
+    return Promise.reject(new Error(msg || error.message))
   },
 )
 
 const request = {
-  get<T = any>(url: string, params?: any, config?: AxiosRequestConfig): Promise<T> {
+  get<T = unknown>(url: string, params?: any, config?: AxiosRequestConfig): Promise<T> {
     return instance.get(url, { params, ...config })
   },
-  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  post<T = unknown>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     return instance.post(url, data, config)
   },
-  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  put<T = unknown>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
     return instance.put(url, data, config)
   },
-  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
+  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     return instance.delete(url, config)
   },
 }

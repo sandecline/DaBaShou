@@ -25,12 +25,26 @@ public class Order extends BaseEntity {
     private Integer status;
     private String verifyCode;
     private LocalDateTime verifyCodeExpire;
+    private String buyerVerifyCode;
+    private String sellerVerifyCode;
+    private String buyerConfirmCode;
+    private String sellerConfirmCode;
+    private Integer buyerVerified;
+    private Integer sellerVerified;
+    private Integer buyerConfirmed;
+    private Integer sellerConfirmed;
+    private String refundRequester;
+    private Integer refundAgreed;
     private Long timeSlotId;
     private LocalDateTime serviceStartTime;
     private LocalDateTime serviceEndTime;
     private LocalDateTime completeTime;
     private LocalDateTime cancelTime;
     private String cancelReason;
+    private String disputeReason;
+    private String disputeExplain;
+    private Long disputeUserId;
+    private LocalDateTime disputeTime;
     private String remark;
     // id / createTime / updateTime / deleted 继承自 BaseEntity
 
@@ -56,6 +70,26 @@ public class Order extends BaseEntity {
     public void setVerifyCode(String verifyCode) { this.verifyCode = verifyCode; }
     public LocalDateTime getVerifyCodeExpire() { return verifyCodeExpire; }
     public void setVerifyCodeExpire(LocalDateTime verifyCodeExpire) { this.verifyCodeExpire = verifyCodeExpire; }
+    public String getBuyerVerifyCode() { return buyerVerifyCode; }
+    public void setBuyerVerifyCode(String buyerVerifyCode) { this.buyerVerifyCode = buyerVerifyCode; }
+    public String getSellerVerifyCode() { return sellerVerifyCode; }
+    public void setSellerVerifyCode(String sellerVerifyCode) { this.sellerVerifyCode = sellerVerifyCode; }
+    public String getBuyerConfirmCode() { return buyerConfirmCode; }
+    public void setBuyerConfirmCode(String buyerConfirmCode) { this.buyerConfirmCode = buyerConfirmCode; }
+    public String getSellerConfirmCode() { return sellerConfirmCode; }
+    public void setSellerConfirmCode(String sellerConfirmCode) { this.sellerConfirmCode = sellerConfirmCode; }
+    public Integer getBuyerVerified() { return buyerVerified; }
+    public void setBuyerVerified(Integer buyerVerified) { this.buyerVerified = buyerVerified; }
+    public Integer getSellerVerified() { return sellerVerified; }
+    public void setSellerVerified(Integer sellerVerified) { this.sellerVerified = sellerVerified; }
+    public Integer getBuyerConfirmed() { return buyerConfirmed; }
+    public void setBuyerConfirmed(Integer buyerConfirmed) { this.buyerConfirmed = buyerConfirmed; }
+    public Integer getSellerConfirmed() { return sellerConfirmed; }
+    public void setSellerConfirmed(Integer sellerConfirmed) { this.sellerConfirmed = sellerConfirmed; }
+    public String getRefundRequester() { return refundRequester; }
+    public void setRefundRequester(String refundRequester) { this.refundRequester = refundRequester; }
+    public Integer getRefundAgreed() { return refundAgreed; }
+    public void setRefundAgreed(Integer refundAgreed) { this.refundAgreed = refundAgreed; }
     public Long getTimeSlotId() { return timeSlotId; }
     public void setTimeSlotId(Long timeSlotId) { this.timeSlotId = timeSlotId; }
     public LocalDateTime getServiceStartTime() { return serviceStartTime; }
@@ -68,6 +102,14 @@ public class Order extends BaseEntity {
     public void setCancelTime(LocalDateTime cancelTime) { this.cancelTime = cancelTime; }
     public String getCancelReason() { return cancelReason; }
     public void setCancelReason(String cancelReason) { this.cancelReason = cancelReason; }
+    public String getDisputeReason() { return disputeReason; }
+    public void setDisputeReason(String disputeReason) { this.disputeReason = disputeReason; }
+    public String getDisputeExplain() { return disputeExplain; }
+    public void setDisputeExplain(String disputeExplain) { this.disputeExplain = disputeExplain; }
+    public Long getDisputeUserId() { return disputeUserId; }
+    public void setDisputeUserId(Long disputeUserId) { this.disputeUserId = disputeUserId; }
+    public LocalDateTime getDisputeTime() { return disputeTime; }
+    public void setDisputeTime(LocalDateTime disputeTime) { this.disputeTime = disputeTime; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
 }

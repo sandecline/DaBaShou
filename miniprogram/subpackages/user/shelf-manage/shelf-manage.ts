@@ -5,6 +5,7 @@
 
 import { shelfService } from '../../../services/shelf';
 import type { SkillShelf, ShelfStatus } from '../../../types/shelf';
+import { ensureLogin } from '../../../utils/auth';
 
 /** 货架状态中文映射 */
 const SHELF_STATUS_MAP: Record<ShelfStatus, string> = {
@@ -43,19 +44,21 @@ Page({
     actionLoading: false,
   },
 
-  onLoad() {
+  async onLoad() {
+    const loggedIn = await ensureLogin();
+    if (!loggedIn) return;
     this.loadMyShelf();
   },
 
   onShow() {
-    this.setData({ pageNum: 1, hasMore: true });
+    // 从详情页返回时刷新列表
+    this.setData({ hasMore: true });
     this.loadMyShelf();
   },
 
   // 上拉加载更多
   onReachBottom() {
     if (!this.data.hasMore) return;
-    this.setData({ pageNum: this.data.pageNum + 1 });
     this.loadMyShelf(true);
   },
 
@@ -63,11 +66,13 @@ Page({
 
   async loadMyShelf(append = false) {
     try {
-      const { pageNum, pageSize } = this.data;
+      const { pageSize } = this.data;
+      const pageNum = append ? this.data.pageNum : 1;
       const res = await shelfService.getMine({ pageNum, pageSize });
       const newList = append ? [...this.data.shelfList, ...res.data.list] : res.data.list;
       this.setData({
         shelfList: newList,
+        pageNum: pageNum + 1,
         hasMore: newList.length < res.data.total,
         loading: false,
       });
@@ -80,20 +85,25 @@ Page({
   // ===== 跳转发布 =====
 
   goPublish() {
-    wx.navigateTo({ url: '/pages/publish/publish' });
+    wx.navigateTo({ url: '/pages/publish-skill/publish-skill' });
   },
 
   // ===== 编辑技能 =====
 
   onEdit(e: WechatMiniprogram.CustomEvent) {
     const { id } = e.currentTarget.dataset;
-    wx.navigateTo({ url: `/pages/publish/publish?editId=${id}` });
+    wx.navigateTo({ url: `/pages/publish-skill/publish-skill?editId=${id}` });
   },
 
   // ===== 上下架 =====
 
   onToggleStatus(e: WechatMiniprogram.CustomEvent) {
     const { id, status } = e.currentTarget.dataset;
+    // 仅允许在上架(1)与下架(0)之间切换，审核中(2)不可操作
+    if (status !== 0 && status !== 1) {
+      wx.showToast({ title: '审核中商品不可操作', icon: 'none' });
+      return;
+    }
     const newStatus: ShelfStatus = status === 1 ? 0 : 1;
     this.setData({
       showToggleDialog: true,
@@ -121,8 +131,7 @@ Page({
         title: toggleTargetStatus === 1 ? '已上架' : '已下架',
         icon: 'success',
       });
-      this.setData({ showToggleDialog: false });
-      this.setData({ pageNum: 1, hasMore: true });
+      this.setData({ showToggleDialog: false, hasMore: true });
       this.loadMyShelf();
     } catch (err) {
       console.error('上下架失败:', err);
