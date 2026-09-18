@@ -18,7 +18,11 @@
             class="search-input"
             @keyup.enter="search"
             @clear="search"
-          />
+          >
+            <template #append>
+              <el-button @click="search">搜索</el-button>
+            </template>
+          </el-input>
         </div>
       </div>
 
@@ -67,7 +71,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { searchDemands } from '@/api/demand'
-import { getUserInfo } from '@/utils/auth'
 import DemandCard from '@/components/common/DemandCard.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -83,24 +86,18 @@ const statusFilter = ref(0)
 const onlyUrgent = ref(false)
 const sortBy = ref('latest')
 
-function isNotMine(item: DemandItemVo): boolean {
-  const userId = getUserInfo()?.id
-  return !userId || item.userId !== userId
-}
-
 async function fetchData() {
   loading.value = true
   try {
     const result = await searchDemands({
-      page: page.value,
-      size: size.value,
+      pageNum: page.value,
+      pageSize: size.value,
       keyword: keyword.value || undefined,
       status: statusFilter.value || undefined,
       urgent: onlyUrgent.value ? 1 : undefined,
-      sort: sortBy.value,
+      sortBy: sortBy.value,
     })
     list.value = result.list
-      .filter(isNotMine)
       .map((d) => ({
         ...d,
         isUrgent: d.deadline ? new Date(d.deadline).getTime() - Date.now() < 12 * 3600 * 1000 : false,

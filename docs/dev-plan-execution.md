@@ -143,7 +143,7 @@
 |---|---|---|
 | C1-1 评价提交 | POST /api/v1/credit/reviews；仅 order status=5 可评；(order_id, reviewer_id) UK 防重 | 重复评价返回 409 |
 | C1-2 评价列表 | GET /api/v1/credit/reviews/{userId}；GET /api/v1/credit/reviews/me | 返回评价列表、平均分 |
-| C1-3 违规记录 | POST /api/v1/credit/violations（举报）；GET /api/v1/credit/violations | 违规记录触发 trust_score 扣分并写 user_trust_score_log |
+| C1-3 违规记录 | POST /api/v1/credit/violations（举报）；GET /api/v1/credit/violations | 违规记录触发 trust_score 扣分并写 dbs_user_trust_score_log |
 | C1-4 申诉处理 | POST /api/v1/credit/appeals；GET /api/v1/credit/appeals/{id}；管理员审批 | 申诉状态流转：待审核 → 通过/拒绝 |
 | C1-5 信任分计算 | 评价星级加权 + 违规扣分；计算后更新 dbs_user.trust_score | 评分变化有日志记录 |
 

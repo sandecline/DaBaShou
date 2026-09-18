@@ -20,16 +20,16 @@ Page({
         if (res.confirm) {
           try {
             // 保留登录态相关的 key
-            const token = wx.getStorageSync('access_token');
+            const token = wx.getStorageSync('dabashou_token');
             const refreshToken = wx.getStorageSync('refresh_token');
-            const userInfo = wx.getStorageSync('user_info');
+            const userInfo = wx.getStorageSync('dabashou_user');
 
             wx.clearStorageSync();
 
             // 恢复登录态
-            if (token) wx.setStorageSync('access_token', token);
+            if (token) wx.setStorageSync('dabashou_token', token);
             if (refreshToken) wx.setStorageSync('refresh_token', refreshToken);
-            if (userInfo) wx.setStorageSync('user_info', userInfo);
+            if (userInfo) wx.setStorageSync('dabashou_user', userInfo);
 
             wx.showToast({ title: '缓存已清除', icon: 'success' });
           } catch (err) {
@@ -60,6 +60,8 @@ Page({
   onConfirmLogout() {
     this.setData({ showLogoutDialog: false });
     logout();
+    wx.showToast({ title: '已退出登录', icon: 'none' });
+    wx.switchTab({ url: '/pages/mine/mine' });
   },
 
   /** 取消退出登录 */

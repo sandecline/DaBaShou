@@ -1,142 +1,186 @@
 <template>
-  <div class="admin-page">
-    <div class="admin-layout">
-      <Sidebar :menu-items="adminMenu" />
-      <div class="admin-content">
-        <div class="page-container">
-          <h2>系统配置</h2>
+  <AdminLayout
+    title="系统配置"
+    subtitle="调整积分、信任分、超时熔断和退改规则"
+  >
+    <template #actions>
+      <el-button :loading="loading" @click="loadConfig">重新读取</el-button>
+      <el-button type="primary" :loading="saving" @click="saveConfig">保存配置</el-button>
+    </template>
 
-          <div class="config-card">
-            <el-form :model="config" label-position="left" label-width="180px">
-              <h3>积分规则</h3>
-              <el-form-item label="注册赠送积分">
-                <el-input-number v-model="config.registerBonus" :min="0" :max="10000" />
-              </el-form-item>
-              <el-form-item label="好评加分">
-                <el-input-number v-model="config.goodReviewBonus" :min="0" :max="100" />
-              </el-form-item>
-              <el-form-item label="签到活跃奖励">
-                <el-input-number v-model="config.checkinBonus" :min="0" :max="100" />
-              </el-form-item>
+    <LoadingSpinner v-if="loading" text="加载配置..." />
 
-              <el-divider />
-              <h3>信任分阈值</h3>
-              <el-form-item label="新人上限">
-                <el-input-number v-model="config.newcomerMax" :min="0" :max="5" :precision="1" :step="0.1" />
-              </el-form-item>
-              <el-form-item label="靠谱上限">
-                <el-input-number v-model="config.reliableMax" :min="0" :max="5" :precision="1" :step="0.1" />
-              </el-form-item>
+    <div v-else class="config-grid">
+      <section class="config-panel">
+        <h2>站点信息</h2>
+        <el-form label-position="top">
+          <el-form-item label="平台名称">
+            <el-input v-model="config['site.name']" placeholder="搭把手" />
+          </el-form-item>
+          <el-form-item label="运营公告">
+            <el-input v-model="config['site.notice']" type="textarea" :rows="3" placeholder="展示给管理员的运营备注" />
+          </el-form-item>
+        </el-form>
+      </section>
 
-              <el-divider />
-              <h3>超时熔断</h3>
-              <el-form-item label="待支付超时(分钟)">
-                <el-input-number v-model="config.payTimeout" :min="1" :max="120" />
-              </el-form-item>
-              <el-form-item label="核销码有效期(分钟)">
-                <el-input-number v-model="config.verifyCodeTimeout" :min="1" :max="120" />
-              </el-form-item>
-              <el-form-item label="服务确认超时(天)">
-                <el-input-number v-model="config.confirmTimeout" :min="1" :max="30" />
-              </el-form-item>
+      <section class="config-panel">
+        <h2>积分规则</h2>
+        <el-form label-position="top">
+          <el-form-item label="注册送积分">
+            <el-input-number v-model="config['point.register_bonus']" :min="0" :max="10000" />
+          </el-form-item>
+          <el-form-item label="签到奖励">
+            <el-input-number v-model="config['point.sign_in_reward']" :min="0" :max="100" />
+          </el-form-item>
+        </el-form>
+      </section>
 
-              <el-divider />
-              <h3>退改扣分比例</h3>
-              <el-form-item label="买家取消扣除比例(%)">
-                <el-input-number v-model="config.buyerCancelPenalty" :min="0" :max="100" />
-              </el-form-item>
-              <el-form-item label="卖家取消扣除比例(%)">
-                <el-input-number v-model="config.sellerCancelPenalty" :min="0" :max="100" />
-              </el-form-item>
+      <section class="config-panel">
+        <h2>信任分规则</h2>
+        <el-form label-position="top">
+          <el-form-item label="新人上限">
+            <el-input-number v-model="config['credit.newcomer_max']" :min="0" :max="5" :precision="1" :step="0.1" />
+          </el-form-item>
+          <el-form-item label="靠谱上限">
+            <el-input-number v-model="config['credit.reliable_max']" :min="0" :max="5" :precision="1" :step="0.1" />
+          </el-form-item>
+          <el-form-item label="违规扣分">
+            <el-input-number v-model="config['credit.violation_penalty']" :min="0" :max="5" :precision="1" :step="0.1" />
+          </el-form-item>
+        </el-form>
+      </section>
 
-              <el-form-item>
-                <el-button type="primary" :loading="saving" @click="saveConfig">
-                  {{ saving ? '保存中...' : '保存配置' }}
-                </el-button>
-              </el-form-item>
-            </el-form>
-          </div>
-        </div>
-      </div>
+      <section class="config-panel">
+        <h2>履约熔断</h2>
+        <el-form label-position="top">
+          <el-form-item label="待支付超时（分钟）">
+            <el-input-number v-model="config['order.auto_cancel_minutes']" :min="1" :max="180" />
+          </el-form-item>
+          <el-form-item label="核销码有效期（分钟）">
+            <el-input-number v-model="config['order.verify_code_minutes']" :min="1" :max="180" />
+          </el-form-item>
+          <el-form-item label="服务确认超时（小时）">
+            <el-input-number v-model="config['order.confirm_timeout_hours']" :min="1" :max="720" />
+          </el-form-item>
+        </el-form>
+      </section>
+
+      <section class="config-panel">
+        <h2>退改扣除</h2>
+        <el-form label-position="top">
+          <el-form-item label="买家取消扣除比例（%）">
+            <el-input-number v-model="config['order.buyer_cancel_penalty']" :min="0" :max="100" />
+          </el-form-item>
+          <el-form-item label="卖家取消扣除比例（%）">
+            <el-input-number v-model="config['order.seller_cancel_penalty']" :min="0" :max="100" />
+          </el-form-item>
+        </el-form>
+      </section>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getSystemConfig, updateSystemConfig } from '@/api/admin'
-import Sidebar from '@/components/layout/Sidebar.vue'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
-const adminMenu = [
-  { path: '/admin/users', title: '用户管理', icon: 'User' },
-  { path: '/admin/orders', title: '订单管理', icon: 'Document' },
-  { path: '/admin/credit', title: '信用管理', icon: 'Warning' },
-  { path: '/admin/system', title: '系统配置', icon: 'Setting' },
-  { path: '/admin/stat', title: '数据统计', icon: 'DataAnalysis' },
-]
-
+const loading = ref(false)
 const saving = ref(false)
-const config = reactive({
-  registerBonus: 100,
-  goodReviewBonus: 10,
-  checkinBonus: 5,
-  newcomerMax: 2.9,
-  reliableMax: 3.9,
-  payTimeout: 15,
-  verifyCodeTimeout: 30,
-  confirmTimeout: 7,
-  buyerCancelPenalty: 10,
-  sellerCancelPenalty: 20,
+const config = reactive<Record<string, any>>({
+  'site.name': '搭把手',
+  'site.notice': '',
+  'point.register_bonus': 100,
+  'point.sign_in_reward': 5,
+  'credit.newcomer_max': 2.9,
+  'credit.reliable_max': 3.9,
+  'credit.violation_penalty': 0.5,
+  'order.auto_cancel_minutes': 15,
+  'order.verify_code_minutes': 30,
+  'order.confirm_timeout_hours': 168,
+  'order.buyer_cancel_penalty': 10,
+  'order.seller_cancel_penalty': 20,
 })
 
+const numericKeys = new Set([
+  'point.register_bonus',
+  'point.sign_in_reward',
+  'credit.newcomer_max',
+  'credit.reliable_max',
+  'credit.violation_penalty',
+  'order.auto_cancel_minutes',
+  'order.verify_code_minutes',
+  'order.confirm_timeout_hours',
+  'order.buyer_cancel_penalty',
+  'order.seller_cancel_penalty',
+])
+
 async function loadConfig() {
+  loading.value = true
   try {
     const result = await getSystemConfig()
-    if (result) Object.assign(config, result)
-  } catch { /* handled */ }
+    Object.entries(result || {}).forEach(([key, value]) => {
+      config[key] = numericKeys.has(key) ? Number(value) : value
+    })
+  } catch {
+    // handled
+  } finally {
+    loading.value = false
+  }
+}
+
+function validateConfig() {
+  if (Number(config['credit.newcomer_max']) >= Number(config['credit.reliable_max'])) {
+    ElMessage.warning('新人上限必须小于靠谱上限')
+    return false
+  }
+  return true
 }
 
 async function saveConfig() {
+  if (!validateConfig()) return
   saving.value = true
   try {
     await updateSystemConfig({ ...config })
     ElMessage.success('系统配置已保存')
-  } catch { /* handled */ } finally { saving.value = false }
+  } catch {
+    // handled
+  } finally {
+    saving.value = false
+  }
 }
 
-onMounted(loadConfig)
+loadConfig()
 </script>
 
 <style scoped lang="scss">
-.admin-layout {
-  display: flex;
-  min-height: calc(100vh - #{$header-offset});
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.admin-content {
-  flex: 1;
-  overflow-x: auto;
-}
-
-h2 {
-  margin: 0 0 $spacing-md;
-  font-size: $font-size-xl;
-  font-weight: 700;
-}
-
-.config-card {
-  max-width: 700px;
+.config-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   background: #ffffff;
-  border-radius: $radius-lg;
-  padding: $spacing-xl;
-  border: 1px solid $color-border;
+  padding: 20px;
 
-  h3 {
-    font-size: $font-size-base;
-    font-weight: 600;
-    margin: 0 0 $spacing-md;
-    color: $color-primary;
+  h2 {
+    margin: 0 0 16px;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+}
+
+@media (max-width: 900px) {
+  .config-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

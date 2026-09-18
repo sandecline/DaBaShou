@@ -159,7 +159,7 @@
 **技术要点**：
 - 内容：UserController（login / register / profile / update / campus-auth）、UserService、UserMapper、User 实体（继承 BaseEntity）、DTO（RegisterDto / LoginDto / UpdateProfileDto）、VO（UserVo）
 - DB：dbs_user 已存在，补充 deleted 字段（配合逻辑删除）
-- 逻辑：注册 BCrypt 加密 + 初始积分 100 + 信任分 5.0；登录返回 JWT；校园认证写 user_campus_auth
+- 逻辑：注册 BCrypt 加密 + 初始积分 100 + 信任分 5.0；登录返回 JWT；校园认证写 dbs_user_campus_auth
 - 安全：密码脱敏（日志不打印明文）、参数校验（@Valid）、防重放（X-Idempotent-Token 头）
 
 **验收标准**：
@@ -205,7 +205,7 @@
 **技术要点**：
 - ReviewController（submit / list）、ViolationController（list / appeal）、AppealController（submit / approve / reject）
 - 逻辑：评价仅订单 status=5 可提交，且 (order_id, reviewer_id) UK 防重；评价不可修改（不提供 update 接口）；违规写 credit_violation 并按规则扣信任分
-- 信任分计算：违规扣分写 user_trust_score_log，触发 trust_score 更新
+- 信任分计算：违规扣分写 dbs_user_trust_score_log，触发 trust_score 更新
 
 **验收标准**：
 - [ ] 同一订单同一用户重复评价返回 409

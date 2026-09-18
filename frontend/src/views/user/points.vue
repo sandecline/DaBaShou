@@ -95,7 +95,7 @@ async function fetchBalance() {
     const result = await getBalance()
     balance.available = result.available
     balance.frozen = result.frozen
-    balance.total = result.balance
+    balance.total = result.total
   } catch {
     // handled
   }
@@ -105,8 +105,8 @@ async function fetchTransactions() {
   txLoading.value = true
   try {
     const result = await getTransactions({
-      page: txPage.value,
-      size: txSize.value,
+      pageNum: txPage.value,
+      pageSize: txSize.value,
       type: typeFilter.value,
     })
     transactions.value = result.list

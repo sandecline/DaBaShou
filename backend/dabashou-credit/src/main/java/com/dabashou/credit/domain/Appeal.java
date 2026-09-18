@@ -15,6 +15,7 @@ public class Appeal {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long violationId;
+    private Long orderId;
     private Long appellantId;
     private String reason;
     private String evidenceFileId;
@@ -29,6 +30,8 @@ public class Appeal {
     public void setId(Long id) { this.id = id; }
     public Long getViolationId() { return violationId; }
     public void setViolationId(Long violationId) { this.violationId = violationId; }
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
     public Long getAppellantId() { return appellantId; }
     public void setAppellantId(Long appellantId) { this.appellantId = appellantId; }
     public String getReason() { return reason; }

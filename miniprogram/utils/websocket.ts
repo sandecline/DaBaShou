@@ -4,11 +4,9 @@
  * 功能：心跳保活、断线重连、消息分发
  */
 
-// TODO: 替换为真实 WebSocket 地址
-const WS_URL = 'wss://api.dabashou.example.com/ws/chat';
+import { WS_BASE_URL } from '../config/api';
 
-// 与 request.ts 保持一致：后端未就绪时跳过真实 WS 连接
-const MOCK_MODE = true;
+const WS_URL = WS_BASE_URL;
 
 /** 重连配置 */
 const RECONNECT_MAX_RETRIES = 5;
@@ -49,25 +47,19 @@ const state: WsState = {
  * 建立 WebSocket 连接
  */
 export function connect(): void {
-  // Mock 模式：无真实后端，跳过连接（聊天发送走 HTTP mock）
-  if (MOCK_MODE) {
-    console.log('[WS] Mock 模式，跳过连接');
-    return;
-  }
-
   if (state.task && state.connected) {
     console.log('[WS] 已连接，跳过');
     return;
   }
 
-  const token = wx.getStorageSync('access_token');
+  const token = wx.getStorageSync('dabashou_token');
   if (!token) {
     console.warn('[WS] 未登录，跳过连接');
     return;
   }
 
   const task = wx.connectSocket({
-    url: WS_URL,
+    url: `${WS_URL}?token=${encodeURIComponent(token)}`,
     header: {
       Authorization: `Bearer ${token}`,
     },
@@ -76,6 +68,7 @@ export function connect(): void {
     },
     fail(err) {
       console.error('[WS] 连接发起失败:', err);
+      state.task = null;
       scheduleReconnect();
     },
   });
@@ -119,12 +112,6 @@ export function connect(): void {
  * 发送消息（高层接口，断线时暂存到队列）
  */
 export function send(type: string, data: unknown): void {
-  // Mock 模式：直接丢弃（发送已通过 HTTP 完成）
-  if (MOCK_MODE) {
-    console.log('[WS] Mock 模式，跳过发送:', type);
-    return;
-  }
-
   const payload = JSON.stringify({ type, data });
 
   if (state.connected && state.task) {

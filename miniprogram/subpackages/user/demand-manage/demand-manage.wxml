@@ -1,0 +1,62 @@
+<view class="demand-manage-page">
+  <!-- 加载中 -->
+  <t-loading wx:if="{{loading}}" theme="circular" size="40px" text="加载中..." />
+
+  <!-- 空状态 -->
+  <view wx:elif="{{demandList.length === 0}}" class="empty-section">
+    <t-empty icon="folder" description="暂无求助，去发布一个吧" />
+    <t-button theme="primary" size="medium" bindtap="goPublish">发布求助</t-button>
+  </view>
+
+  <!-- 求助列表 -->
+  <view wx:else class="demand-list">
+    <t-swipe-cell
+      wx:for="{{demandList}}"
+      wx:key="id"
+      right="{{[{text: '取消', className: 'swipe-btn-danger', id: 'cancel'}]}}"
+      bind:click="onCancelDemand"
+      data-id="{{item.id}}"
+    >
+      <view class="demand-card" data-id="{{item.id}}" bindtap="onDemandTap">
+        <!-- 标题 + 状态标签 -->
+        <view class="demand-card__header">
+          <text class="demand-card__title">{{item.title}}</text>
+          <t-tag
+            theme="{{DEMAND_STATUS_THEME[item.status] || 'default'}}"
+            size="small"
+            variant="light"
+          >
+            {{DEMAND_STATUS_MAP[item.status] || '未知'}}
+          </t-tag>
+        </view>
+
+        <!-- 信息行 -->
+        <view class="demand-card__info">
+          <text class="demand-card__category">{{item.skillTagName || item.tagName}}</text>
+          <text class="demand-card__price">{{item.pointReward}} 积分</text>
+        </view>
+
+        <!-- 时间 -->
+        <view class="demand-card__time">
+          <text>{{item.createTime}}</text>
+        </view>
+      </view>
+    </t-swipe-cell>
+  </view>
+
+  <!-- 发布按钮 -->
+  <view class="publish-bar">
+    <t-button theme="primary" size="large" block bindtap="goPublish">发布新求助</t-button>
+  </view>
+
+  <!-- 取消确认弹窗 -->
+  <t-dialog
+    visible="{{showCancelDialog}}"
+    title="确认取消"
+    content="取消后该求助将无法被其他用户看到，是否继续？"
+    confirm-btn="确认"
+    cancel-btn="再想想"
+    bind:confirm="onConfirmCancel"
+    bind:cancel="onCloseCancelDialog"
+  />
+</view>

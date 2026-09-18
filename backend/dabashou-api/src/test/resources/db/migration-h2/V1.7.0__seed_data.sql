@@ -6,7 +6,10 @@
 -- 依赖: V1.0.0 (dbs_user, dbs_skill_category, dbs_skill_tag, dbs_demand)
 -- 变更记录:
 --   V1.7.0 (2026-06-29) - 初始种子数据
+-- 说明: 此脚本的种子数据会被 V1.18.0 完全替代，关闭外键检查避免早期引用错误
 -- ============================================================================
+
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ==================== 1. 管理员 ====================
 -- 密码: admin123
@@ -98,3 +101,5 @@ INSERT INTO `dbs_demand` (`user_id`, `skill_tag_id`, `title`, `description`, `po
 -- DELETE FROM `dbs_skill_tag` WHERE id BETWEEN 1 AND 35;
 -- DELETE FROM `dbs_skill_category` WHERE id BETWEEN 1 AND 7;
 -- DELETE FROM `dbs_user` WHERE username IN ('admin', 'zhangsan', 'lisi', 'wangwu');
+
+SET FOREIGN_KEY_CHECKS = 1;

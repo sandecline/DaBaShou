@@ -48,7 +48,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getChatSessions } from '@/api/message'
+import { getChatSessions, markChatSessionRead } from '@/api/message'
+import { useMessageStore } from '@/stores/message'
 import { fromNow } from '@/utils/format'
 import ChatView from './chat.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -58,17 +59,29 @@ import type { Conversation } from '@/types/api'
 const loading = ref(true)
 const conversations = ref<Conversation[]>([])
 const activeConv = ref<number | null>(null)
+const messageStore = useMessageStore()
 
-function selectConv(targetUserId: number) {
+async function selectConv(targetUserId: number) {
   activeConv.value = targetUserId
+  const conv = conversations.value.find((item) => item.otherUserId === targetUserId)
+  const unread = conv?.unreadCount || 0
+  if (conv && unread > 0) {
+    conv.unreadCount = 0
+    messageStore.decrementUnread(unread)
+  }
+  try {
+    await markChatSessionRead(targetUserId)
+  } catch {
+    // request.ts 已统一提示，列表本地状态保持已读体验。
+  }
 }
 
 onMounted(async () => {
   try {
-    const result = await getChatSessions({ page: 1, size: 50 })
+    const result = await getChatSessions({ pageNum: 1, pageSize: 50 })
     conversations.value = result.list
     if (result.list.length > 0) {
-      activeConv.value = result.list[0].otherUserId
+      await selectConv(result.list[0].otherUserId)
     }
   } catch {
     // handled

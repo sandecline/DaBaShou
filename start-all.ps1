@@ -1,12 +1,14 @@
 # ============================================================================
 # DaBaShou Service Manager
-# Usage: .\start-all.ps1 [start|stop|restart|status]
+# Usage: .\start-all.ps1 [start|stop|restart|status] [-DbUsername root] [-DbPassword ""]
 #
 # How to use after opening PowerShell:
 #   1. Go to the project directory:
 #        cd C:\Users\Li\Desktop\Dabashou
 #   2. Start all services:
 #        .\start-all.ps1 start
+#      If your local MySQL root account has a password:
+#        .\start-all.ps1 restart -DbPassword "your-password"
 #      or simply:
 #        .\start-all.ps1
 #   3. Check service status:
@@ -28,6 +30,8 @@
 # ============================================================================
 param(
     [string]$Action = "start",
+    [string]$DbUsername = "root",
+    [string]$DbPassword = "",
     [switch]$NoPause
 )
 
@@ -84,9 +88,17 @@ function Start-Backend {
         Write-Host "(JAR not found)" -NoNewline -ForegroundColor Red
         return $false
     }
+    $backendArgs = @(
+        "-jar",
+        "$($jar.FullName)",
+        "--spring.profiles.active=dev",
+        "--server.port=9090",
+        "--spring.datasource.username=$DbUsername",
+        "--spring.datasource.password=$DbPassword"
+    )
     $proc = Start-Process -FilePath "java" `
-        -ArgumentList "-jar", "$($jar.FullName)", "--spring.profiles.active=dev", "--server.port=9090" `
-        -NoNewWindow -PassThru `
+        -ArgumentList $backendArgs `
+        -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput "$LogDir\backend.log" `
         -RedirectStandardError "$LogDir\backend-error.log"
     $proc.Id | Out-File "$LogDir\backend.pid"
@@ -104,7 +116,7 @@ function Start-Frontend {
     $proc = Start-Process -FilePath "npm.cmd" `
         -ArgumentList "run", "dev", "--", "--port", "5173", "--host" `
         -WorkingDirectory "$ProjectRoot\frontend" `
-        -NoNewWindow -PassThru `
+        -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput "$LogDir\frontend.log" `
         -RedirectStandardError "$LogDir\frontend-error.log"
     $proc.Id | Out-File "$LogDir\frontend.pid"
@@ -124,8 +136,8 @@ function Stop-ByPidFile($pf) {
 $G = @(
     @{ N="MySQL"; P=3306; D=@(); S={}; T={}; H="tcp:3306"; L="$LogDir\mysql.log"; E=$true },
     @{ N="Redis"; P=6379; D=@("MySQL"); S={ Start-Redis }; T={ Get-Process redis-server -EA 0 | Stop-Process -Force }; H="tcp:6379"; L="$LogDir\redis.log"; E=$true },
-    @{ N="Backend"; P=9090; D=@("MySQL","Redis"); S={ Start-Backend }; T={ Stop-ByPidFile "$LogDir\backend.pid"; Get-Process java -EA 0 | Where-Object { $_.Id -ne $PID } | Stop-Process -Force }; H="http:localhost:9090/doc.html"; L="$LogDir\backend.log"; E=$true },
-    @{ N="Frontend"; P=5173; D=@("Backend"); S={ Start-Frontend }; T={ Stop-ByPidFile "$LogDir\frontend.pid"; Get-Process node -EA 0 | Where-Object { $_.CommandLine -like "*vite*" } | Stop-Process -Force }; H="http:localhost:5173"; L="$LogDir\frontend.log"; E=$true }
+    @{ N="Backend"; P=9090; D=@("MySQL","Redis"); S={ Start-Backend }; T={ Stop-ByPidFile "$LogDir\backend.pid" }; H="http:localhost:9090/doc.html"; L="$LogDir\backend.log"; E=$true },
+    @{ N="Frontend"; P=5173; D=@("Backend"); S={ Start-Frontend }; T={ Stop-ByPidFile "$LogDir\frontend.pid" }; H="http:localhost:5173"; L="$LogDir\frontend.log"; E=$true }
 )
 
 # ======================== Utils ==============================
@@ -173,6 +185,7 @@ function Show-Usage {
     Write-Host "  Usage:" -ForegroundColor Cyan
     Write-Host "    cd C:\Users\Li\Desktop\Dabashou" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 start    # start MySQL check, Redis, backend, frontend" -ForegroundColor DarkGray
+    Write-Host "    .\start-all.ps1 restart -DbPassword ""your-password""  # use this only if MySQL root has a password" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 status   # show current status" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 restart  # stop then start again" -ForegroundColor DarkGray
     Write-Host "    .\start-all.ps1 stop     # stop services started by this script" -ForegroundColor DarkGray

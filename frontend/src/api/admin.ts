@@ -1,5 +1,5 @@
 ﻿import request from '@/utils/request'
-import type { UserAdminVo, OrderAdminVo, AdminOverviewVo, DailyTrendItem, UserActiveItem, TrustDistributionItem, CampusAuthAdminVo, ViolationVo, AppealVo, ReviewVo, PageResult, PageParams } from '@/types/api'
+import type { UserAdminVo, OrderAdminVo, AdminOverviewVo, DailyTrendItem, SkillHeatItem, UserActiveItem, TrustDistributionItem, CampusAuthAdminVo, ViolationVo, AppealVo, ReviewVo, PageResult, PageParams } from '@/types/api'
 import { normalizePageParams } from './_params'
 
 export function getAdminUserList(params: PageParams & { keyword?: string; status?: number }): Promise<PageResult<UserAdminVo>> {
@@ -30,8 +30,8 @@ export function adminArbitrateOrder(id: number, data: { result: string; reason: 
   return request.post('/admin/v1/orders/' + id + '/arbitrate', data)
 }
 
-export function adminHandleViolation(id: number, result: string): Promise<null> {
-  return request.post('/admin/v1/violations/' + id, { result })
+export function adminHandleViolation(id: number, data: { result: string; reason?: string }): Promise<null> {
+  return request.post('/admin/v1/violations/' + id, data)
 }
 
 export function adminHandleAppeal(id: number, data: { approved: boolean; reason: string }): Promise<null> {
@@ -60,6 +60,10 @@ export function getAdminUserActive(days?: number): Promise<UserActiveItem[]> {
 
 export function getAdminTrustDistribution(): Promise<TrustDistributionItem[]> {
   return request.get('/admin/v1/stats/trust-distribution')
+}
+
+export function getAdminSkillHeat(limit?: number): Promise<SkillHeatItem[]> {
+  return request.get('/admin/v1/stats/skills/heat', { limit })
 }
 
 export function exportAdminData(type: string): Promise<Blob> {

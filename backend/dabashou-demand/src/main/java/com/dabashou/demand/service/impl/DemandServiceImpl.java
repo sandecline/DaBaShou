@@ -43,12 +43,39 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long publish(Long userId, DemandDto dto) {
+        int reward = dto.getPointReward();
+
+        // 检查并冻结积分
+        Integer available = jdbcTemplate.queryForObject(
+                "SELECT available FROM dbs_point_account WHERE user_id = ?", Integer.class, userId);
+        if (available == null) {
+            throw new BusinessException(ErrorCode.CONFLICT, "积分账户不存在");
+        }
+        if (available < reward) {
+            throw new BusinessException(ErrorCode.CONFLICT, "积分不足，当前可用 " + available + " 积分");
+        }
+
+        // 扣减可用积分，增加冻结积分
+        int affected = jdbcTemplate.update(
+                "UPDATE dbs_point_account SET available = available - ?, frozen = frozen + ?, update_time = NOW() WHERE user_id = ? AND available >= ?",
+                reward, reward, userId, reward);
+        if (affected == 0) {
+            throw new BusinessException(ErrorCode.CONFLICT, "积分扣减失败，请重试");
+        }
+
+        // 记录积分流水
+        Integer balanceAfter = jdbcTemplate.queryForObject(
+                "SELECT available FROM dbs_point_account WHERE user_id = ?", Integer.class, userId);
+        jdbcTemplate.update(
+                "INSERT INTO dbs_point_transaction (user_id, type, amount, balance_after, description, create_time) VALUES (?, 3, ?, ?, ?, NOW())",
+                userId, reward, balanceAfter != null ? balanceAfter : 0, "发布需求冻结积分: " + dto.getTitle());
+
         Demand demand = new Demand();
         demand.setUserId(userId);
         demand.setSkillTagId(dto.getSkillTagId());
         demand.setTitle(dto.getTitle());
         demand.setDescription(dto.getDescription());
-        demand.setPointReward(dto.getPointReward());
+        demand.setPointReward(reward);
         if (dto.getDeadline() != null && !dto.getDeadline().isBlank()) {
             demand.setDeadline(LocalDateTime.parse(dto.getDeadline().replace(" ", "T")));
         }
@@ -60,7 +87,7 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
         demand.setCreateTime(LocalDateTime.now());
         demand.setUpdateTime(LocalDateTime.now());
         save(demand);
-        log.info("发布需求: demandId={}, userId={}, title={}", demand.getId(), userId, dto.getTitle());
+        log.info("发布需求: demandId={}, userId={}, title={}, 冻结积分={}", demand.getId(), userId, dto.getTitle(), reward);
         return demand.getId();
     }
 
@@ -99,7 +126,11 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
         demand.setStatus(0);
         demand.setUpdateTime(LocalDateTime.now());
         updateById(demand);
-        log.info("关闭需求: demandId={}, userId={}", demandId, userId);
+
+        // 解冻积分
+        unfreezeDemandPoints(demand);
+
+        log.info("关闭需求: demandId={}, userId={}, 解冻积分={}", demandId, userId, demand.getPointReward());
     }
 
     @Override
@@ -115,6 +146,12 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
         if (count != null && count > 0) {
             throw new BusinessException(ErrorCode.CONFLICT, "存在进行中的订单，无法删除");
         }
+
+        // 解冻积分（仅状态为开放中或进行中的需求才需要解冻）
+        if (demand.getStatus() != null && demand.getStatus() >= 1) {
+            unfreezeDemandPoints(demand);
+        }
+
         removeById(demandId);
         log.info("删除需求: demandId={}, userId={}", demandId, userId);
     }
@@ -222,6 +259,26 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
 
     // ========== 私有方法 ==========
 
+    /**
+     * 解冻需求关联的积分
+     */
+    private void unfreezeDemandPoints(Demand demand) {
+        int reward = demand.getPointReward();
+        Long userId = demand.getUserId();
+
+        // 增加可用积分，扣减少结积分
+        jdbcTemplate.update(
+                "UPDATE dbs_point_account SET available = available + ?, frozen = frozen - ?, update_time = NOW() WHERE user_id = ?",
+                reward, reward, userId);
+
+        // 记录积分流水
+        Integer balanceAfter = jdbcTemplate.queryForObject(
+                "SELECT available FROM dbs_point_account WHERE user_id = ?", Integer.class, userId);
+        jdbcTemplate.update(
+                "INSERT INTO dbs_point_transaction (user_id, type, amount, balance_after, description, create_time) VALUES (?, 4, ?, ?, ?, NOW())",
+                userId, reward, balanceAfter != null ? balanceAfter : 0, "需求关闭/删除，解冻积分: " + demand.getTitle());
+    }
+
     private Demand getByIdOrThrow(Long demandId) {
         Demand demand = getById(demandId);
         if (demand == null) throw new BusinessException(ErrorCode.NOT_FOUND, "需求不存在: " + demandId);
@@ -306,5 +363,26 @@ public class DemandServiceImpl extends ServiceImpl<DemandMapper, Demand> impleme
         String ph = String.join(", ", Collections.nCopies(tagIds.size(), "?"));
         return jdbcTemplate.queryForList("SELECT id, name FROM dbs_skill_tag WHERE id IN (" + ph + ")", tagIds.toArray())
                 .stream().collect(Collectors.toMap(r -> ((Number) r.get("id")).longValue(), r -> (String) r.get("name"), (a, b) -> a));
+    }
+
+    @Override
+    public List<Map<String, Object>> matchShelves(Long demandId, int limit) {
+        Demand demand = getByIdOrThrow(demandId);
+        Long skillTagId = demand.getSkillTagId();
+        if (skillTagId == null) {
+            return List.of();
+        }
+
+        // 查询匹配技能标签的已上架服务，按匹配度排序
+        String sql = "SELECT s.id AS shelfId, s.user_id AS userId, s.title, s.point_price AS pointPrice, " +
+                "u.nickname, u.avatar, u.trust_score AS trustScore, " +
+                "100 AS matchScore " +
+                "FROM dbs_skill_shelf s " +
+                "JOIN dbs_user u ON u.id = s.user_id " +
+                "WHERE s.skill_tag_id = ? AND s.status = 1 AND s.user_id != ? " +
+                "ORDER BY s.create_time DESC " +
+                "LIMIT ?";
+
+        return jdbcTemplate.queryForList(sql, skillTagId, demand.getUserId(), limit);
     }
 }

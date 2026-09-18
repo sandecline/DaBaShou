@@ -5,7 +5,7 @@
  */
 
 import { api } from '../utils/request';
-import type { ApiResponse, PageResult } from '../types/api-response';
+import type { PageResult } from '../types/api-response';
 import type { SkillShelf, ShelfDetail, ShelfSearchParams, SkillShelfForm, TimeSlot } from '../types/shelf';
 
 export const shelfService = {
@@ -51,7 +51,7 @@ export const shelfService = {
 
   /** 获取用户货架列表 */
   getUserShelves(userId: number, params: { pageNum: number; pageSize: number }) {
-    return api.get<PageResult<SkillShelf>>(`/v1/users/${userId}/shelves`, params as unknown as Record<string, unknown>);
+    return api.get<PageResult<SkillShelf>>(`/v1/shelves/users/${userId}/shelves`, params as unknown as Record<string, unknown>);
   },
 
   /** 设置空闲时段 */

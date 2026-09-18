@@ -5,12 +5,10 @@
  */
 import type { OrderStatus } from '../types/order';
 
-export const ORDER_STATUS_MAP: Record<OrderStatus, string> = {
+export const ORDER_STATUS_MAP: Record<number, string> = {
   0: '已取消',
-  1: '待支付',
-  2: '已支付',
+  1: '待核销',
   3: '服务中',
-  4: '待确认',
   5: '已完成',
   6: '已退款',
   7: '争议中',

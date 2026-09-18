@@ -1,6 +1,28 @@
-.order-list-page {
+q.order-list-page {
   min-height: 100vh;
   background: #f5f5f5;
+}
+
+.role-switch {
+  display: flex;
+  padding: 16rpx 24rpx;
+  gap: 16rpx;
+  background: #fff;
+}
+
+.role-item {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx 0;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 8rpx;
+  background: #f5f5f5;
+}
+
+.role-item.active {
+  color: #fff;
+  background: #FF6E14;
 }
 
 .order-list {
@@ -83,4 +105,10 @@
 .order-card__time {
   font-size: 24rpx;
   color: #999;
+}
+
+.order-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
 }

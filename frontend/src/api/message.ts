@@ -30,6 +30,10 @@ export function getChatMessages(targetUserId: number, params?: PageParams): Prom
   return request.get('/v1/chat/messages', normalizePageParams({ targetUserId, ...params }))
 }
 
+export function markChatSessionRead(targetUserId: number): Promise<null> {
+  return request.put('/v1/chat/messages/read', undefined, { params: { targetUserId } })
+}
+
 export function createChatSession(userId: number): Promise<number> {
   return request.post('/v1/chat/sessions', { userId })
 }

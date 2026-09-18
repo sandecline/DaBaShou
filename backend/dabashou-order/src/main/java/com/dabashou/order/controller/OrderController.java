@@ -2,8 +2,10 @@ package com.dabashou.order.controller;
 
 import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
+import com.dabashou.common.enums.ErrorCode;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.order.dto.*;
+import java.util.List;
 import com.dabashou.order.service.OrderService;
 import com.dabashou.order.vo.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,11 +42,11 @@ public class OrderController {
         return AjaxResult.ok(orderService.createOrderFromDemand(userId, dto));
     }
 
-    @Operation(summary = "订单列表")
+    @Operation(summary = "订单列表，status支持逗号分隔多值（如 1,3）")
     @GetMapping
     public AjaxResult<PageResult<OrderItemVo>> listOrders(
             @Parameter(description = "角色: buyer/seller") @RequestParam(required = false) String role,
-            @Parameter(description = "状态码") @RequestParam(required = false) Integer status,
+            @Parameter(description = "状态码，支持逗号分隔多值") @RequestParam(required = false) List<Integer> status,
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int pageSize) {
         Long userId = SecurityUtil.requireCurrentUserId();
@@ -65,18 +67,22 @@ public class OrderController {
         return AjaxResult.ok(orderService.getOrderStatus(userId, orderId));
     }
 
-    @Operation(summary = "支付订单(1→2)")
+    @Operation(summary = "支付订单(旧流程,已废弃)")
     @PostMapping("/{orderId}/pay")
+    @Deprecated
     public AjaxResult<PayResultVo> payOrder(
             @PathVariable Long orderId,
             @RequestHeader(value = "X-Idempotent-Token", required = false) String headerToken,
             @RequestParam(value = "idempotentToken", required = false) String paramToken) {
         Long userId = SecurityUtil.requireCurrentUserId();
         String idempotentToken = headerToken != null ? headerToken : paramToken;
+        if (idempotentToken == null || idempotentToken.isBlank()) {
+            return AjaxResult.fail(ErrorCode.BAD_REQUEST, "缺少幂等令牌，请重新提交");
+        }
         return AjaxResult.ok(orderService.payOrder(userId, orderId, idempotentToken));
     }
 
-    @Operation(summary = "取消订单(1→0)")
+    @Operation(summary = "取消订单")
     @PostMapping("/{orderId}/cancel")
     public AjaxResult<Void> cancelOrder(@PathVariable Long orderId, @Valid @RequestBody CancelDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
@@ -84,11 +90,11 @@ public class OrderController {
         return AjaxResult.ok();
     }
 
-    @Operation(summary = "开始服务(2→3)")
-    @RequestMapping(value = "/{orderId}/start", method = {RequestMethod.POST, RequestMethod.PUT})
-    public AjaxResult<Void> startService(@PathVariable Long orderId) {
+    @Operation(summary = "核销订单(双方核销码驱动)")
+    @PostMapping("/{orderId}/verify")
+    public AjaxResult<Void> verifyOrder(@PathVariable Long orderId, @Valid @RequestBody VerifyDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
-        orderService.startService(userId, orderId);
+        orderService.verifyOrder(userId, orderId, dto);
         return AjaxResult.ok();
     }
 
@@ -106,23 +112,7 @@ public class OrderController {
         return AjaxResult.ok(orderService.refreshVerifyCode(userId, orderId));
     }
 
-    @Operation(summary = "核销订单(3→4)")
-    @PostMapping("/{orderId}/verify")
-    public AjaxResult<Void> verifyOrder(@PathVariable Long orderId, @Valid @RequestBody VerifyDto dto) {
-        Long userId = SecurityUtil.requireCurrentUserId();
-        orderService.verifyOrder(userId, orderId, dto);
-        return AjaxResult.ok();
-    }
-
-    @Operation(summary = "买家确认完成(4→5)")
-    @PostMapping("/{orderId}/confirm")
-    public AjaxResult<Void> confirmOrder(@PathVariable Long orderId) {
-        Long userId = SecurityUtil.requireCurrentUserId();
-        orderService.confirmOrder(userId, orderId);
-        return AjaxResult.ok();
-    }
-
-    @Operation(summary = "发起争议(4→7)")
+    @Operation(summary = "发起争议(服务中或已完成)")
     @PostMapping("/{orderId}/dispute")
     public AjaxResult<Void> disputeOrder(@PathVariable Long orderId, @Valid @RequestBody DisputeDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();

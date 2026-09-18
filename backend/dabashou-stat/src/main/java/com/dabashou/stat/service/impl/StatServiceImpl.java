@@ -35,6 +35,16 @@ public class StatServiceImpl implements StatService {
 
         vo.setSkillCount(queryInt("SELECT COUNT(*) FROM dbs_user_skill WHERE user_id=?", userId));
         vo.setReviewCount(queryInt("SELECT COUNT(*) FROM dbs_review WHERE reviewee_id=?", userId));
+        vo.setPublishedSkills(queryInt("SELECT COUNT(*) FROM dbs_skill_shelf WHERE user_id=?", userId));
+        vo.setPublishedDemands(queryInt("SELECT COUNT(*) FROM dbs_demand WHERE user_id=?", userId));
+        vo.setTakenOrders(queryInt("SELECT COUNT(*) FROM dbs_order WHERE seller_id=?", userId));
+        vo.setAverageRating(queryBigDecimal("SELECT IFNULL(AVG(rating),0) FROM dbs_review WHERE reviewee_id=?", userId)
+                .setScale(1, RoundingMode.HALF_UP));
+
+        Map<String, Object> pointAccount = queryMap(
+                "SELECT total_earned, total_spent FROM dbs_point_account WHERE user_id=?", userId);
+        vo.setTotalPointsEarned(pointAccount == null ? 0 : toInt(pointAccount.get("total_earned")));
+        vo.setTotalPointsSpent(pointAccount == null ? 0 : toInt(pointAccount.get("total_spent")));
         return vo;
     }
 
@@ -133,6 +143,17 @@ public class StatServiceImpl implements StatService {
     private Integer queryInt(String sql, Object... args) {
         Number n = jdbc.queryForObject(sql, Number.class, args);
         return n != null ? n.intValue() : 0;
+    }
+
+    private BigDecimal queryBigDecimal(String sql, Object... args) {
+        Number n = jdbc.queryForObject(sql, Number.class, args);
+        return n == null ? BigDecimal.ZERO : toBigDecimal(n);
+    }
+
+    private Integer toInt(Object v) {
+        if (v == null) return 0;
+        if (v instanceof Number) return ((Number) v).intValue();
+        return Integer.parseInt(v.toString());
     }
 
     private BigDecimal toBigDecimal(Object v) {

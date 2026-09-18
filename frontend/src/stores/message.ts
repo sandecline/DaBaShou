@@ -28,6 +28,10 @@ export const useMessageStore = defineStore('message', () => {
     unreadCount.value++
   }
 
+  function decrementUnread(count: number) {
+    unreadCount.value = Math.max(unreadCount.value - count, 0)
+  }
+
   function setWsConnected(connected: boolean) {
     wsConnected.value = connected
   }
@@ -38,6 +42,7 @@ export const useMessageStore = defineStore('message', () => {
     fetchUnreadCount,
     setUnreadCount,
     incrementUnread,
+    decrementUnread,
     setWsConnected,
   }
 })

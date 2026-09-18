@@ -1,9 +1,14 @@
 /**
  * 搭把手 微信小程序 — App 入口
  * 全局生命周期、全局数据、事件总线
+ * 
+ * auth 与 frontend/src/utils/auth.ts 严格对齐：
+ * - 相同的存储键 dabashou_token / dabashou_user
+ * - 相同的 LoginVo 结构
  */
 
 import type { IAppOption } from './types/global';
+import { getToken, getUserInfo } from './utils/auth';
 
 App<IAppOption>({
   // ========== 全局数据 ==========
@@ -22,6 +27,7 @@ App<IAppOption>({
    */
   onLaunch() {
     console.log('[App] 搭把手小程序启动');
+    this.clearMockJunk();
     this.restoreSession();
   },
 
@@ -50,12 +56,12 @@ App<IAppOption>({
 
   /**
    * 恢复登录态
-   * 从 Storage 读取 token，验证有效性
+   * 与 Web 端一致的存储键
    */
   restoreSession() {
     try {
-      const token = wx.getStorageSync('access_token');
-      const userInfo = wx.getStorageSync('user_info');
+      const token = getToken();
+      const userInfo = getUserInfo();
       if (token) {
         this.globalData.token = token;
         this.globalData.isLoggedIn = true;
@@ -71,13 +77,30 @@ App<IAppOption>({
 
   /**
    * 清除登录态
+   * 与 Web 端一致的存储清理
    */
   clearSession() {
     this.globalData.token = '';
     this.globalData.userInfo = null;
     this.globalData.isLoggedIn = false;
-    wx.removeStorageSync('access_token');
+    wx.removeStorageSync('dabashou_token');
+    wx.removeStorageSync('dabashou_user');
     wx.removeStorageSync('refresh_token');
-    wx.removeStorageSync('user_info');
+  },
+
+  /**
+   * 清理旧 mock 模式残留数据
+   * mock JWT (exp=2100) 和 mock_refresh_jwt 会干扰真实认证
+   */
+  clearMockJunk() {
+    try {
+      const token = wx.getStorageSync('dabashou_token');
+      if (token && typeof token === 'string' && token.includes('mock_signature')) {
+        console.log('[App] 清理残留 mock JWT');
+        wx.removeStorageSync('dabashou_token');
+        wx.removeStorageSync('refresh_token');
+        wx.removeStorageSync('dabashou_user');
+      }
+    } catch { /* ignore */ }
   },
 });

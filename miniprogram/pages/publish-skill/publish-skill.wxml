@@ -3,36 +3,27 @@
   <!-- 分类选择区 -->
   <view class="section card">
     <text class="section-title">服务分类</text>
-    <view class="picker-row">
-      <view class="picker-item">
-        <text class="picker-label">大类</text>
-        <picker
-          mode="selector"
-          range="{{categories}}"
-          range-key="name"
-          value="{{categoryIndex}}"
-          bindchange="onCategoryChange"
-        >
-          <view class="picker-value">
-            <text>{{categories[categoryIndex] ? categories[categoryIndex].name : '请选择'}}</text>
-            <t-icon name="chevron-right" size="32rpx" color="#999" />
-          </view>
-        </picker>
+    <view class="category-grid">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-item {{categoryIndex === index ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="onCategoryTap"
+      >
+        <text class="category-icon">{{item._icon}}</text>
+        <text class="category-name">{{item.name}}</text>
       </view>
-      <view class="picker-item">
-        <text class="picker-label">标签</text>
-        <picker
-          mode="selector"
-          range="{{tags}}"
-          range-key="name"
-          value="{{tagIndex}}"
-          bindchange="onTagChange"
-        >
-          <view class="picker-value">
-            <text>{{tags[tagIndex] ? tags[tagIndex].name : '请选择'}}</text>
-            <t-icon name="chevron-right" size="32rpx" color="#999" />
-          </view>
-        </picker>
+    </view>
+    <view class="tag-row" wx:if="{{tags.length > 0}}">
+      <view
+        wx:for="{{tags}}"
+        wx:key="id"
+        class="tag-item {{tagIndex === index ? 'active' : ''}}"
+        data-index="{{index}}"
+        bindtap="onTagTap"
+      >
+        <text>{{item.name}}</text>
       </view>
     </view>
   </view>
@@ -106,6 +97,72 @@
         <t-radio value="{{3}}" label="均可" />
       </view>
     </t-radio-group>
+  </view>
+
+  <!-- 空闲时间 -->
+  <view class="section card">
+    <text class="section-title">空闲时间（选填）</text>
+    <text class="section-desc">设置你可以提供服务的具体时段，方便同学选择</text>
+
+    <!-- 已有时段列表 -->
+    <view wx:if="{{timeSlots.length > 0}}" class="timeslot-list">
+      <view
+        wx:for="{{timeSlots}}"
+        wx:key="index"
+        class="timeslot-row"
+      >
+        <view class="timeslot-info">
+          <t-icon name="time" size="32rpx" color="#0052d9" />
+          <text class="timeslot-text">{{item.date}} {{item.startTime}}-{{item.endTime}}</text>
+        </view>
+        <view class="timeslot-remove" data-index="{{index}}" catchtap="onRemoveTimeSlot">
+          <t-icon name="delete" size="36rpx" color="#d54941" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 添加新时段 -->
+    <view wx:if="{{addingTimeSlot}}" class="timeslot-editor">
+      <view class="timeslot-pickers">
+        <picker
+          class="timeslot-picker-item"
+          mode="date"
+          start="{{todayStr}}"
+          value="{{newSlotDate}}"
+          bindchange="onSlotDateChange"
+        >
+          <view class="picker-value picker-value-sm">{{newSlotDate || '选择日期'}}</view>
+        </picker>
+        <view class="timeslot-sep">—</view>
+        <picker
+          class="timeslot-picker-item"
+          mode="time"
+          value="{{newSlotStart}}"
+          bindchange="onSlotStartChange"
+        >
+          <view class="picker-value picker-value-sm">{{newSlotStart || '开始'}}</view>
+        </picker>
+        <view class="timeslot-sep">~</view>
+        <picker
+          class="timeslot-picker-item"
+          mode="time"
+          value="{{newSlotEnd}}"
+          bindchange="onSlotEndChange"
+        >
+          <view class="picker-value picker-value-sm">{{newSlotEnd || '结束'}}</view>
+        </picker>
+      </view>
+      <view class="timeslot-actions">
+        <t-button theme="primary" size="small" bindtap="onConfirmTimeSlot">确认添加</t-button>
+        <t-button theme="default" size="small" bindtap="onCancelTimeSlot">取消</t-button>
+      </view>
+    </view>
+
+    <view wx:else class="timeslot-add-row">
+      <t-button theme="default" size="small" icon="add" bindtap="onShowTimeSlotEditor">
+        添加时段
+      </t-button>
+    </view>
   </view>
 
   <!-- 图片上传 -->

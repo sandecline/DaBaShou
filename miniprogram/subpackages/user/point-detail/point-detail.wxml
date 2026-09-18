@@ -41,7 +41,7 @@
       wx:key="id"
     >
       <view class="item-left">
-        <view class="item-icon {{isIncomeType(item.type) ? 'icon-income' : 'icon-expense'}}">
+        <view class="item-icon {{item._iconClass}}">
           <text>{{item.description.slice(0, 1)}}</text>
         </view>
         <view class="item-info">
@@ -49,8 +49,8 @@
           <text class="item-time">{{item.createTime}}</text>
         </view>
       </view>
-      <view class="item-amount {{isIncomeType(item.type) ? 'amount-income' : 'amount-expense'}}">
-        {{isIncomeType(item.type) ? '+' : ''}}{{item.amount}}
+      <view class="item-amount {{item._amountClass}}">
+        {{item._prefix}}{{item.amount}}
       </view>
     </view>
 

@@ -1,103 +1,145 @@
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { getToken } from '@/utils/auth'
 import { useMessageStore } from '@/stores/message'
 
-export function useWebSocket() {
-  const ws = ref<WebSocket | null>(null)
-  const connected = ref(false)
-  const messageStore = useMessageStore()
+type MessageCallback = (data: any) => void
 
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
-  let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+const connected = ref(false)
+let ws: WebSocket | null = null
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null
+let started = false
 
-  function connect() {
-    const token = getToken()
-    if (!token) return
+const messageCallbacks = new Set<MessageCallback>()
 
-    const url = `${import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws'}?token=${token}`
-    ws.value = new WebSocket(url)
+export function onMessage(callback: MessageCallback): () => void {
+  messageCallbacks.add(callback)
+  return () => {
+    messageCallbacks.delete(callback)
+  }
+}
 
-    ws.value.onopen = () => {
-      connected.value = true
-      messageStore.setWsConnected(true)
-      startHeartbeat()
-    }
+export function connect() {
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return
 
-    ws.value.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        handleMessage(data)
-      } catch {
-        // ignore parse errors
-      }
-    }
+  const token = getToken()
+  if (!token) return
 
-    ws.value.onclose = () => {
-      connected.value = false
-      messageStore.setWsConnected(false)
-      stopHeartbeat()
-      scheduleReconnect()
-    }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const url = `${proto}//${location.host}/ws/chat?token=${encodeURIComponent(token)}`
 
-    ws.value.onerror = () => {
-      ws.value?.close()
+  ws = new WebSocket(url)
+
+  ws.onopen = () => {
+    connected.value = true
+    useMessageStore().setWsConnected(true)
+    startHeartbeat()
+  }
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data)
+      handleMessage(msg)
+    } catch {
+      // ignore parse errors
     }
   }
 
-  function handleMessage(data: any) {
-    switch (data.type) {
-      case 'chat':
-        // Chat message — handled by chat view
-        break
-      case 'notification':
-        messageStore.incrementUnread()
-        break
-      case 'heartbeat':
-        // respond with pong
-        break
-    }
-  }
-
-  function send(data: any) {
-    if (ws.value && connected.value) {
-      ws.value.send(JSON.stringify(data))
-    }
-  }
-
-  function startHeartbeat() {
-    heartbeatTimer = setInterval(() => {
-      send({ type: 'ping' })
-    }, 30000)
-  }
-
-  function stopHeartbeat() {
-    if (heartbeatTimer) {
-      clearInterval(heartbeatTimer)
-      heartbeatTimer = null
-    }
-  }
-
-  function scheduleReconnect() {
-    if (reconnectTimer) return
-    reconnectTimer = setTimeout(() => {
-      reconnectTimer = null
-      connect()
-    }, 5000)
-  }
-
-  function disconnect() {
+  ws.onclose = () => {
+    connected.value = false
+    useMessageStore().setWsConnected(false)
     stopHeartbeat()
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer)
-      reconnectTimer = null
-    }
-    ws.value?.close()
+    scheduleReconnect()
   }
 
-  return {
-    connected,
-    connect,
-    disconnect,
-    send,
+  ws.onerror = () => {
+    ws?.close()
   }
+}
+
+export function disconnect() {
+  started = false
+  stopHeartbeat()
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
+  }
+  if (ws) {
+    ws.onclose = null
+    ws.close()
+    ws = null
+  }
+  connected.value = false
+  useMessageStore().setWsConnected(false)
+}
+
+export function send(data: Record<string, unknown>) {
+  if (ws && connected.value) {
+    ws.send(JSON.stringify(data))
+  }
+}
+
+function handleMessage(msg: any) {
+  switch (msg.type) {
+    case 'chat':
+      for (const cb of messageCallbacks) {
+        try {
+          cb(msg.data)
+        } catch {
+          // ignore callback errors
+        }
+      }
+      break
+    case 'read':
+      for (const cb of messageCallbacks) {
+        try {
+          cb(msg)
+        } catch {
+          // ignore
+        }
+      }
+      break
+    case 'notification':
+      useMessageStore().incrementUnread()
+      break
+    case 'pong':
+      break
+  }
+}
+
+function startHeartbeat() {
+  stopHeartbeat()
+  heartbeatTimer = setInterval(() => {
+    send({ type: 'ping' })
+  }, 30000)
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer)
+    heartbeatTimer = null
+  }
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null
+    if (started) connect()
+  }, 5000)
+}
+
+/**
+ * 开始自动连接（登录后调用一次）
+ */
+export function startWebSocket() {
+  started = true
+  connect()
+}
+
+/**
+ * 停止自动连接（登出时调用）
+ */
+export function stopWebSocket() {
+  disconnect()
 }

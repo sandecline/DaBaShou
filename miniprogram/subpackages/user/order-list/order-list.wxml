@@ -1,4 +1,10 @@
 <view class="order-list-page">
+  <!-- 角色切换 -->
+  <view class="role-switch">
+    <view class="role-item {{activeRole === 'buyer' ? 'active' : ''}}" bindtap="onRoleChange" data-role="buyer">我买的</view>
+    <view class="role-item {{activeRole === 'seller' ? 'active' : ''}}" bindtap="onRoleChange" data-role="seller">我接的</view>
+  </view>
+
   <!-- Tab 筛选栏 -->
   <t-tabs value="{{activeTab}}" bind:change="onTabChange">
     <t-tab-panel label="全部" value="0" />
@@ -35,7 +41,7 @@
 
       <!-- 服务标题 + 积分 -->
       <view class="order-card__body">
-        <text class="order-card__title">{{item.title}}</text>
+        <text class="order-card__title">{{item.shelfTitle}}</text>
         <text class="order-card__point">{{item.pointAmount}} 积分</text>
       </view>
 
@@ -46,7 +52,16 @@
           <text class="order-card__name">{{item.myRole === 'buyer' ? item.sellerNickname : item.buyerNickname}}</text>
           <text class="order-card__role">{{item.myRole === 'buyer' ? '卖家' : '买家'}}</text>
         </view>
-        <text class="order-card__time">{{item.createTime}}</text>
+        <view class="order-card__actions">
+          <t-button
+            size="small"
+            variant="outline"
+            data-userid="{{item.myRole === 'buyer' ? item.sellerId : item.buyerId}}"
+            data-nickname="{{item.myRole === 'buyer' ? item.sellerNickname : item.buyerNickname}}"
+            catch:tap="onChat"
+          >私聊</t-button>
+          <text class="order-card__time">{{item.createTimeFormatted || item.createTime}}</text>
+        </view>
       </view>
     </view>
   </view>

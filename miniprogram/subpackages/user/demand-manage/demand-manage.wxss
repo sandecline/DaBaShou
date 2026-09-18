@@ -1,0 +1,82 @@
+.demand-manage-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 120rpx;
+}
+
+.empty-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 200rpx;
+  gap: 40rpx;
+}
+
+.demand-list {
+  padding: 20rpx 32rpx;
+}
+
+.demand-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.demand-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.demand-card__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 16rpx;
+}
+
+.demand-card__info {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 12rpx;
+}
+
+.demand-card__category {
+  font-size: 26rpx;
+  color: #FF6E14;
+  background: #fff3e8;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.demand-card__price {
+  font-size: 26rpx;
+  color: #e37318;
+  font-weight: 500;
+}
+
+.demand-card__time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.publish-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20rpx 32rpx 40rpx;
+  background: #fff;
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.swipe-btn-danger /deep/ .t-swipe-cell__right {
+  background: #e34d59 !important;
+}

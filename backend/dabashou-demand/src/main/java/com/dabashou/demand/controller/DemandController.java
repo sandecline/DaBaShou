@@ -16,6 +16,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * 需求控制器
  */
@@ -96,5 +99,13 @@ public class DemandController {
     public AjaxResult<AcceptResultVo> accept(@PathVariable Long id, @Valid @RequestBody AcceptDto dto) {
         Long userId = SecurityUtil.requireCurrentUserId();
         return AjaxResult.ok(demandService.accept(userId, id, dto));
+    }
+
+    @Operation(summary = "匹配可接单的服务货架")
+    @GetMapping("/{id}/match")
+    public AjaxResult<List<Map<String, Object>>> match(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "10") int limit) {
+        return AjaxResult.ok(demandService.matchShelves(id, limit));
     }
 }

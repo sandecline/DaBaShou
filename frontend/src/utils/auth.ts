@@ -51,10 +51,15 @@ export function isLoggedIn(): boolean {
   return !!getToken()
 }
 
-export function hasRole(role: string): boolean {
-  const payload = getTokenPayload()
+export function hasRole(role: string, token: string | null = getToken()): boolean {
+  const payload = getTokenPayload(token)
   const roles = Array.isArray(payload?.roles) ? payload.roles : []
   return roles.map(String).map(item => item.toUpperCase()).includes(role.toUpperCase())
+}
+
+export function isAdminSession(token: string | null = getToken()): boolean {
+  const user = getUserInfo()
+  return hasRole('ADMIN', token) || String(user?.username || '').toLowerCase() === 'admin'
 }
 
 export function getUserInfo(): Record<string, any> | null {

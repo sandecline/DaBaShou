@@ -1,8 +1,5 @@
 <view class="order-detail-page">
-  <!-- 加载中 -->
   <t-loading wx:if="{{loading}}" theme="circular" size="40px" text="加载中..." />
-
-  <!-- 加载错误 -->
   <view wx:elif="{{loadError}}" class="error-wrap">
     <text class="error-text">加载失败</text>
     <t-button size="small" bindtap="loadDetail">重试</t-button>
@@ -11,130 +8,129 @@
   <view wx:elif="{{order}}" class="detail-content">
     <!-- 状态标签 -->
     <view class="status-bar">
-      <t-tag
-        theme="{{statusTheme}}"
-        size="large"
-      >
-        {{ORDER_STATUS_MAP[order.status]}}
-      </t-tag>
+      <t-tag theme="{{statusTheme}}" size="large">{{ORDER_STATUS_MAP[order.status]}}</t-tag>
     </view>
 
     <!-- 订单信息 -->
     <t-cell-group bordered>
       <t-cell title="订单号" note="{{order.orderNo}}" />
-      <t-cell title="服务标题" note="{{order.title}}" />
+      <t-cell title="服务标题" note="{{order.shelfTitle}}" />
       <t-cell title="积分金额" note="{{order.pointAmount}} 积分" />
-      <t-cell title="分类" note="{{order.skillTagName}}" />
-      <t-cell title="服务时长" note="{{order.durationMinutes}} 分钟" />
-      <t-cell title="创建时间" note="{{order.createTime}}" />
+      <t-cell wx:if="{{order.tagName}}" title="分类" note="{{order.tagName}}" />
+      <t-cell title="创建时间" note="{{order.createTimeFormatted}}" />
     </t-cell-group>
 
     <!-- 对方信息 -->
-    <t-cell-group bordered title="{{order.myRole === 'buyer' ? '卖家' : '买家'}}">
-      <t-cell title="{{order.myRole === 'buyer' ? order.sellerNickname : order.buyerNickname}}" note="{{order.myRole === 'buyer' ? '卖家' : '买家'}}" />
+    <t-cell-group bordered>
+      <t-cell title="{{order.myRole === 'seller' ? '买家' : '卖家'}}" note="{{order.myRole === 'seller' ? order.buyerNickname : order.sellerNickname}}" />
     </t-cell-group>
 
-    <!-- 状态流转 -->
-    <view wx:if="{{order.statusLogs && order.statusLogs.length}}" class="status-flow">
-      <view class="status-flow__title">状态记录</view>
-      <view wx:for="{{order.statusLogs}}" wx:key="createTime" class="status-flow__step">
-        <text class="status-flow__from">{{ORDER_STATUS_MAP[item.fromStatus]}}</text>
-        <text class="status-flow__arrow">→</text>
-        <text class="status-flow__to">{{ORDER_STATUS_MAP[item.toStatus]}}</text>
-        <text class="status-flow__time">{{item.createTime}}</text>
-        <text wx:if="{{item.remark}}" class="status-flow__remark">{{item.remark}}</text>
+    <!-- 无权限提示 -->
+    <view wx:if="{{order.myRole === null}}" class="code-section">
+      <text class="code-hint">当前订单与你无关，无法查看核销码或操作</text>
+    </view>
+
+    <!-- ====== Status 1: 待核销 — 只展示自己的核销码 ====== -->
+    <view wx:elif="{{order.status === 1}}" class="code-section">
+      <view class="section-title">开始核销</view>
+      <view class="code-hint">双方输入对方的核销码后，服务正式开始，积分将被冻结</view>
+      <view class="code-card">
+        <text class="code-label">我的核销码（交给对方）</text>
+        <text class="code-text">{{order.myStartCode}}</text>
+        <t-tag theme="{{order.myStartVerified ? 'success' : 'primary'}}" size="small">
+          {{order.myStartVerified ? '已核销' : '等待对方输入'}}
+        </t-tag>
       </view>
     </view>
 
-    <!-- 核销码 -->
-    <view wx:if="{{order.verifyCode}}" class="verify-code-section">
-      <view class="verify-code-box" bindtap="onCopyVerifyCode">
-        <text class="verify-code-text">{{order.verifyCode}}</text>
-        <text class="verify-code-hint">点击复制核销码</text>
+    <!-- ====== Status 3: 服务中 — 只展示自己的确认码 ====== -->
+    <view wx:elif="{{order.status === 3}}" class="code-section">
+      <view class="section-title">完成确认</view>
+      <view class="code-hint">双方输入对方的确认码后，订单完成，积分将结算给卖家</view>
+      <view class="code-card">
+        <text class="code-label">我的确认码（交给对方）</text>
+        <text class="code-text">{{order.myConfirmCode}}</text>
+        <t-tag theme="{{order.myConfirmed ? 'success' : 'primary'}}" size="small">
+          {{order.myConfirmed ? '已确认' : '等待对方输入'}}
+        </t-tag>
       </view>
-      <text wx:if="{{order.verifyCodeExpire}}" class="verify-code-expire">有效期至 {{order.verifyCodeExpire}}</text>
     </view>
 
-    <!-- 备注 -->
-    <t-cell-group wx:if="{{order.remark}}" bordered title="备注">
-      <t-cell title="{{order.remark}}" />
-    </t-cell-group>
+    <!-- ====== Status 7: 争议中 ====== -->
+    <view wx:elif="{{order.status === 7}}" class="code-section">
+      <view class="section-title">争议处理中</view>
+      <text class="code-hint">订单存在争议，平台客服正在介入处理，请保持沟通渠道畅通</text>
+    </view>
+
+    <!-- 退款提示（仅服务中状态才显示） -->
+    <view wx:if="{{order.status === 3 && order.refundRequesting}}" class="refund-banner">
+      <t-icon name="error-circle" size="40rpx" color="#FF6E14" />
+      <text>{{order.refundRequester === order.myRole ? '你' : (order.refundRequester === 'buyer' ? '买家' : '卖家')}}已发起退款申请</text>
+    </view>
+
+    <!-- 时间线 -->
+    <view wx:if="{{order.serviceStartTime}}" class="timeline">
+      <text class="timeline-item">开始: {{order.serviceStartTime}}</text>
+      <text wx:if="{{order.completeTime}}" class="timeline-item">完成: {{order.completeTime}}</text>
+    </view>
   </view>
 
   <!-- 底部操作按钮 -->
   <view wx:if="{{order}}" class="bottom-actions">
-    <!-- 核销按钮（卖家 + 服务中） -->
-    <t-button
-      wx:if="{{order.myRole === 'seller' && order.status === 3}}"
-      theme="primary"
-      size="large"
-      block
-      loading="{{actionLoading}}"
-      bindtap="onShowVerifyDialog"
-    >
-      核销服务
-    </t-button>
+    <!-- Status 1: 输入对方核销码启动服务 -->
+    <t-button wx:if="{{order.myRole && order.status === 1}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="输入对方的核销码" data-action="start">核销启动服务</t-button>
 
-    <!-- 确认完成按钮（买家 + 待确认） -->
-    <t-button
-      wx:if="{{order.myRole === 'buyer' && order.status === 4}}"
-      theme="primary"
-      size="large"
-      block
-      loading="{{actionLoading}}"
-      bindtap="onConfirmComplete"
-    >
-      确认完成
-    </t-button>
+    <!-- Status 3: 输入对方确认码完成服务 -->
+    <t-button wx:if="{{order.myRole && order.status === 3}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onCodeBtnTap" data-title="输入对方的确认码" data-action="complete">核销完成服务</t-button>
 
-    <!-- 取消按钮（待支付 / 已支付） -->
-    <t-button
-      wx:if="{{order.status === 1 || order.status === 2}}"
-      theme="light"
-      size="large"
-      block
-      loading="{{actionLoading}}"
-      bindtap="onShowCancelDialog"
-    >
-      取消订单
-    </t-button>
+    <!-- Status 5: 去评价 -->
+    <t-button wx:if="{{order.myRole && order.status === 5 && !reviewed}}" theme="primary" size="large" block loading="{{actionLoading}}" bindtap="onShowReviewDialog">去评价</t-button>
+
+    <!-- Status 3/5: 争议 -->
+    <t-button wx:if="{{order.myRole && (order.status === 3 || order.status === 5)}}" theme="warning" size="large" block loading="{{actionLoading}}" bindtap="onShowDisputeDialog">发起争议</t-button>
+
+    <!-- Status 3: 申请退款（仅未发起时） -->
+    <t-button wx:if="{{order.myRole && order.status === 3 && !order.refundRequesting}}" theme="light" size="large" block loading="{{actionLoading}}" bindtap="onRequestRefund">申请退款</t-button>
+
+    <!-- Status 3: 同意退款（仅对方发起时） -->
+    <t-button wx:if="{{order.myRole && order.status === 3 && order.refundRequesting && order.refundRequester !== order.myRole}}" theme="danger" size="large" block loading="{{actionLoading}}" bindtap="onApproveRefund">同意对方退款</t-button>
+
+    <!-- Status 3: 等待对方同意（己方发起时） -->
+    <t-button wx:if="{{order.myRole && order.status === 3 && order.refundRequesting && order.refundRequester === order.myRole}}" theme="light" size="large" block disabled>等待对方同意退款</t-button>
+
+    <!-- Status 1: 双方均可取消 -->
+    <t-button wx:if="{{order.myRole && order.status === 1}}" theme="default" size="large" block loading="{{actionLoading}}" bindtap="onShowCancelDialog">取消订单</t-button>
+
+    <!-- Status 7: 发起申诉 -->
+    <t-button wx:if="{{order.myRole && order.status === 7}}" theme="primary" size="large" block bindtap="onGoToAppeal">发起申诉</t-button>
   </view>
 
-  <!-- 核销弹窗 -->
-  <t-dialog
-    visible="{{showVerifyDialog}}"
-    title="输入核销码"
-    content=""
-    confirm-btn="确认核销"
-    cancel-btn="取消"
-    bind:confirm="onConfirmVerify"
-    bind:cancel="onCloseVerifyDialog"
-  >
-    <input
-      slot="content"
-      class="verify-input"
-      placeholder="请输入核销码"
-      value="{{verifyCodeInput}}"
-      bindinput="onVerifyCodeInput"
-    />
+  <!-- 核销码弹窗 -->
+  <t-dialog visible="{{showCodeDialog}}" title="{{codeDialogTitle}}" confirm-btn="确认" cancel-btn="取消" bind:confirm="onConfirmCode" bind:cancel="onCloseCodeDialog">
+    <input slot="content" class="code-input" placeholder="请输入核销码" value="{{codeInput}}" bindinput="onCodeInput" maxlength="10" />
   </t-dialog>
 
-  <!-- 取消弹窗 -->
-  <t-dialog
-    visible="{{showCancelDialog}}"
-    title="取消订单"
-    content=""
-    confirm-btn="确认取消"
-    cancel-btn="再想想"
-    bind:confirm="onConfirmCancel"
-    bind:cancel="onCloseCancelDialog"
-  >
-    <input
-      slot="content"
-      class="cancel-input"
-      placeholder="取消原因（可选）"
-      value="{{cancelReason}}"
-      bindinput="onCancelReasonInput"
-    />
+
+
+  <!-- 争议弹窗 -->
+  <t-dialog visible="{{showDisputeDialog}}" title="发起争议" confirm-btn="确认提交" cancel-btn="取消" bind:confirm="onConfirmDispute" bind:cancel="onCloseDisputeDialog">
+    <input slot="content" class="dispute-input" placeholder="请描述争议原因" value="{{disputeReason}}" bindinput="onDisputeReasonInput" />
+  </t-dialog>
+
+  <!-- 评价弹窗 -->
+  <t-dialog visible="{{showReviewDialog}}" title="评价订单" confirm-btn="提交评价" cancel-btn="取消" bind:confirm="onSubmitReview" bind:cancel="onCloseReviewDialog">
+    <view slot="content" class="review-dialog-content">
+      <view class="review-row">
+        <text class="review-label">评分</text>
+        <picker mode="selector" range="{{[1,2,3,4,5]}}" value="{{reviewRating - 1}}" bindchange="onRatingChange">
+          <view class="review-picker">{{reviewRating}} 星</view>
+        </picker>
+      </view>
+      <textarea class="review-textarea" placeholder="请输入评价内容" value="{{reviewContent}}" bindinput="onReviewInput" maxlength="200" />
+      <view class="review-images">
+        <image wx:for="{{reviewImages}}" wx:key="*this" src="{{item}}" class="review-thumb" data-index="{{index}}" bindtap="onRemoveReviewImage" />
+        <view wx:if="{{reviewImages.length < maxReviewImages}}" class="review-add" bindtap="onChooseReviewImage">+</view>
+      </view>
+    </view>
   </t-dialog>
 </view>

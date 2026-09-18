@@ -61,7 +61,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getMyShelves, getUserShelves } from '@/api/shelf'
+import { getMyShelves, getUserShelves, setTimeSlots } from '@/api/shelf'
 import { getUserById } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import SkillCard from '@/components/common/SkillCard.vue'
@@ -77,7 +77,12 @@ const userStore = useUserStore()
 const loading = ref(true)
 const skills = ref<ShelfItemVo[]>([])
 const shopUser = ref<UserProfileVo | PublicUserVo | null>(null)
-const timeSlots = ref<Array<{ date: string; startTime: string; endTime: string }>>([])
+const timeSlots = ref<Array<{ date: string; dayOfWeek: number; startTime: string; endTime: string }>>([])
+
+const DAY_MAP: Record<string, number> = {
+  '周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6, '周日': 7,
+}
+const DAY_LABELS: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' }
 const savingSlots = ref(false)
 
 const isOwner = computed(() => {
@@ -107,12 +112,22 @@ async function loadData() {
 }
 
 async function saveTimeSlots() {
+  if (skills.value.length === 0) {
+    ElMessage.warning('暂无技能货架，无法保存闲时设置')
+    return
+  }
   savingSlots.value = true
   try {
-    // API call to save time slots
+    const slots = timeSlots.value.map((ts) => ({
+      dayOfWeek: ts.dayOfWeek || DAY_MAP[ts.date] || 1,
+      startTime: ts.startTime,
+      endTime: ts.endTime,
+    }))
+    const shelfId = skills.value[0].id
+    await setTimeSlots(shelfId, slots)
     ElMessage.success('闲时设置已保存')
   } catch {
-    // handled
+    // error already shown by interceptor
   } finally {
     savingSlots.value = false
   }

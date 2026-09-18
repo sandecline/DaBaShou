@@ -16,12 +16,12 @@
 
 ## 技术栈
 
-- **后端**: Spring Boot 4.x, Java  21, MyBatis-Plus, Redis, WebSocket
+- **后端**: Spring Boot 3.4.3、Java 21、MyBatis-Plus、Flyway、Redis、WebSocket
 - **前端**: Vue 3, Element Plus, Vite, TypeScript, Pinia
 - **数据库**: MySQL 8.0
 - **缓存**: Redis
 - **即时通讯**: WebSocket
-- **部署**: Docker, Docker Compose
+- **本地启动**: Maven、npm；Windows 可使用 `start-all.ps1`
 
 ## 功能模块清单
 
@@ -118,6 +118,7 @@ DaBaShou/
 │   ├── tsconfig.json           # TypeScript配置
 │   ├── package.json            # 项目配置
 │   └── tailwind.config.js      # Tailwind配置
+├── miniprogram/                # 微信小程序
 ├── database/                   # 数据库脚本
 │   ├── init.sql                # 初始化脚本
 │   └── migration/              # 数据库迁移脚本
@@ -125,11 +126,8 @@ DaBaShou/
 │   ├── api/                    # API文档
 │   ├── design/                 # 设计文档
 │   ├── database-design.md      # 数据库设计
-│   └── order-state-machine.md  # 状态机设计
-├── docker/                     # Docker配置
-│   ├── docker-compose.yml      # Docker Compose配置
-│   ├── Dockerfile.backend      # 后端Dockerfile
-│   └── Dockerfile.frontend     # 前端Dockerfile
+│   └── requirements.md         # 需求说明
+├── start-all.ps1               # Windows 服务管理脚本
 ├── AGENTS.md                   # 协作约束文件
 └── README.md                   # 项目说明
 ```
@@ -152,13 +150,13 @@ DaBaShou/
 - `sys_role` - 角色表
 - `sys_permission` - 权限表
 - `sys_file` - 文件表
-- `sys_notification` - 通知表
+- `dbs_notification` - 通知表
 - `sys_log` - 日志表
 - `sys_config` - 系统配置表
 
 ### 信用评价表
-- `user_campus_auth` - 校园认证表
-- `user_trust_score_log` - 信任分变动记录表
+- `dbs_user_campus_auth` - 校园认证表
+- `dbs_user_trust_score_log` - 信任分变动记录表
 - `credit_violation` - 违规记录表
 - `credit_appeal` - 申诉记录表
 
@@ -169,18 +167,17 @@ DaBaShou/
 ## 订单状态机
 
 ```
-待支付(1) → 已支付(2) → 服务中(3) → 待确认(4) → 已完成(5)
-    ↓           ↓           ↓           ↓
-  已取消(0)   已退款(6)   已退款(6)   争议中(7)
-                ↓           ↓           ↓
-            已取消(0)    已取消(0)    已完成(5)/已退款(6)
+待核销(1) → 服务中(3) → 已完成(5)
+    ↓           ↓            ↓
+  已取消(0)   已退款(6)    争议中(7)
+                ↓            ↓
+              已取消(0)   已完成(5)/已退款(6)
 ```
 
 ### 关键业务规则
-- **支付环节**：买家支付积分，积分冻结到担保池，生成动态核销码
-- **服务确认**：线下服务扫码核销，线上服务买家确认
-- **超时熔断**：待支付超时15分钟自动取消，核销码超时30分钟自动退款
-- **退改扣分**：买家取消扣10%积分，卖家取消扣20%积分
+- **开始核销**：买卖双方输入对方的核销码，双方完成后冻结买家积分并进入服务中
+- **完成确认**：双方输入对方的确认码，双方完成后结算积分
+- **争议与退款**：服务中可申请退款；服务中或已完成订单可发起争议
 
 ## 开发规范
 
@@ -198,35 +195,33 @@ DaBaShou/
 ## 快速开始
 
 ### 环境要求
-- JDK 17+
+- JDK 21
 - Node.js 18+
 - MySQL 8.0+
 - Redis 7.0+
-- Docker & Docker Compose (可选)
+- Maven 3.9+
 
 ### 本地开发
 ```bash
 # 1. 克隆项目
 git clone https://github.com/sandecline/DaBaShou.git
+cd DaBaShou
 
-# 2. 启动数据库
-docker-compose -f docker/docker-compose.yml up -d mysql redis
+# 2. 在本机启动 MySQL 和 Redis，并创建 dabashou 数据库
+#    Flyway 会在后端启动时执行数据库迁移
 
-# 3. 启动后端
+# 3. 构建并启动后端（默认端口 9090）
 cd backend
-mvn spring-boot:run
+mvn -pl dabashou-api -am package
+java -jar dabashou-api/target/dabashou-api-1.0.0-SNAPSHOT.jar
 
-# 4. 启动前端
-cd frontend
+# 4. 在另一个终端启动 Web 前端（默认端口 5173）
+cd ../frontend
 npm install
 npm run dev
 ```
 
-### Docker部署
-```bash
-# 一键启动所有服务
-docker-compose -f docker/docker-compose.yml up -d
-```
+后端默认连接 `localhost:3306/dabashou`，可用 `DB_USERNAME`、`DB_PASSWORD` 和 `JWT_SECRET` 环境变量覆盖本地配置。Windows 用户可先构建 JAR，再运行 `./start-all.ps1 start -DbUsername root -DbPassword "你的密码" -NoPause`。小程序源码位于 `miniprogram/`，可用微信开发者工具打开；开发接口地址见 `miniprogram/config/api.ts`。
 
 ## 项目文档
 

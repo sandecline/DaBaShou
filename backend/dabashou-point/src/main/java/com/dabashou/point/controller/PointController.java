@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dabashou.common.core.AjaxResult;
 import com.dabashou.common.core.PageResult;
+import com.dabashou.common.enums.ErrorCode;
 import com.dabashou.common.enums.PointTransType;
 import com.dabashou.common.utils.SecurityUtil;
 import com.dabashou.point.domain.PointAccount;
 import com.dabashou.point.domain.PointTransaction;
 import com.dabashou.point.mapper.PointAccountMapper;
 import com.dabashou.point.mapper.PointTransactionMapper;
+import com.dabashou.point.service.PointService;
 import com.dabashou.point.vo.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,8 +21,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 积分控制器 — 积分余额、流水、统计、签到、担保池
@@ -32,13 +37,16 @@ public class PointController {
 
     private final PointAccountMapper pointAccountMapper;
     private final PointTransactionMapper pointTransactionMapper;
+    private final PointService pointService;
     private final JdbcTemplate jdbcTemplate;
 
     public PointController(PointAccountMapper pointAccountMapper,
                            PointTransactionMapper pointTransactionMapper,
+                           PointService pointService,
                            JdbcTemplate jdbcTemplate) {
         this.pointAccountMapper = pointAccountMapper;
         this.pointTransactionMapper = pointTransactionMapper;
+        this.pointService = pointService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -54,6 +62,8 @@ public class PointController {
         PointBalanceVo vo = new PointBalanceVo(
                 account.getAvailable() != null ? account.getAvailable() : 0,
                 account.getFrozen() != null ? account.getFrozen() : 0);
+        vo.setTotalEarned(account.getTotalEarned() != null ? account.getTotalEarned() : 0);
+        vo.setTotalSpent(account.getTotalSpent() != null ? account.getTotalSpent() : 0);
         return AjaxResult.ok(vo);
     }
 
@@ -62,17 +72,27 @@ public class PointController {
     public AjaxResult<PageResult<PointTransVo>> listTransactions(
             @Parameter(description = "页码") @RequestParam(defaultValue = "1") int pageNum,
             @Parameter(description = "每页大小") @RequestParam(defaultValue = "10") int pageSize,
-            @Parameter(description = "流水类型") @RequestParam(required = false) Integer type,
+            @Parameter(description = "流水类型(逗号分隔多类型,如1,5,7)") @RequestParam(required = false) String type,
             @Parameter(description = "订单ID") @RequestParam(required = false) Long orderId,
             @Parameter(description = "开始日期(yyyy-MM-dd HH:mm:ss)") @RequestParam(required = false)
                 @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDate,
             @Parameter(description = "结束日期(yyyy-MM-dd HH:mm:ss)") @RequestParam(required = false)
                 @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate) {
         Long userId = SecurityUtil.requireCurrentUserId();
+
+        List<Integer> typeList = null;
+        if (type != null && !type.isBlank()) {
+            typeList = Arrays.stream(type.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
+        }
+
         Page<PointTransaction> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<PointTransaction> wrapper = new LambdaQueryWrapper<PointTransaction>()
                 .eq(PointTransaction::getUserId, userId)
-                .eq(type != null, PointTransaction::getType, type)
+                .in(typeList != null && !typeList.isEmpty(), PointTransaction::getType, typeList)
                 .eq(orderId != null, PointTransaction::getOrderId, orderId)
                 .ge(startDate != null, PointTransaction::getCreateTime, startDate)
                 .le(endDate != null, PointTransaction::getCreateTime, endDate)
@@ -106,7 +126,7 @@ public class PointController {
                         .eq(PointTransaction::getId, id)
                         .eq(PointTransaction::getUserId, userId));
         if (t == null) {
-            return AjaxResult.fail(404, "流水记录不存在");
+            return AjaxResult.fail(ErrorCode.NOT_FOUND);
         }
 
         PointTransVo vo = new PointTransVo();
@@ -132,10 +152,10 @@ public class PointController {
 
         String sql = """
                 SELECT
-                    COALESCE(SUM(CASE WHEN type IN (1,5) THEN amount ELSE 0 END), 0) AS totalIncome,
-                    COALESCE(SUM(CASE WHEN type IN (2,3,6) THEN amount ELSE 0 END), 0) AS totalExpense,
-                    COALESCE(SUM(CASE WHEN type IN (1,5) AND create_time >= ? THEN amount ELSE 0 END), 0) AS monthIncome,
-                    COALESCE(SUM(CASE WHEN type IN (2,3,6) AND create_time >= ? THEN amount ELSE 0 END), 0) AS monthExpense
+                    COALESCE(SUM(CASE WHEN type IN (1,5,7) THEN amount ELSE 0 END), 0) AS totalIncome,
+                    COALESCE(SUM(CASE WHEN type IN (2,6) THEN amount ELSE 0 END), 0) AS totalExpense,
+                    COALESCE(SUM(CASE WHEN type IN (1,5,7) AND create_time >= ? THEN amount ELSE 0 END), 0) AS monthIncome,
+                    COALESCE(SUM(CASE WHEN type IN (2,6) AND create_time >= ? THEN amount ELSE 0 END), 0) AS monthExpense
                 FROM dbs_point_transaction WHERE user_id = ?
                 """;
         Map<String, Object> row = jdbcTemplate.queryForMap(sql, monthStart, monthStart, userId);
@@ -151,20 +171,15 @@ public class PointController {
     @Operation(summary = "签到")
     @PostMapping("/sign-in")
     public AjaxResult<SignInVo> signIn() {
-        SecurityUtil.requireCurrentUserId();
-        // Stub: 签到功能待实现
-        return AjaxResult.ok(new SignInVo(5, 1));
+        Long userId = SecurityUtil.requireCurrentUserId();
+        return AjaxResult.ok(pointService.signIn(userId));
     }
 
     @Operation(summary = "签到状态")
     @GetMapping("/sign-in/status")
     public AjaxResult<SignInVo> getSignInStatus() {
-        SecurityUtil.requireCurrentUserId();
-        // Stub: 签到功能待实现
-        SignInVo vo = new SignInVo();
-        vo.setReward(0);
-        vo.setConsecutiveDays(0);
-        return AjaxResult.ok(vo);
+        Long userId = SecurityUtil.requireCurrentUserId();
+        return AjaxResult.ok(pointService.getSignInStatus(userId));
     }
 
     @Operation(summary = "担保池概览")

@@ -2,7 +2,7 @@
  * 发布页 — 选择发布技能 or 发布求助
  */
 
-import { silentLogin } from '../../utils/auth';
+import { ensureLogin } from '../../utils/auth';
 
 Page({
   data: {
@@ -17,7 +17,7 @@ Page({
   /** 静默登录 */
   async doLogin() {
     try {
-      await silentLogin();
+      await ensureLogin();
     } catch (err) {
       console.error('[Publish] 静默登录失败:', err);
     } finally {

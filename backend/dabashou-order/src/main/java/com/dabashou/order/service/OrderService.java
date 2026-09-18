@@ -5,6 +5,7 @@ import com.dabashou.common.core.PageResult;
 import com.dabashou.order.domain.Order;
 import com.dabashou.order.dto.*;
 import com.dabashou.order.vo.*;
+import java.util.List;
 
 /**
  * 订单服务接口
@@ -24,7 +25,7 @@ public interface OrderService extends IService<Order> {
     /**
      * 订单列表(买家/卖家视角)
      */
-    PageResult<OrderItemVo> listOrders(Long userId, String role, Integer status, int pageNum, int pageSize);
+    PageResult<OrderItemVo> listOrders(Long userId, String role, List<Integer> status, int pageNum, int pageSize);
 
     /**
      * 订单详情
@@ -37,8 +38,9 @@ public interface OrderService extends IService<Order> {
     OrderStatusVo getOrderStatus(Long userId, Long orderId);
 
     /**
-     * 支付订单(1→2，冻结积分+生成核销码)
+     * 支付订单(1→2，冻结积分+生成核销码) — 已废弃，新流程使用 verifyOrder
      */
+    @Deprecated
     PayResultVo payOrder(Long userId, Long orderId, String idempotentToken);
 
     /**
@@ -47,8 +49,9 @@ public interface OrderService extends IService<Order> {
     void cancelOrder(Long userId, Long orderId, CancelDto dto);
 
     /**
-     * 开始服务(2→3)
+     * 开始服务(2→3) — 已废弃，新流程使用 verifyOrder(phase=start)
      */
+    @Deprecated
     void startService(Long userId, Long orderId);
 
     /**
@@ -62,17 +65,20 @@ public interface OrderService extends IService<Order> {
     VerifyCodeVo refreshVerifyCode(Long userId, Long orderId);
 
     /**
-     * 核销订单(3→4)
+     * 核销订单 — 双方核销码驱动
+     * phase=start: 开始核销（1→3），双方输入对方的开始核销码
+     * phase=complete: 完成确认（3→5），双方输入对方的完成确认码
      */
     void verifyOrder(Long userId, Long orderId, VerifyDto dto);
 
     /**
-     * 买家确认完成(4→5，结算积分)
+     * 买家确认完成(4→5，结算积分) — 已废弃，新流程使用 verifyOrder(phase=complete)
      */
+    @Deprecated
     void confirmOrder(Long userId, Long orderId);
 
     /**
-     * 发起争议(4→7)
+     * 发起争议(3→7 或 5→7)
      */
     void disputeOrder(Long userId, Long orderId, DisputeDto dto);
 
@@ -85,4 +91,10 @@ public interface OrderService extends IService<Order> {
      * 申请退款
      */
     void refundOrder(Long userId, Long orderId, RefundDto dto);
+
+    /**
+     * 自动确认超时订单（待确认超过配置时间自动完成并结算）
+     * @return 处理的订单数
+     */
+    int autoConfirmTimeout();
 }

@@ -3,21 +3,18 @@
  * 展示用户个人统计数据
  */
 
-import { userService } from '../../../services/user';
-import type { UserProfile } from '../../../types/user';
+import { statService, type OverviewVo } from '../../../services/stat';
 
 interface StatCard {
   label: string;
-  value: number;
+  value: string;
   unit: string;
   icon: string;
 }
 
 Page({
   data: {
-    /** 统计卡片列表 */
     statCards: [] as StatCard[],
-    /** 加载状态 */
     loading: true,
   },
 
@@ -25,23 +22,26 @@ Page({
     this.loadStats();
   },
 
-  /** 加载用户统计数据 */
   async loadStats() {
     try {
-      const res = await userService.getProfile();
-      const data = (res.data || res) as UserProfile;
-      const stats = data.stats;
+      const res = await statService.getOverview();
+      const data = res.data as OverviewVo;
+      if (!data) return;
 
-      if (stats) {
-        this.setData({
-          statCards: [
-            { label: '帮助次数', value: stats.helpCount, unit: '次', icon: 'help' },
-            { label: '获得帮助', value: stats.helpedCount, unit: '次', icon: 'helped' },
-            { label: '技能数量', value: stats.skillCount, unit: '个', icon: 'skill' },
-            { label: '好评率', value: stats.praiseRate, unit: '%', icon: 'praise' },
-          ],
-        });
-      }
+      const praiseRate = data.reviewCount > 0 && data.averageRating
+        ? Math.round((data.averageRating / 5) * 100)
+        : 0;
+
+      this.setData({
+        statCards: [
+          { label: '完成订单', value: String(data.completedOrders || 0), unit: '单', icon: 'order' },
+          { label: '技能数量', value: String(data.skillCount || 0), unit: '个', icon: 'skill' },
+          { label: '获得评价', value: String(data.reviewCount || 0), unit: '条', icon: 'review' },
+          { label: '好评率', value: String(praiseRate), unit: '%', icon: 'praise' },
+          { label: '积分收入', value: String(data.totalPointsEarned || 0), unit: '积分', icon: 'income' },
+          { label: '积分支出', value: String(data.totalPointsSpent || 0), unit: '积分', icon: 'expense' },
+        ],
+      });
     } catch (err) {
       console.error('[MyStats] 获取统计数据失败:', err);
       wx.showToast({ title: '加载失败', icon: 'none' });
@@ -50,7 +50,6 @@ Page({
     }
   },
 
-  /** 下拉刷新 */
   onPullDownRefresh() {
     this.loadStats().finally(() => {
       wx.stopPullDownRefresh();

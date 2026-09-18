@@ -61,13 +61,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getChatMessages, sendChatMessage } from '@/api/message'
+import { getChatMessages, markChatSessionRead, sendChatMessage } from '@/api/message'
+import { useMessageStore } from '@/stores/message'
 import { useUserStore } from '@/stores/user'
 import { fromNow } from '@/utils/format'
 import EmptyState from '@/components/common/EmptyState.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { onMessage } from '@/composables/useWebSocket'
 import type { ChatMessageVo } from '@/types/api'
 
 const props = defineProps<{
@@ -78,6 +80,7 @@ const props = defineProps<{
 }>()
 
 const userStore = useUserStore()
+const messageStore = useMessageStore()
 const myAvatar = computed(() => userStore.user?.avatar || '')
 const myName = computed(() => userStore.user?.nickname || '我')
 
@@ -98,16 +101,50 @@ async function loadMessages() {
 
   loading.value = true
   try {
-    const result = await getChatMessages(targetUserId.value, { page: 1, size: 50 })
+    const result = await getChatMessages(targetUserId.value, { pageNum: 1, pageSize: 50 })
     messages.value = result.list.map((msg) => ({
       ...msg,
       isMine: msg.senderId === userStore.user?.id,
     })).reverse()
     scrollToBottom()
+    await markChatSessionRead(targetUserId.value).catch(() => undefined)
+    await messageStore.fetchUnreadCount()
   } catch {
     // request.ts already shows a unified error message.
   } finally {
     loading.value = false
+  }
+}
+
+let unregisterWs: (() => void) | null = null
+
+function handleWsMessage(data: any) {
+  if (!data) return
+
+  // 聊天消息：来自当前对话的对方
+  if (data.id && data.senderId && data.senderId !== userStore.user?.id) {
+    if (data.senderId === targetUserId.value) {
+      messages.value.push({
+        id: data.id,
+        senderId: data.senderId,
+        senderNickname: data.senderNickname || peerName.value,
+        senderAvatar: data.senderAvatar || peerAvatar.value,
+        content: data.content,
+        msgType: data.msgType ?? 1,
+        isRead: data.isRead ?? 0,
+        createTime: data.createTime || new Date().toISOString(),
+        isMine: false,
+      })
+      scrollToBottom()
+      markChatSessionRead(targetUserId.value).catch(() => undefined)
+    }
+  }
+
+  // 已读回执
+  if (data.type === 'read' && data.senderId === targetUserId.value) {
+    for (const msg of messages.value) {
+      if (msg.isMine) msg.isRead = 1
+    }
   }
 }
 
@@ -132,7 +169,7 @@ async function handleSend() {
     inputText.value = ''
     scrollToBottom()
   } catch {
-    ElMessage.error('发送失败')
+    // error already shown by interceptor
   } finally {
     sending.value = false
   }
@@ -147,7 +184,13 @@ function scrollToBottom() {
 }
 
 watch(targetUserId, loadMessages)
-onMounted(loadMessages)
+onMounted(() => {
+  loadMessages()
+  unregisterWs = onMessage(handleWsMessage)
+})
+onUnmounted(() => {
+  unregisterWs?.()
+})
 </script>
 
 <style scoped lang="scss">
